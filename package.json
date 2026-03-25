@@ -1,0 +1,100 @@
+{
+  "name": "essaylens-electron",
+  "version": "0.1.0",
+  "description": "EssayLens desktop app",
+  "main": "dist-electron/main/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron:watch\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --config renderer/vite.config.ts",
+    "dev:electron:watch": "tsc -p electron/tsconfig.build.json --watch --preserveWatchOutput",
+    "dev:electron": "wait-on tcp:5173 dist-electron/main/index.js dist-electron/preload/index.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "start:prod": "cross-env NODE_ENV=production electron .",
+    "typecheck": "tsc -p renderer/tsconfig.json --noEmit && tsc -p electron/tsconfig.json --noEmit",
+    "build": "npm run build:renderer && npm run build:electron",
+    "build:renderer": "tsc -p renderer/tsconfig.build.json --noEmit && vite build --config renderer/vite.config.ts",
+    "build:electron": "tsc -p electron/tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:python-worker": "pyinstaller --onedir --name essaylens-llm-worker electron-llm/main.py",
+    "guard:phase0_5": "node scripts/phase0_5_guard.mjs",
+    "package": "npm run build && electron-builder",
+    "package:dir": "npm run build && electron-builder --dir"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "@xmldom/xmldom": "^0.8.11",
+    "docx-preview": "^0.3.7",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-toastify": "^10.0.6",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "jsdom": "^25.0.1",
+    "playwright": "^1.49.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.4",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.essaylens.app",
+    "files": [
+      "dist-electron/**",
+      "renderer/dist/**",
+      "electron-llm/**",
+      "package.json",
+      "!**/*.test.*",
+      "!**/*.spec.*",
+      "!**/__tests__/**",
+      "!**/tests/**",
+      "!.planning/**",
+      "!**/*.md"
+    ],
+    "extraResources": [
+      {
+        "from": "electron-llm",
+        "to": "electron-llm",
+        "filter": [
+          "**/*",
+          "!**/*.test.*",
+          "!**/*.spec.*",
+          "!**/__tests__/**",
+          "!**/tests/**",
+          "!**/*.md"
+        ]
+      },
+      {
+        "from": "electron/main/db/migrations",
+        "to": "db/migrations",
+        "filter": [
+          "**/*.sql"
+        ]
+      },
+      {
+        "from": "vendor/python-worker",
+        "to": "python-worker",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "vendor/llama-server",
+        "to": "llama-server",
+        "filter": ["**/*"]
+      }
+    ]
+  }
+}

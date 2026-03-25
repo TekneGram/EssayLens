@@ -1,0 +1,1 @@
+export { ChatCollapsedRail } from './ChatCollapsedRail';

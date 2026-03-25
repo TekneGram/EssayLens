@@ -1,0 +1,73 @@
+import { ChatControl } from '@/layout/ChatView/components/ChatControl';
+import { ChatListScreen } from '@/layout/ChatView/components/ChatListScreen';
+import { ChatScreen } from '@/layout/ChatView/components/ChatScreen';
+import { ActionsView } from '@/layout/ChatView/components/ActionsView';
+import { useChatViewController } from '@/layout/ChatView/hooks/useChatViewController';
+
+export { ChatCollapsedRail } from '@/layout/ChatView/components/ChatCollapsedRail';
+export { collapseChatPanel, expandChatPanel, selectIsChatCollapsed } from '@/layout/ChatView/state';
+
+interface ChatViewProps {
+  onCollapse: () => void;
+}
+
+export function ChatView({ onCollapse }: ChatViewProps) {
+  const {
+    fileEntityUuid,
+    activeScreen,
+    sessions,
+    activeSessionId,
+    sessionsStatus,
+    sessionsError,
+    sessionItems,
+    isSessionTurnsLoading,
+    sessionTurnsError,
+    showLlmLoading,
+    showThinking,
+    actionItems,
+    onBack,
+    onSessionSelect,
+    onNewChat,
+    onSessionDelete
+  } = useChatViewController();
+
+  return (
+    <section className="chat-view pane chat" data-testid="chat-view" aria-label="Chat view">
+      <div className="chat-head">
+        <ChatControl
+          isBackDisabled={activeScreen === 'list' || !fileEntityUuid}
+          isNewChatDisabled={!fileEntityUuid}
+          onBack={onBack}
+          onNewChat={() => void onNewChat()}
+        />
+        <button className="chat-toggle chat-toggle-collapse" type="button" aria-label="Collapse chat panel" onClick={onCollapse}>
+          ‹
+        </button>
+      </div>
+      <div className="chat-main" data-testid="chat-main">
+        {!fileEntityUuid ? <p className="content-block">Select a file to load chat sessions.</p> : null}
+        {fileEntityUuid && activeScreen === 'list' ? (
+          <ChatListScreen
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            isLoading={sessionsStatus === 'loading'}
+            error={sessionsError}
+            onSessionSelect={onSessionSelect}
+            onSessionDelete={onSessionDelete}
+          />
+        ) : null}
+        {fileEntityUuid && activeScreen === 'chat' ? (
+          <ChatScreen
+            items={sessionItems}
+            isLoading={isSessionTurnsLoading && sessionItems.length === 0}
+            error={sessionTurnsError}
+            showThinking={showThinking}
+          />
+        ) : null}
+      </div>
+      <div className="chat-actions" data-testid="chat-actions">
+        <ActionsView items={actionItems} showLlmLoading={showLlmLoading} />
+      </div>
+    </section>
+  );
+}

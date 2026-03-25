@@ -1,0 +1,27 @@
+{
+  "annotations": [
+    {
+      "id": "e905d992-e661-4172-9418-f382b61e4b94",
+      "type": "inline",
+      "commentText": "lovely",
+      "exactQuote": " the student explained that the genAI helped her with paraphrasing and citation formatting. The professor looked more closely at the paraphrases and offered some additional advice on paraphrasing techniques but was generally satisfied with the student's work.The student in the vignette calmed her anxiety and produced a successful report through her dialogue with genAI. The use of genAI also mediated the dialogue between the student and the professor. The willingness of the student to ",
+      "prefixText": "ussed the citations with the student and",
+      "suffixText": "use genAI and accept its outputs and adv",
+      "startAnchor": {
+        "part": "word/document.xml",
+        "paragraphIndex": 4,
+        "runIndex": 4,
+        "textNodeIndex": 0,
+        "charOffset": 195
+      },
+      "endAnchor": {
+        "part": "word/document.xml",
+        "paragraphIndex": 6,
+        "runIndex": 3,
+        "textNodeIndex": 0,
+        "charOffset": 34
+      },
+      "createdAt": "2026-02-18T13:48:55.661Z"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+node_modules/
+
+# Build output
+dist-electron/
+renderer/dist/
+dist/
+tutorial/
+build/
+*.spec
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Cache/temp
+.cache/
+.turbo/
+.vite/
+*.tsbuildinfo
+
+# OS/editor artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+.planning/text-view
+electron-llm/third_party
+**/__pycache__/
+*.py[cod]
+.venv-pyinstaller/
+
+# PyInstaller packaged worker artifacts
+vendor/python-worker/**
+vendor/llama-server/**
+!vendor/python-worker/README.md
