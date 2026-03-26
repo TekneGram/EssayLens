@@ -1,0 +1,18 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--line-normal);
+  background: radial-gradient(1200px 800px at -5% -10%, var(--bg-accent-soft), transparent 60%), var(--bg-app);
+  color: var(--text-primary);
+}

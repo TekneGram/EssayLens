@@ -1,2 +1,2 @@
-export { fileKindFromExtension, isImageFileKind } from '@/features/workspace/domain/fileKind';
-export type { FileKind } from '@/features/workspace/domain/workspace.types';
+export { fileKindFromExtension, isImageFileKind } from '@/layout/FileControlContainer/domain/fileKind';
+export type { FileKind } from '@/layout/FileControlContainer/domain/workspace.types';

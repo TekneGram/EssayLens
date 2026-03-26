@@ -1,8 +1,4 @@
-export interface AppError {
-  code: string;
-  message: string;
-  details?: unknown;
-}
+import type { AppError } from './appError';
 
 export type AppResultSuccess<T> = {
   ok: true;

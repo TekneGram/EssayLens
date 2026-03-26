@@ -1,6 +1,6 @@
 import type { AppState, SelectedFileType } from './types';
-import { selectIsChatCollapsed as selectIsChatCollapsedFromChatView } from '@/features/chat-view/state';
-import { isImageFileKind } from '@/features/workspace/domain/fileKind';
+import { selectIsChatCollapsed as selectIsChatCollapsedFromChatView } from '@/layout/ChatView';
+import { isImageFileKind } from '@/layout/FileControlContainer/domain/fileKind';
 
 export function selectActiveTopTab(state: AppState) {
   return state.ui.activeTopTab;

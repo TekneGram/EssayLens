@@ -1,12 +1,15 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "esModuleInterop": true,
     "module": "CommonJS",
     "lib": ["ES2022"],
     "types": ["node"],
     "outDir": "../dist-electron",
     "rootDir": "."
   },
-  "include": ["main/**/*.ts", "preload/**/*.ts", "shared/**/*.ts"],
+  "include": [
+    "**/*.ts"
+  ],
   "exclude": ["../.planning/**", "../dist-electron/**"]
 }

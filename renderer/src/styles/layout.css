@@ -1,0 +1,87 @@
+.app-shell {
+  display: grid;
+  height: 100vh;
+  grid-template-rows: minmax(0, 1fr) clamp(96px, 12vh, 120px);
+  grid-template-columns: 46px 170px minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "loader files assessment chatview"
+    "chatinput chatinput chatinput chatinput";
+  gap: 0;
+}
+
+.app-shell[data-chat-collapsed="true"] {
+  grid-template-columns: 46px 170px minmax(0, 1fr) 8px;
+}
+
+.loader-bar {
+  grid-area: loader;
+}
+
+.file-display-bar {
+  grid-area: files;
+}
+
+.assessment-window {
+  grid-area: assessment;
+  min-width: 0;
+  height: 100%;
+}
+
+.chat-view {
+  grid-area: chatview;
+}
+
+.chat-collapsed-rail {
+  grid-area: chatview;
+}
+
+.chat-interface {
+  grid-area: chatinput;
+}
+
+.assessment-tab {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  min-height: 0;
+}
+
+.assessment-tab[data-mode="two-pane"] {
+  grid-template-columns:
+    minmax(0, calc((100% - 8px) * var(--assessment-left-ratio, 0.66)))
+    8px
+    minmax(0, calc((100% - 8px) * (1 - var(--assessment-left-ratio, 0.66))));
+}
+
+.assessment-tab[data-mode="three-pane"] {
+  grid-template-columns: minmax(140px, 18%) minmax(0, 1fr) minmax(240px, 34%);
+}
+
+.rubric-tab {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(220px, 30%) minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "assessment"
+      "chatview"
+      "chatinput";
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 32%) auto;
+  }
+
+  .loader-bar,
+  .file-display-bar {
+    display: none;
+  }
+
+  .assessment-tab,
+  .rubric-tab {
+    grid-template-columns: 1fr;
+  }
+}

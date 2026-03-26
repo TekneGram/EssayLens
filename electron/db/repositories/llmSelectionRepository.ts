@@ -5,7 +5,7 @@ import type {
   DownloadedLlmModelDto,
   LlmModelKey,
   LlmRuntimeSettings
-} from '../../../shared/llmManagerContracts';
+} from '../../ipc/contracts/llmManager.contracts';
 import { LlmSettingsRepository } from './llmSettingsRepository';
 
 interface LlmSelectionRepositoryOptions {

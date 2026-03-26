@@ -1,6 +1,6 @@
 import type { AssessmentTopTab, CommentsTab, EntityId } from './primitives';
-import type { ChatState } from '@/features/chat-interface/domain';
-import type { WorkspaceState } from '@/features/workspace/domain/workspace.types';
+import type { ChatState } from '@/layout/ChatInterface/domain';
+import type { WorkspaceState } from '@/layout/FileControlContainer/domain/workspace.types';
 
 export interface RubricGradingSelection {
   rubricId: EntityId;

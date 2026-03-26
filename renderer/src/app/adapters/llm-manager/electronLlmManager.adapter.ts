@@ -1,14 +1,5 @@
+import { invokeRequest } from '@/app/invokeRequest';
 import type { DownloadProgressEvent, LlmManagerPort } from '@/app/ports/llmManager.port';
-
-type LlmApi = LlmManagerPort;
-
-function getLlmManagerApi(): LlmApi {
-  const appWindow = window as Window & { api?: { llmManager?: LlmApi } };
-  if (!appWindow.api?.llmManager) {
-    throw new Error('window.api.llmManager is not available.');
-  }
-  return appWindow.api.llmManager;
-}
 
 function hasLlmManagerApi(): boolean {
   const appWindow = window as Window & { api?: { llmManager?: unknown } };
@@ -18,31 +9,22 @@ function hasLlmManagerApi(): boolean {
 export function createElectronLlmManagerAdapter(): LlmManagerPort {
   return {
     isAvailable: () => hasLlmManagerApi(),
-    supportsDownload: () => {
-      if (!hasLlmManagerApi()) {
-        return false;
-      }
-      const api = getLlmManagerApi() as unknown as Record<string, unknown>;
-      return typeof api['downloadModel'] === 'function';
-    },
-    listCatalogModels: () => getLlmManagerApi().listCatalogModels(),
-    listDownloadedModels: () => getLlmManagerApi().listDownloadedModels(),
-    getActiveModel: () => getLlmManagerApi().getActiveModel(),
-    downloadModel: (request) => getLlmManagerApi().downloadModel(request),
-    deleteDownloadedModel: (request) => getLlmManagerApi().deleteDownloadedModel(request),
+    supportsDownload: () => hasLlmManagerApi(), // Simplified as we expect download to be available if api is
+    listCatalogModels: () => invokeRequest('llmManager/listCatalogModels'),
+    listDownloadedModels: () => invokeRequest('llmManager/listDownloadedModels'),
+    getActiveModel: () => invokeRequest('llmManager/getActiveModel'),
+    downloadModel: (request) => invokeRequest('llmManager/downloadModel', request),
+    deleteDownloadedModel: (request) => invokeRequest('llmManager/deleteDownloadedModel', request),
     onDownloadProgress: (listener) => {
-      if (!hasLlmManagerApi()) {
-        return () => {};
+      const appWindow = window as any;
+      if (typeof appWindow.api?.llmManager?.onDownloadProgress === 'function') {
+        return appWindow.api.llmManager.onDownloadProgress(listener);
       }
-      const api = getLlmManagerApi() as unknown as Record<string, unknown>;
-      if (typeof api['onDownloadProgress'] !== 'function') {
-        return () => {};
-      }
-      return (api['onDownloadProgress'] as (l: (event: DownloadProgressEvent) => void) => () => void)(listener);
+      return () => {};
     },
-    selectModel: (request) => getLlmManagerApi().selectModel(request),
-    getSettings: () => getLlmManagerApi().getSettings(),
-    updateSettings: (request) => getLlmManagerApi().updateSettings(request),
-    resetSettingsToDefaults: () => getLlmManagerApi().resetSettingsToDefaults()
+    selectModel: (request) => invokeRequest('llmManager/selectModel', request),
+    getSettings: () => invokeRequest('llmManager/getSettings'),
+    updateSettings: (request) => invokeRequest('llmManager/updateSettings', request),
+    resetSettingsToDefaults: () => invokeRequest('llmManager/resetSettingsToDefaults')
   };
 }

@@ -1,8 +1,8 @@
 import { getSharedDatabaseClient } from '../appDatabase';
 import type { SQLiteClient } from '../sqlite';
-import type { LlmRuntimeSettings } from '../../../shared/llmManagerContracts';
+import type { LlmRuntimeSettings } from '../../ipc/contracts/llmManager.contracts';
 
-export type { LlmRuntimeSettings } from '../../../shared/llmManagerContracts';
+export type { LlmRuntimeSettings } from '../../ipc/contracts/llmManager.contracts';
 
 interface LlmSettingsRow {
   llm_server_path: string;

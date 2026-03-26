@@ -1,0 +1,328 @@
+.rubric {
+  --rubric-surface: #ffffff;
+  --rubric-page-bg: #f5f7fb;
+  --rubric-text: #111111;
+  --rubric-muted-bg: #f8f8f8;
+  --rubric-border: #dddddd;
+  --rubric-control-border: #cbcbcb;
+  --rubric-control-radius: 8px;
+  --rubric-control-bg: var(--rubric-surface);
+  --rubric-control-text: var(--rubric-text);
+  --rubric-control-placeholder: #6a7280;
+  --rubric-axis-border: #cfd4dc;
+  --rubric-axis-radius: 10px;
+  --rubric-axis-bg: var(--rubric-surface);
+  --rubric-axis-input-bg: transparent;
+  --rubric-axis-input-text: var(--rubric-text);
+  --rubric-axis-input-placeholder: #6a7280;
+  --rubric-delete-border: #b7bfca;
+  --rubric-delete-bg: #eef2f8;
+  --rubric-delete-fg: #4f5c71;
+  --rubric-delete-hover-bg: #e4ebf5;
+  --rubric-delete-hover-fg: #233047;
+  --rubric-cell-bg: var(--rubric-control-bg);
+  --rubric-cell-text: var(--rubric-control-text);
+  --rubric-cell-placeholder: var(--rubric-control-placeholder);
+  --rubric-score-col-width: 8.25rem;
+  display: grid;
+  gap: 1rem;
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  color: var(--rubric-text);
+  background: transparent;
+}
+
+.rubric-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.rubric-toolbar label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.rubric-toolbar input,
+.rubric-toolbar button,
+.rubric-modebar button,
+.rubric-table textarea,
+.rubric-table button {
+  border: 1px solid var(--rubric-control-border);
+  border-radius: var(--rubric-control-radius);
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  background: var(--rubric-control-bg);
+  color: var(--rubric-control-text);
+}
+
+.rubric-toolbar input::placeholder,
+.rubric-toolbar textarea::placeholder {
+  color: var(--rubric-control-placeholder);
+}
+
+.rubric-modebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rubric-modebar__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.rubric-modebar__tag {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #264b9b;
+}
+
+.rubric-modebar__toggle {
+  cursor: pointer;
+}
+
+.rubric-toolbar__controls {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.rubric-toolbar__controls button {
+  cursor: pointer;
+}
+
+.rubric-table-wrap {
+  overflow-x: auto;
+}
+
+.rubric-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rubric-table__score-col {
+  width: var(--rubric-score-col-width);
+}
+
+.rubric-table__score-col--compact {
+  width: 0.35rem;
+}
+
+.rubric-table th,
+.rubric-table td {
+  border: 1px solid var(--rubric-border);
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+.rubric-table thead th {
+  background: var(--rubric-muted-bg);
+}
+
+.rubric-table textarea {
+  width: 100%;
+  min-height: 82px;
+  resize: vertical;
+  background: var(--rubric-cell-bg);
+  color: var(--rubric-cell-text);
+}
+
+.rubric-table textarea::placeholder {
+  color: var(--rubric-cell-placeholder);
+}
+
+.rubric-axis-field {
+  position: relative;
+  background: var(--rubric-axis-bg);
+  border: 1px solid var(--rubric-axis-border);
+  border-radius: var(--rubric-axis-radius);
+  padding: 0.35rem 0.45rem;
+  min-height: 2.4rem;
+}
+
+.rubric-axis-field__delete {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--rubric-delete-border);
+  background: var(--rubric-delete-bg);
+  color: var(--rubric-delete-fg);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 160ms ease, transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.rubric-axis-field:hover .rubric-axis-field__delete,
+.rubric-axis-field:focus-within .rubric-axis-field__delete,
+.rubric-axis-field__delete:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rubric-axis-field__delete:hover {
+  background: var(--rubric-delete-hover-bg);
+  color: var(--rubric-delete-hover-fg);
+}
+
+.rubric-axis-field__delete-icon {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.rubric-axis-field__delete-icon::before,
+.rubric-axis-field__delete-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.1rem;
+  background: currentColor;
+  border-radius: 999px;
+  transform-origin: center;
+}
+
+.rubric-axis-field__delete-icon::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.rubric-axis-field__delete-icon::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.rubric-axis-field__input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: var(--rubric-axis-input-bg);
+  color: var(--rubric-axis-input-text);
+  box-shadow: none;
+  padding: 0.45rem 0.35rem;
+}
+
+.rubric-axis-field__input::placeholder {
+  color: var(--rubric-axis-input-placeholder);
+}
+
+.rubric-axis-field__input:focus,
+.rubric-axis-field__input:focus-visible {
+  outline: none;
+}
+
+.rubric-axis-field__input--category {
+  text-align: center;
+}
+
+.rubric-axis-field__input--score {
+  text-align: right;
+  padding-left: 1.65rem;
+}
+
+.rubric-axis-field__value {
+  width: 100%;
+  padding: 0.45rem 0.35rem;
+}
+
+.rubric-axis-field__value--category {
+  text-align: center;
+}
+
+.rubric-axis-field__value--score {
+  text-align: right;
+}
+
+.rubric-table__cell-text {
+  min-height: 82px;
+  white-space: pre-wrap;
+}
+
+.rubric-table__grade-cell {
+  width: 100%;
+  min-height: 82px;
+  text-align: left;
+  white-space: pre-wrap;
+  cursor: pointer;
+}
+
+.rubric-table__grade-cell--compact {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.rubric-table__cell-text--compact {
+  min-height: 82px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+.rubric-table button.rubric-table__grade-cell--selected {
+  border-color: #163777;
+  background: #264b9b;
+  color: #ffffff;
+}
+
+.rubric-table--compact thead th:first-child {
+  color: transparent;
+  width: 0.35rem;
+  min-width: 0.35rem;
+  padding: 0;
+}
+
+.rubric-table--compact tbody th {
+  width: 0.35rem;
+  min-width: 0.35rem;
+  max-width: 0.35rem;
+  padding: 0;
+}
+
+.rubric-table--compact .rubric-axis-field--score {
+  display: none;
+}
+
+.rubric-table--compact .rubric-axis-field__value--category {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  min-height: 5.25rem;
+  margin: 0 auto;
+  padding: 0.25rem 0.1rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.rubric-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(26rem, calc(100vw - 2rem));
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #b7bfca;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 6px 18px rgba(12, 20, 35, 0.16);
+  line-height: 1.35;
+  font-size: 0.86rem;
+  pointer-events: none;
+}

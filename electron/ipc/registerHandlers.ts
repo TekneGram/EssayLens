@@ -5,6 +5,7 @@ import { LLM_SERVER_CHANNELS, registerLlmServerHandlers } from './registerHandle
 import { LLM_SESSION_CHANNELS, registerLlmSessionHandlers } from './registerHandlers/register.llmSession';
 import { RUBRIC_CHANNELS, registerRubricHandlers } from './registerHandlers/register.rubric';
 import { LlmOrchestrator } from '../services/llm/llmOrchestrator';
+import { PythonWorkerClient } from '../infrastructure/adapters/pythonWorkerAdapter';
 import type { IpcMainLike } from './types';
 import { WORKSPACE_CHANNELS, registerWorkspaceHandlers } from './registerHandlers/register.workspace';
 
@@ -16,13 +17,15 @@ export const ALL_IPC_CHANNELS = [
   ...Object.values(LLM_MANAGER_CHANNELS),
   ...Object.values(LLM_SERVER_CHANNELS),
   ...Object.values(LLM_SESSION_CHANNELS)
-] as const;
+] as readonly string[];
 
 let sharedLlmOrchestrator: LlmOrchestrator | null = null;
 
 function getSharedLlmOrchestrator(): LlmOrchestrator {
   if (!sharedLlmOrchestrator) {
-    sharedLlmOrchestrator = new LlmOrchestrator();
+    sharedLlmOrchestrator = new LlmOrchestrator({
+      workerClient: new PythonWorkerClient()
+    });
   }
   return sharedLlmOrchestrator;
 }

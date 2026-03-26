@@ -12,6 +12,6 @@ export type {
   SelectedFileState,
   WorkspaceFile,
   WorkspaceFolder
-} from '@/features/workspace/domain/workspace.types';
-export type { SelectFileCommand, SelectFolderCommand } from '@/features/workspace/domain/workspace.commands';
+} from '@/layout/FileControlContainer/domain/workspace.types';
+export type { SelectFileCommand, SelectFolderCommand } from '@/layout/FileControlContainer/domain/workspace.commands';
 export { fileKindFromExtension, isImageFileKind } from './fileKind';

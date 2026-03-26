@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const workspaceSchemas = {
-  selectFolder: z.unknown(),
-  listFiles: z.unknown(),
-  getCurrentFolder: z.unknown()
+  listFiles: z.object({ folderId: z.string() }),
+  selectFolder: z.object({}).optional(),
+  getCurrentFolder: z.object({}).optional(),
 };

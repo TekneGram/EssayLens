@@ -12,7 +12,7 @@ import type {
   RubricDto,
   RubricScoreDto,
   UpdateRubricOperation
-} from '../../../shared/rubricContracts';
+} from '../../ipc/contracts/rubric.contracts';
 
 interface RubricRepositoryOptions {
   now?: () => string;

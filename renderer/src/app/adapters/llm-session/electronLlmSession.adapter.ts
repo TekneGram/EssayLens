@@ -1,20 +1,32 @@
-import type { LlmSessionPort } from '@/app/ports';
+import type {
+  LlmSessionPort,
+  CreateLlmSessionRequest,
+  CreateLlmSessionResponse,
+  ClearLlmSessionRequest,
+  ClearLlmSessionResponse,
+  DeleteLlmSessionRequest,
+  DeleteLlmSessionResponse,
+  GetLlmSessionTurnsRequest,
+  GetLlmSessionTurnsResponse,
+  ListLlmSessionsByFileRequest,
+  ListLlmSessionsByFileResponse
+} from '@/app/ports/llmSession.port';
+import { invokeRequest } from '@/app/invokeRequest';
 
-function getElectronLlmSessionApi(): LlmSessionPort {
-  const appWindow = window as Window & { api?: { llmSession?: LlmSessionPort } };
-  if (!appWindow.api?.llmSession) {
-    throw new Error('window.api.llmSession is not available.');
-  }
-
-  return appWindow.api.llmSession;
-}
+const CHANNELS = {
+  create: 'llmSession/create',
+  clear: 'llmSession/clear',
+  delete: 'llmSession/delete',
+  getTurns: 'llmSession/getTurns',
+  listByFile: 'llmSession/listByFile'
+} as const;
 
 export function createElectronLlmSessionAdapter(): LlmSessionPort {
   return {
-    create: (request) => getElectronLlmSessionApi().create(request),
-    clear: (request) => getElectronLlmSessionApi().clear(request),
-    delete: (request) => getElectronLlmSessionApi().delete(request),
-    getTurns: (request) => getElectronLlmSessionApi().getTurns(request),
-    listByFile: (request) => getElectronLlmSessionApi().listByFile(request)
+    create: (request: CreateLlmSessionRequest) => invokeRequest<CreateLlmSessionResponse>(CHANNELS.create, request),
+    clear: (request: ClearLlmSessionRequest) => invokeRequest<ClearLlmSessionResponse>(CHANNELS.clear, request),
+    delete: (request: DeleteLlmSessionRequest) => invokeRequest<DeleteLlmSessionResponse>(CHANNELS.delete, request),
+    getTurns: (request: GetLlmSessionTurnsRequest) => invokeRequest<GetLlmSessionTurnsResponse>(CHANNELS.getTurns, request),
+    listByFile: (request: ListLlmSessionsByFileRequest) => invokeRequest<ListLlmSessionsByFileResponse>(CHANNELS.listByFile, request)
   };
 }

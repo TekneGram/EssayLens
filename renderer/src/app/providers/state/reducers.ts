@@ -1,8 +1,8 @@
 import type { AppAction } from './actions';
 import { initialAppState, initialRubricState, initialUiState } from './initialState';
 import type { AppState, RubricState, UiState } from './types';
-import { chatReducer } from '@/features/chat-interface/state/chatInterface.reducer';
-import { workspaceReducer } from '@/features/workspace/state/workspace.reducer';
+import { chatReducer } from '@/layout/ChatInterface/state/chatInterface.reducer';
+import { workspaceReducer } from '@/layout/FileControlContainer/state/workspace.reducer';
 
 const ASSESSMENT_SPLIT_MIN = 0.35;
 const ASSESSMENT_SPLIT_MAX = 0.8;

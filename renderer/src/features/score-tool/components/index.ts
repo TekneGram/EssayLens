@@ -1,0 +1,1 @@
+export { ScoreToolView } from './ScoreToolView';

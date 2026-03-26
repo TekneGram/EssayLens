@@ -1,26 +1,18 @@
 import type { RubricPort } from '@/app/ports';
-
-function getElectronRubricApi(): RubricPort {
-  const appWindow = window as Window & { api?: { rubric?: RubricPort } };
-  if (!appWindow.api?.rubric) {
-    throw new Error('window.api.rubric is not available.');
-  }
-
-  return appWindow.api.rubric;
-}
+import { invokeRequest } from '@/app/invokeRequest';
 
 export function createElectronRubricAdapter(): RubricPort {
   return {
-    listRubrics: () => getElectronRubricApi().listRubrics(),
-    createRubric: (request) => getElectronRubricApi().createRubric(request),
-    cloneRubric: (request) => getElectronRubricApi().cloneRubric(request),
-    deleteRubric: (request) => getElectronRubricApi().deleteRubric(request),
-    getFileScores: (request) => getElectronRubricApi().getFileScores(request),
-    saveFileScores: (request) => getElectronRubricApi().saveFileScores(request),
-    clearAppliedRubric: (request) => getElectronRubricApi().clearAppliedRubric(request),
-    getGradingContext: (request) => getElectronRubricApi().getGradingContext(request),
-    getMatrix: (request) => getElectronRubricApi().getMatrix(request),
-    updateMatrix: (request) => getElectronRubricApi().updateMatrix(request),
-    setLastUsed: (request) => getElectronRubricApi().setLastUsed(request)
+    listRubrics: () => invokeRequest('rubric/listRubrics'),
+    createRubric: (request) => invokeRequest('rubric/createRubric', request),
+    cloneRubric: (request) => invokeRequest('rubric/cloneRubric', request),
+    deleteRubric: (request) => invokeRequest('rubric/deleteRubric', request),
+    getFileScores: (request) => invokeRequest('rubric/getFileScores', request),
+    saveFileScores: (request) => invokeRequest('rubric/saveFileScores', request),
+    clearAppliedRubric: (request) => invokeRequest('rubric/clearAppliedRubric', request),
+    getGradingContext: (request) => invokeRequest('rubric/getGradingContext', request),
+    getMatrix: (request) => invokeRequest('rubric/getMatrix', request),
+    updateMatrix: (request) => invokeRequest('rubric/updateMatrix', request),
+    setLastUsed: (request) => invokeRequest('rubric/setLastUsed', request)
   };
 }

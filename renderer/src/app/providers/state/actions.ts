@@ -4,7 +4,7 @@ import type {
   EntityId,
   WorkspaceAction
 } from './types';
-import type { ChatInterfaceAction } from '@/features/chat-interface/state/chatInterface.actions';
+import type { ChatInterfaceAction } from '@/layout/ChatInterface/state';
 
 export type ChatAction = ChatInterfaceAction;
 

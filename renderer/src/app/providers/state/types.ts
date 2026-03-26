@@ -11,12 +11,12 @@ export type {
   UiState,
   WorkspaceState
 } from '@/app/types';
-export type { ChatDataArray, ChatMessage, ChatState } from '@/features/chat-interface/domain';
+export type { ChatDataArray, ChatMessage, ChatState } from '@/layout/ChatInterface/domain';
 export type { RubricGradingSelection } from '@/app/types';
 export type {
   FileKind,
   SelectedFileState,
   WorkspaceFile,
   WorkspaceFolder
-} from '@/features/workspace/domain/workspace.types';
-export type { WorkspaceAction } from '@/features/workspace/state/workspace.actions';
+} from '@/layout/FileControlContainer/domain/workspace.types';
+export type { WorkspaceAction } from '@/layout/FileControlContainer/state/workspace.actions';

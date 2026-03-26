@@ -1,0 +1,1 @@
+export { RubricTab } from './RubricTab';

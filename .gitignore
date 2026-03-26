@@ -30,6 +30,10 @@ pnpm-debug.log*
 .turbo/
 .vite/
 *.tsbuildinfo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
 
 # OS/editor artifacts
 .DS_Store
@@ -39,11 +43,14 @@ Thumbs.db
 
 .planning/text-view
 electron-llm/third_party
+electron-llm/venv/
+electron-llm/.venv/
 **/__pycache__/
 *.py[cod]
 .venv-pyinstaller/
 
-# PyInstaller packaged worker artifacts
+# Vendored/runtime native binaries and local Python installs
+vendor/python/
 vendor/python-worker/**
 vendor/llama-server/**
 !vendor/python-worker/README.md

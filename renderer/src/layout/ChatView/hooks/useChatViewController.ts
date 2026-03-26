@@ -78,7 +78,7 @@ export function useChatViewController() {
     void handleLoadSessionsForFile(fileEntityUuid, activeSessionId ?? undefined);
     setActiveScreen('list');
     // Only reload full session index when selected file changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // TODO: fix exhaustive-deps
   }, [fileEntityUuid, handleLoadSessionsForFile]);
 
   useEffect(() => {

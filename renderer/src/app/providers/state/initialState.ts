@@ -1,6 +1,6 @@
-import { initialChatState } from '@/features/chat-interface/state/chatInterface.initialState';
+import { initialChatState } from '@/layout/ChatInterface/state/chatInterface.initialState';
 import type { AppState, RubricState, UiState } from './types';
-import { initialWorkspaceState } from '@/features/workspace/state/workspace.reducer';
+import { initialWorkspaceState } from '@/layout/FileControlContainer/state/workspace.reducer';
 
 export const initialRubricState: RubricState = {
   selectedGradingRubricIdByFileId: {},

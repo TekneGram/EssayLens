@@ -1,0 +1,11 @@
+:root {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --line-normal: 1.5;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --radius-md: 0.5rem;
+  --pane-divider-width: 1px;
+}
