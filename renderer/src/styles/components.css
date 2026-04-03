@@ -652,6 +652,11 @@
   resize: vertical;
 }
 
+::highlight(essaylens-active-comment) {
+  background: color-mix(in hsl, var(--accent-primary) 28%, white);
+  color: inherit;
+}
+
 .comment-edit-buttons {
   display: flex;
   gap: 6px;

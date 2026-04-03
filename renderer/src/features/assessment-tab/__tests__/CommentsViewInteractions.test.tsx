@@ -90,11 +90,22 @@ describe('CommentsView interactions', () => {
     expect(onSelectComment).toHaveBeenCalledWith('feedback-inline-1');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send to LLM' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Send command' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+
     fireEvent.change(screen.getByRole('textbox', { name: 'Edit comment text' }), {
       target: { value: 'Updated comment text from tools.' }
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onEditComment).toHaveBeenCalledWith('feedback-inline-1', 'Updated comment text from tools.');
+    expect(screen.getAllByRole('button', { name: 'Delete' })[0]).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Send to LLM' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Send command' })).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
     expect(onDeleteComment).toHaveBeenCalledWith('feedback-inline-1');
