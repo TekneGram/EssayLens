@@ -502,8 +502,27 @@
   grid-template-rows: auto auto minmax(0, 1fr);
 }
 
+.comments-view-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.comments-view-title {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
 .comments-tabs {
   flex: 0 0 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .comments-content {

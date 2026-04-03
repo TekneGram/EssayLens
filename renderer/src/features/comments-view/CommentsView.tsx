@@ -37,35 +37,37 @@ export function CommentsView({
 
   return (
     <section className="comments-view subpane">
-      <h4>CommentsView</h4>
-      <div role="tablist" aria-label="Comments tabs" className="comments-tabs tabs">
-        <button
-          type="button"
-          className={view.isCommentsActive ? 'tab active is-active' : 'tab'}
-          role="tab"
-          aria-selected={view.isCommentsActive}
-          onClick={view.onSelectCommentsTab}
-        >
-          Comments
-        </button>
-        <button
-          type="button"
-          className={view.isScoreActive ? 'tab active is-active' : 'tab'}
-          role="tab"
-          aria-selected={view.isScoreActive}
-          onClick={view.onSelectScoreTab}
-        >
-          Score
-        </button>
-        <button
-          type="button"
-          className={view.isGenerateActive ? 'tab active is-active' : 'tab'}
-          role="tab"
-          aria-selected={view.isGenerateActive}
-          onClick={view.onSelectGenerateTab}
-        >
-          Generate
-        </button>
+      <div className="comments-view-header">
+        <div role="tablist" aria-label="Comments tabs" className="comments-tabs tabs">
+          <button
+            type="button"
+            className={view.isCommentsActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isCommentsActive}
+            onClick={view.onSelectCommentsTab}
+          >
+            Comments
+          </button>
+          <button
+            type="button"
+            className={view.isScoreActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isScoreActive}
+            onClick={view.onSelectScoreTab}
+          >
+            Score
+          </button>
+          <button
+            type="button"
+            className={view.isGenerateActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isGenerateActive}
+            onClick={view.onSelectGenerateTab}
+          >
+            Generate
+          </button>
+        </div>
+        <h4 className="comments-view-title">CommentsView</h4>
       </div>
       <div className="comments-content">
         <div className="content-block comments-panel" role="tabpanel" hidden={!view.isCommentsActive}>
