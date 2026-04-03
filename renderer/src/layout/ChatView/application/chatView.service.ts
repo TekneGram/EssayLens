@@ -15,16 +15,6 @@ export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessage
   }));
 }
 
-export function toActionMessageItems(messages: ChatMessage[]): ChatViewMessageItem[] {
-  return messages
-    .filter((message) => message.role === 'system')
-    .map((message) => ({
-      id: message.id,
-      roleClassName: message.role,
-      text: message.content
-    }));
-}
-
 export function toSessionTurnItems(sessionId: string, turns: LlmSessionTurnDto[]): ChatViewMessageItem[] {
   return turns.map((turn, index) => ({
     id: `${sessionId}:${turn.role}:${index}`,

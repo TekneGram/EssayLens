@@ -9,14 +9,13 @@ import {
   selectSessionSyncNonceForFile,
   selectSessionsForFile
 } from '@/layout/ChatInterface/state';
-import { selectChatMessages, selectIsChatCollapsed } from '../state';
+import { selectIsChatCollapsed } from '../state';
 
 export function useChatViewState() {
   const state = useAppState();
   const selectedFileId = state.workspace.selectedFile.fileId;
   return {
     isCollapsed: selectIsChatCollapsed(state),
-    messages: selectChatMessages(state),
     chatStatus: selectChatStatus(state),
     selectedFile: state.workspace.files.find((file) => file.id === selectedFileId) ?? null,
     activeSessionId: selectActiveSessionIdForFile(state, selectedFileId),
