@@ -12,8 +12,8 @@ export function OriginalTextView({
 }: OriginalTextViewProps) {
   return (
     <section className="original-text-view subpane" data-testid="original-text-view">
-      <h4>OriginalTextView</h4>
       <TextViewWindow
+        title="OriginalTextView"
         selectedFileId={selectedFileId}
         text={text}
         pendingSelection={pendingSelection}

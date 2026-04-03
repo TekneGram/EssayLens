@@ -160,10 +160,30 @@
   align-content: start;
 }
 
+.assessment-window-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.assessment-window-title {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .assessment-llm-status {
   margin: 0;
   font-size: 0.78rem;
   color: var(--text-muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .assessment-window-tabs,
@@ -172,6 +192,11 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.assessment-window-tabs {
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .tab {
@@ -313,14 +338,30 @@
   gap: 6px;
 }
 
+.text-view-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-view-title {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
 .text-view-zoom-controls {
   display: flex;
   gap: 6px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
+  justify-self: end;
 }
 
 .text-view-zoom-label {

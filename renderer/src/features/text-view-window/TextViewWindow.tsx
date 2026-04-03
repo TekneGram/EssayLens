@@ -13,6 +13,7 @@ import { useTextViewSelection } from './hooks/useTextViewSelection';
 import { useTextViewWindowState } from './hooks/useTextViewWindowState';
 
 interface TextViewWindowProps {
+  title?: string;
   selectedFileId: string | null;
   text: string;
   pendingSelection?: PendingSelection | null;
@@ -29,6 +30,7 @@ const DEFAULT_ZOOM_PERCENT = 100;
 const MIN_STAGE_GUTTER = 24;
 
 export function TextViewWindow({
+  title,
   selectedFileId,
   text,
   pendingSelection = null,
@@ -135,16 +137,19 @@ export function TextViewWindow({
 
   return (
     <div className="text-view-shell">
-      <TextViewToolbar
-        zoomPercent={zoomPercent}
-        minZoomPercent={MIN_ZOOM_PERCENT}
-        maxZoomPercent={MAX_ZOOM_PERCENT}
-        stepPercent={ZOOM_STEP_PERCENT}
-        defaultZoomPercent={DEFAULT_ZOOM_PERCENT}
-        canControlZoom={Boolean(document)}
-        onZoomChange={setZoomPercent}
-        onResetZoom={resetZoom}
-      />
+      <div className="text-view-header">
+        {title ? <h4 className="text-view-title">{title}</h4> : <div aria-hidden="true" />}
+        <TextViewToolbar
+          zoomPercent={zoomPercent}
+          minZoomPercent={MIN_ZOOM_PERCENT}
+          maxZoomPercent={MAX_ZOOM_PERCENT}
+          stepPercent={ZOOM_STEP_PERCENT}
+          defaultZoomPercent={DEFAULT_ZOOM_PERCENT}
+          canControlZoom={Boolean(document)}
+          onZoomChange={setZoomPercent}
+          onResetZoom={resetZoom}
+        />
+      </div>
       <TextViewCanvas
         zoomLevel={zoomLevel}
         text={text}

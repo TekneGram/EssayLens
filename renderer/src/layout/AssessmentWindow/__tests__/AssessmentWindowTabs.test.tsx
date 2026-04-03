@@ -49,7 +49,7 @@ describe('AssessmentWindow tabs', () => {
     expect(assessmentTab.className).toContain('active');
     expect(rubricTab.className).toBe('tab');
     expect(llmTab.className).toBe('tab');
-    expect(llmStatus.textContent).toBe('No LLM installed.');
+    expect(llmStatus.textContent).toBe('Currently using: No LLM installed.');
     expect(assessmentPanel.hasAttribute('hidden')).toBe(false);
     expect(rubricPanel.hasAttribute('hidden')).toBe(true);
     expect(llmPanel.hasAttribute('hidden')).toBe(true);
@@ -110,7 +110,7 @@ describe('AssessmentWindow tabs', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('assessment-llm-status').textContent).toBe('Qwen3 8B Q8_0');
+      expect(screen.getByTestId('assessment-llm-status').textContent).toBe('Currently using: Qwen3 8B Q8_0');
     });
   });
 });

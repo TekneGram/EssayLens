@@ -26,44 +26,48 @@ export function AssessmentWindow({
   return (
     <section className="assessment-window pane main" data-testid="assessment-window" aria-label="Assessment window">
       <div className="main-head">
-        <h3>AssessmentWindow</h3>
-        <p className="assessment-llm-status" data-testid="assessment-llm-status">
-          {llmStatusText}
-        </p>
-        <div role="tablist" aria-label="Assessment window tabs" className="assessment-window-tabs tabs">
-          <button
-            id="assessment-tab"
-            role="tab"
-            type="button"
-            aria-selected={activeTab === 'assessment'}
-            aria-controls="assessment-panel"
-            className={activeTab === 'assessment' ? 'tab active is-active' : 'tab'}
-            onClick={() => onTabChange('assessment')}
-          >
-            Assessment
-          </button>
-          <button
-            id="rubric-tab"
-            role="tab"
-            type="button"
-            aria-selected={activeTab === 'rubric'}
-            aria-controls="rubric-panel"
-            className={activeTab === 'rubric' ? 'tab active is-active' : 'tab'}
-            onClick={() => onTabChange('rubric')}
-          >
-            Rubric
-          </button>
-          <button
-            id="llm-tab"
-            role="tab"
-            type="button"
-            aria-selected={activeTab === 'llm'}
-            aria-controls="llm-panel"
-            className={activeTab === 'llm' ? 'tab active is-active' : 'tab'}
-            onClick={() => onTabChange('llm')}
-          >
-            Your LLM
-          </button>
+        <div className="assessment-window-header">
+          <div role="tablist" aria-label="Assessment window tabs" className="assessment-window-tabs tabs">
+            <button
+              id="assessment-tab"
+              role="tab"
+              type="button"
+              aria-selected={activeTab === 'assessment'}
+              aria-controls="assessment-panel"
+              className={activeTab === 'assessment' ? 'tab active is-active' : 'tab'}
+              onClick={() => onTabChange('assessment')}
+            >
+              Assessment
+            </button>
+            <button
+              id="rubric-tab"
+              role="tab"
+              type="button"
+              aria-selected={activeTab === 'rubric'}
+              aria-controls="rubric-panel"
+              className={activeTab === 'rubric' ? 'tab active is-active' : 'tab'}
+              onClick={() => onTabChange('rubric')}
+            >
+              Rubric
+            </button>
+            <button
+              id="llm-tab"
+              role="tab"
+              type="button"
+              aria-selected={activeTab === 'llm'}
+              aria-controls="llm-panel"
+              className={activeTab === 'llm' ? 'tab active is-active' : 'tab'}
+              onClick={() => onTabChange('llm')}
+            >
+              Your LLM
+            </button>
+          </div>
+
+          <h3 className="assessment-window-title">AssessmentWindow</h3>
+
+          <p className="assessment-llm-status" data-testid="assessment-llm-status">
+            Currently using: {llmStatusText}
+          </p>
         </div>
       </div>
 
