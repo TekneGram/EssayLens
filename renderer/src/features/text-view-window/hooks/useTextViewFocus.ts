@@ -6,25 +6,25 @@ import type { LoadedTextViewDocument } from './useTextViewDocument';
 
 interface UseTextViewFocusArgs {
   activeCommentId: string | null;
-  pendingSelection: PendingSelection | null;
+  activeCommentSelection: PendingSelection | null;
   document: LoadedTextViewDocument | null;
   bridgeRef: MutableRefObject<RenderBridge | null>;
 }
 
 export function useTextViewFocus({
   activeCommentId,
-  pendingSelection,
+  activeCommentSelection,
   document,
   bridgeRef
 }: UseTextViewFocusArgs): void {
   useEffect(() => {
-    if (!activeCommentId || !pendingSelection || !document || !bridgeRef.current) {
+    if (!activeCommentId || !activeCommentSelection || !document || !bridgeRef.current) {
       return;
     }
 
     const range = buildRangeFromAnchors(
-      pendingSelection.startAnchor,
-      pendingSelection.endAnchor,
+      activeCommentSelection.startAnchor,
+      activeCommentSelection.endAnchor,
       bridgeRef.current,
       document.textMap
     );
@@ -36,5 +36,5 @@ export function useTextViewFocus({
     clearWindowSelection();
     addRangeToWindowSelection(range);
     range.startContainer.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [activeCommentId, bridgeRef, document, pendingSelection]);
+  }, [activeCommentId, activeCommentSelection, bridgeRef, document]);
 }

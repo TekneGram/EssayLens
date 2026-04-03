@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const llmModelKeySchema = z.enum(['qwen3_4b_q8', 'qwen3_8b_q8']);
+const llmModelKeySchema = z.string().trim().min(1);
 
 const llmRuntimeSettingsPartialSchema = z.object({
   llm_server_path: z.string().optional(),

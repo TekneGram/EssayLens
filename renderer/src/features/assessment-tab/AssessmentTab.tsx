@@ -19,6 +19,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
     originalText,
     comments,
     pendingSelection,
+    activeCommentSelection,
     activeCommentId,
     chatMode,
     isModeLockedToChat,
@@ -68,6 +69,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
         selectedFileId={selectedFileId}
         text={originalText}
         pendingSelection={pendingSelection}
+        activeCommentSelection={activeCommentSelection}
         activeCommentId={activeCommentId}
         onSelectionCaptured={onSelectionCaptured}
         onDocumentTextChange={onDocumentTextChange}

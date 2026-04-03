@@ -17,6 +17,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "build:llama-server": "bash scripts/build_llama_server.sh",
+    "build:llama-server:macos": "bash scripts/build_llama_server.sh --platform darwin",
     "build:python-worker": "pyinstaller --onedir --name essaylens-llm-worker electron-llm/main.py",
     "guard:phase0_5": "node scripts/phase0_5_guard.mjs",
     "package": "npm run build && electron-builder",
@@ -59,7 +61,6 @@
     "files": [
       "dist-electron/**",
       "renderer/dist/**",
-      "electron-llm/**",
       "package.json",
       "!**/*.test.*",
       "!**/*.spec.*",
@@ -69,18 +70,6 @@
       "!**/*.md"
     ],
     "extraResources": [
-      {
-        "from": "electron-llm",
-        "to": "electron-llm",
-        "filter": [
-          "**/*",
-          "!**/*.test.*",
-          "!**/*.spec.*",
-          "!**/__tests__/**",
-          "!**/tests/**",
-          "!**/*.md"
-        ]
-      },
       {
         "from": "electron/main/db/migrations",
         "to": "db/migrations",

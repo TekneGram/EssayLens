@@ -28,6 +28,9 @@ export function useAssessmentTabController({
 
   useEffect(() => {
     setSelectedEssayText(null);
+    localDispatch({ type: 'assessmentTab/setPendingSelection', payload: null });
+    localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: null });
+    localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: null });
   }, [selectedFileId]);
 
   const { addFeedback, isPending: isAddFeedbackPending, errorMessage: addFeedbackErrorMessage } =
@@ -58,6 +61,7 @@ export function useAssessmentTabController({
   const {
     comments,
     pendingSelection,
+    activeCommentSelection,
     activeCommentId,
     activeCommentsTab,
     isCommentsLoading,
@@ -101,6 +105,7 @@ export function useAssessmentTabController({
     originalText,
     comments,
     pendingSelection,
+    activeCommentSelection,
     activeCommentId,
     chatMode,
     isModeLockedToChat,

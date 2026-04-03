@@ -63,7 +63,7 @@ export function useAssessmentCommentsActions({
     (commentId: string) => {
       localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: commentId });
       localDispatch({
-        type: 'assessmentTab/setPendingSelection',
+        type: 'assessmentTab/setActiveCommentSelection',
         payload: selectPendingSelectionFromComments(comments, commentId)
       });
     },

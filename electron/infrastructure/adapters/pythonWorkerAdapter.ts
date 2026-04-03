@@ -53,10 +53,7 @@ function isPackagedApp(): boolean {
   }
 }
 
-function getDefaultWorkerScriptPath(resourcesPath: string): string {
-  if (isPackagedApp()) {
-    return path.resolve(resourcesPath, 'electron-llm', 'main.py');
-  }
+function getDefaultWorkerScriptPath(): string {
   return path.resolve(process.cwd(), 'electron-llm', 'main.py');
 }
 
@@ -70,9 +67,9 @@ function getDefaultDeps(): PythonWorkerClientDeps {
   const resourcesPath = process.resourcesPath;
   const packaged = isPackagedApp();
   const pythonExecutable = process.env.PYTHON_EXECUTABLE;
-  const workerScriptPath = process.env.PYTHON_WORKER_PATH ?? getDefaultWorkerScriptPath(resourcesPath);
+  const workerScriptPath = process.env.PYTHON_WORKER_PATH;
 
-  if (pythonExecutable) {
+  if (pythonExecutable && workerScriptPath) {
     return {
       spawn,
       workerCommand: pythonExecutable,
@@ -92,8 +89,8 @@ function getDefaultDeps(): PythonWorkerClientDeps {
 
   return {
     spawn,
-    workerCommand: 'python3',
-    workerArgs: ['-u', workerScriptPath],
+    workerCommand: pythonExecutable ?? 'python3',
+    workerArgs: ['-u', workerScriptPath ?? getDefaultWorkerScriptPath()],
     defaultTimeoutMs: 180_000
   };
 }

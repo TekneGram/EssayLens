@@ -33,6 +33,7 @@ export function useAssessmentCommentsStateSync({
   return {
     comments,
     pendingSelection: localState.pendingSelection,
+    activeCommentSelection: localState.activeCommentSelection,
     activeCommentId: localState.activeCommentId,
     activeCommentsTab,
     isCommentsLoading: feedbackListQuery.isPending || isAddFeedbackPending,

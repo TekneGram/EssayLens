@@ -19,6 +19,7 @@ interface ChatServiceDeps {
   llmChatSessionRepository: LlmChatSessionRepository;
   llmSelectionRepository: LlmSelectionRepository;
   fileExists: (targetPath: string) => Promise<boolean>;
+  isFile: (targetPath: string) => Promise<boolean>;
   isExecutable: (targetPath: string) => Promise<boolean>;
   resolveLlmServerPath: () => string;
 }
@@ -47,13 +48,27 @@ async function defaultIsExecutable(targetPath: string): Promise<boolean> {
   }
 }
 
+async function defaultIsFile(targetPath: string): Promise<boolean> {
+  try {
+    const stats = await fsPromises.stat(targetPath);
+    return stats.isFile();
+  } catch {
+    return false;
+  }
+}
+
 function resolveDefaultLlmServerPath(): string {
   const runtimeMode = process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === 'development' ? 'dev' : 'packaged';
   return resolveLlamaServerPath({ mode: runtimeMode });
 }
 
 function canRecoverServerPathIssues(details: LlmNotReadyErrorDetails): boolean {
-  const recoverableCodes = new Set(['MISSING_SERVER_PATH', 'SERVER_FILE_NOT_FOUND', 'SERVER_NOT_EXECUTABLE']);
+  const recoverableCodes = new Set([
+    'MISSING_SERVER_PATH',
+    'SERVER_FILE_NOT_FOUND',
+    'SERVER_PATH_NOT_FILE',
+    'SERVER_NOT_EXECUTABLE'
+  ]);
   return details.issues.length > 0 && details.issues.every((issue) => recoverableCodes.has(issue.code));
 }
 
@@ -83,6 +98,7 @@ export class ChatService {
       llmChatSessionRepository: new LlmChatSessionRepository(),
       llmSelectionRepository: new LlmSelectionRepository(),
       fileExists: defaultFileExists,
+      isFile: defaultIsFile,
       isExecutable: defaultIsExecutable,
       resolveLlmServerPath: resolveDefaultLlmServerPath,
       ...deps
@@ -106,6 +122,7 @@ export class ChatService {
 
     let notReadyDetails = await getLlmNotReadyDetails(settings, {
       fileExists: this.deps.fileExists,
+      isFile: this.deps.isFile,
       isExecutable: this.deps.isExecutable
     });
 
@@ -117,6 +134,7 @@ export class ChatService {
           settings = reset.settings;
           notReadyDetails = await getLlmNotReadyDetails(settings, {
             fileExists: this.deps.fileExists,
+            isFile: this.deps.isFile,
             isExecutable: this.deps.isExecutable
           });
         }

@@ -2,7 +2,7 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "esModuleInterop": true,
-    "module": "CommonJS",
+    "module": "commonjs",
     "lib": ["ES2022"],
     "types": ["node"],
     "outDir": "../dist-electron",

@@ -16,6 +16,7 @@ interface TextViewWindowProps {
   selectedFileId: string | null;
   text: string;
   pendingSelection?: PendingSelection | null;
+  activeCommentSelection?: PendingSelection | null;
   activeCommentId?: string | null;
   onSelectionCaptured: (selection: PendingSelection | null) => void;
   onDocumentTextChange?: (text: string | null) => void;
@@ -31,6 +32,7 @@ export function TextViewWindow({
   selectedFileId,
   text,
   pendingSelection = null,
+  activeCommentSelection = null,
   activeCommentId = null,
   onSelectionCaptured,
   onDocumentTextChange
@@ -80,18 +82,18 @@ export function TextViewWindow({
 
   useTextViewFocus({
     activeCommentId,
-    pendingSelection,
+    activeCommentSelection,
     document,
     bridgeRef
   });
 
   useEffect(() => {
     const root = windowRef.current;
-    if (!root || document || !activeCommentId || !pendingSelection) {
+    if (!root || document || !activeCommentId || !activeCommentSelection) {
       return;
     }
 
-    const startIndex = pendingSelection.startAnchor.paragraphIndex;
+    const startIndex = activeCommentSelection.startAnchor.paragraphIndex;
     const startParagraph = root.querySelector<HTMLElement>(`[data-paragraph-index="${startIndex}"]`);
     if (!startParagraph) {
       return;
@@ -105,7 +107,7 @@ export function TextViewWindow({
     if (typeof startParagraph.scrollIntoView === 'function') {
       startParagraph.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
-  }, [activeCommentId, document, pendingSelection]);
+  }, [activeCommentId, activeCommentSelection, document]);
 
   const captureFallbackSelection = () => {
     const activeSelection = getActiveWindowSelection();

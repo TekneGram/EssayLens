@@ -11,34 +11,13 @@ import type {
 } from '@/app/ports/llmManager.port';
 import type { LlmCatalogModel } from '../domain/llmManager.types';
 
-export const FALLBACK_CATALOG_MODELS: LlmCatalogModel[] = [
-  {
-    key: 'qwen3_4b_q8',
-    displayName: 'Qwen3 4B Q8_0',
-    hfRepoId: 'Qwen/Qwen3-4B-GGUF',
-    hfFilename: 'Qwen3-4B-Q8_0.gguf',
-    mmprojFilename: null,
-    backend: 'server',
-    modelFamily: 'instruct/think'
-  },
-  {
-    key: 'qwen3_8b_q8',
-    displayName: 'Qwen3 8B Q8_0',
-    hfRepoId: 'Qwen/Qwen3-8B-GGUF',
-    hfFilename: 'Qwen3-8B-Q8_0.gguf',
-    mmprojFilename: null,
-    backend: 'server',
-    modelFamily: 'instruct/think'
-  }
-];
-
 function toError(resultError: AppError): Error {
   return new Error(resultError.message || 'LLM manager request failed.');
 }
 
 export async function listCatalogModels(port: LlmManagerPort): Promise<LlmCatalogModel[]> {
   if (!port.isAvailable()) {
-    return FALLBACK_CATALOG_MODELS;
+    return [];
   }
   const result = await port.listCatalogModels();
   if (!result.ok) {

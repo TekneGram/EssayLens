@@ -3,6 +3,7 @@ import type { LlmNotReadyErrorDetails, LlmReadinessIssue } from '../ipc/contract
 
 interface RuntimeReadinessDeps {
   fileExists: (targetPath: string) => Promise<boolean>;
+  isFile: (targetPath: string) => Promise<boolean>;
   isExecutable: (targetPath: string) => Promise<boolean>;
 }
 
@@ -51,6 +52,12 @@ export async function getLlmNotReadyDetails(
     issues.push({
       code: 'SERVER_FILE_NOT_FOUND',
       message: 'The configured llama-server binary does not exist on disk.',
+      path: serverPath
+    });
+  } else if (!(await deps.isFile(serverPath))) {
+    issues.push({
+      code: 'SERVER_PATH_NOT_FILE',
+      message: 'The configured llama-server path is not a file.',
       path: serverPath
     });
   } else if (!(await deps.isExecutable(serverPath))) {

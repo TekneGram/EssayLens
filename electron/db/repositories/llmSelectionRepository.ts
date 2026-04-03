@@ -19,8 +19,8 @@ interface CatalogModelRow {
   hf_repo_id: string;
   hf_filename: string;
   mmproj_filename: string | null;
-  backend: 'server';
-  model_family: 'instruct/think';
+  backend: string;
+  model_family: string;
 }
 
 interface DownloadedModelRow {

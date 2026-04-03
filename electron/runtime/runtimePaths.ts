@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 export type LlmRuntimeMode = 'dev' | 'packaged';
@@ -11,7 +12,21 @@ export interface ResolveLlamaServerPathOptions {
 }
 
 function getDefaultDevRootPath(): string {
-  return path.resolve(__dirname, '..', '..', '..');
+  return path.resolve(__dirname, '..', '..');
+}
+
+function resolveCandidateServerPath(rootPath: string, executableName: string, targetDir: string): string {
+  const platformScopedPath = path.resolve(rootPath, 'llama-server', targetDir, executableName);
+  if (existsSync(platformScopedPath)) {
+    return platformScopedPath;
+  }
+
+  const flatPath = path.resolve(rootPath, executableName);
+  if (existsSync(flatPath)) {
+    return flatPath;
+  }
+
+  return platformScopedPath;
 }
 
 export function resolveLlamaServerPath(options: ResolveLlamaServerPathOptions): string {
@@ -22,9 +37,9 @@ export function resolveLlamaServerPath(options: ResolveLlamaServerPathOptions): 
 
   if (options.mode === 'packaged') {
     const resourcesPath = options.resourcesPath ?? process.resourcesPath ?? process.cwd();
-    return path.resolve(resourcesPath, 'llama-server', targetDir, executableName);
+    return resolveCandidateServerPath(resourcesPath, executableName, targetDir);
   }
 
   const devRootPath = options.devRootPath ?? getDefaultDevRootPath();
-  return path.resolve(devRootPath, 'vendor', 'llama-server', targetDir, executableName);
+  return resolveCandidateServerPath(path.resolve(devRootPath, 'vendor'), executableName, targetDir);
 }

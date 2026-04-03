@@ -5,6 +5,7 @@ export function OriginalTextView({
   selectedFileId,
   text,
   pendingSelection,
+  activeCommentSelection,
   activeCommentId,
   onSelectionCaptured,
   onDocumentTextChange
@@ -16,6 +17,7 @@ export function OriginalTextView({
         selectedFileId={selectedFileId}
         text={text}
         pendingSelection={pendingSelection}
+        activeCommentSelection={activeCommentSelection}
         activeCommentId={activeCommentId}
         onSelectionCaptured={onSelectionCaptured}
         onDocumentTextChange={onDocumentTextChange}

@@ -50,6 +50,7 @@ export type LlmReadinessIssueCode =
   | 'GGUF_FILE_NOT_FOUND'
   | 'MISSING_SERVER_PATH'
   | 'SERVER_FILE_NOT_FOUND'
+  | 'SERVER_PATH_NOT_FILE'
   | 'SERVER_NOT_EXECUTABLE';
 
 export interface LlmReadinessIssue {
