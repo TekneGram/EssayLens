@@ -5,4 +5,4 @@ export type CommentKind = 'inline' | 'block';
 export type ChatRole = 'system' | 'teacher' | 'assistant';
 
 export type AssessmentTopTab = 'assessment' | 'rubric' | 'llm';
-export type CommentsTab = 'comments' | 'score';
+export type CommentsTab = 'comments' | 'score' | 'generate';

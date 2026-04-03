@@ -57,10 +57,14 @@ export function CommentsView({
         >
           Score
         </button>
-      </div>
-      <div className="comments-generate-action">
-        <button type="button" onClick={onGenerateFeedbackDocument} disabled={!view.isGenerateEnabled}>
-          {isGeneratePending ? 'Generating...' : 'Generate'}
+        <button
+          type="button"
+          className={view.isGenerateActive ? 'tab active is-active' : 'tab'}
+          role="tab"
+          aria-selected={view.isGenerateActive}
+          onClick={view.onSelectGenerateTab}
+        >
+          Generate
         </button>
       </div>
       <div className="comments-content">
@@ -87,6 +91,25 @@ export function CommentsView({
         </div>
         <div className="content-block comments-panel" role="tabpanel" hidden={!view.isScoreActive}>
           {view.isScoreActive ? <ScoreTool /> : null}
+        </div>
+        <div className="content-block comments-panel comments-generate-panel" role="tabpanel" hidden={!view.isGenerateActive}>
+          <div className="comments-generate-card">
+            <div className="comments-generate-copy">
+              <h5>Generate Feedback</h5>
+              <p>Create a document that compiles the current comments into a shareable feedback draft.</p>
+            </div>
+            <button
+              type="button"
+              className="comments-generate-button"
+              onClick={onGenerateFeedbackDocument}
+              disabled={!view.isGenerateEnabled}
+            >
+              {isGeneratePending ? 'Generating feedback document...' : 'Create feedback document'}
+            </button>
+            {!canGenerateFeedbackDocument ? (
+              <p className="comments-generate-hint">Add at least one comment before generating a feedback document.</p>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

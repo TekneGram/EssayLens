@@ -32,35 +32,40 @@ export function CommentTools({
             onChange={(event) => tools.setDraftText(event.target.value)}
           />
           <div className="comment-edit-buttons">
-            <button type="button" onClick={tools.saveEdit} disabled={!tools.canSave}>
+            <button type="button" className="comment-tool-button comment-tool-button--primary" onClick={tools.saveEdit} disabled={!tools.canSave}>
               Save
             </button>
-            <button type="button" onClick={tools.cancelEdit}>
+            <button type="button" className="comment-tool-button" onClick={tools.cancelEdit}>
               Cancel
             </button>
           </div>
         </div>
       ) : (
-        <button type="button" onClick={tools.startEdit}>
+        <button type="button" className="comment-tool-button" onClick={tools.startEdit}>
           Edit
         </button>
       )}
-      <button type="button" onClick={tools.deleteComment}>
+      <button type="button" className="comment-tool-button comment-tool-button--danger" onClick={tools.deleteComment}>
         Delete
       </button>
       <div className="comment-llm-controls">
-        <select aria-label="Send command" value={tools.commandId} onChange={(event) => tools.setCommandId(event.target.value)}>
+        <select
+          className="comment-tool-select"
+          aria-label="Send command"
+          value={tools.commandId}
+          onChange={(event) => tools.setCommandId(event.target.value)}
+        >
           {SEND_TO_LLM_COMMANDS.map((command) => (
             <option key={command.id || 'default'} value={command.id}>
               {command.label}
             </option>
           ))}
         </select>
-        <button type="button" onClick={tools.sendToLlm}>
+        <button type="button" className="comment-tool-button comment-tool-button--primary" onClick={tools.sendToLlm}>
           Send to LLM
         </button>
       </div>
-      <button type="button" onClick={tools.toggleApplied}>
+      <button type="button" className="comment-tool-button comment-tool-button--accent" onClick={tools.toggleApplied}>
         {applied ? 'Unapply' : 'Apply'}
       </button>
     </div>

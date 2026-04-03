@@ -16,10 +16,10 @@ describe('uiReducer', () => {
   it('changes comments tab', () => {
     const next = uiReducer(initialUiState, {
       type: 'ui/setCommentsTab',
-      payload: 'score'
+      payload: 'generate'
     });
 
-    expect(next.activeCommentsTab).toBe('score');
+    expect(next.activeCommentsTab).toBe('generate');
   });
 
   it('changes chat collapsed state', () => {

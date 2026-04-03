@@ -66,7 +66,7 @@ describe('CommentsView interactions', () => {
     const onApplyComment = vi.fn();
     const onGenerateFeedbackDocument = vi.fn();
 
-    render(
+    const { rerender } = render(
       <CommentsView
         comments={[inlineComment]}
         activeCommentId={null}
@@ -111,7 +111,28 @@ describe('CommentsView interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     expect(onApplyComment).toHaveBeenCalledWith('feedback-inline-1', true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    expect(screen.queryByRole('button', { name: 'Create feedback document' })).toBeNull();
+    rerender(
+      <CommentsView
+        comments={[inlineComment]}
+        activeCommentId={null}
+        isLoading={false}
+        isGeneratePending={false}
+        canGenerateFeedbackDocument={true}
+        onSelectComment={onSelectComment}
+        onEditComment={onEditComment}
+        onDeleteComment={onDeleteComment}
+        onSendToLlm={onSendToLlm}
+        onApplyComment={onApplyComment}
+        onGenerateFeedbackDocument={onGenerateFeedbackDocument}
+        activeTab="generate"
+        onTabChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Generate Feedback')).toBeTruthy();
+    expect(screen.getByText('Create a document that compiles the current comments into a shareable feedback draft.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Create feedback document' }));
     expect(onGenerateFeedbackDocument).toHaveBeenCalledTimes(1);
   });
 

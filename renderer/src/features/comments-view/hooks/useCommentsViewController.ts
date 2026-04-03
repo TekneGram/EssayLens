@@ -1,7 +1,14 @@
 import { useMemo } from 'react';
 import type { CommentsTab } from '@/app/providers/state';
 import type { FeedbackItem } from '@/features/feedback/domain';
-import { canGenerateDocument, isCommentsTabActive, isScoreTabActive, shouldRenderCommentsList, shouldShowEmptyCommentsState } from '../domain/commentsView.logic';
+import {
+  canGenerateDocument,
+  isCommentsTabActive,
+  isGenerateTabActive,
+  isScoreTabActive,
+  shouldRenderCommentsList,
+  shouldShowEmptyCommentsState
+} from '../domain/commentsView.logic';
 import { toCommentsTab } from '../application/commentsView.service';
 
 interface UseCommentsViewControllerParams {
@@ -27,11 +34,13 @@ export function useCommentsViewController({
     () => ({
       isCommentsActive: isCommentsTabActive(activeTab),
       isScoreActive: isScoreTabActive(activeTab),
+      isGenerateActive: isGenerateTabActive(activeTab),
       isGenerateEnabled: canGenerateDocument(canGenerateFeedbackDocument, isGeneratePending),
       showEmptyState: shouldShowEmptyCommentsState({ isLoading, error, comments }),
       showCommentsList: shouldRenderCommentsList(comments),
       onSelectCommentsTab: () => onTabChange(toCommentsTab('comments')),
-      onSelectScoreTab: () => onTabChange(toCommentsTab('score'))
+      onSelectScoreTab: () => onTabChange(toCommentsTab('score')),
+      onSelectGenerateTab: () => onTabChange(toCommentsTab('generate'))
     }),
     [activeTab, canGenerateFeedbackDocument, comments, error, isGeneratePending, isLoading, onTabChange]
   );

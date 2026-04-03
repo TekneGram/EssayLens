@@ -9,6 +9,10 @@ export function isScoreTabActive(activeTab: CommentsTab): boolean {
   return activeTab === 'score';
 }
 
+export function isGenerateTabActive(activeTab: CommentsTab): boolean {
+  return activeTab === 'generate';
+}
+
 export function canGenerateDocument(canGenerateFeedbackDocument: boolean, isGeneratePending: boolean): boolean {
   return canGenerateFeedbackDocument && !isGeneratePending;
 }
