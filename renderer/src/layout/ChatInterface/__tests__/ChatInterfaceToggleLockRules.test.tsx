@@ -109,6 +109,16 @@ describe('ChatInterface toggle lock rules', () => {
     expect(middleRow?.contains(sendButton)).toBe(true);
   });
 
+  it('updates the chat input placeholder to match the selected mode', () => {
+    const { rerender } = render(<ChatInterface onChatIntent={vi.fn()} chatMode="comment" />);
+
+    expect(screen.getByLabelText('Message').getAttribute('placeholder')).toBe('Write a comment');
+
+    rerender(<ChatInterface onChatIntent={vi.fn()} chatMode="chat" />);
+
+    expect(screen.getByLabelText('Message').getAttribute('placeholder')).toBe('Chat with me about the essay');
+  });
+
   it('renders chat toggle in top row and highlighted text in bottom row', () => {
     const { container } = render(
       <ChatInterface
