@@ -6,7 +6,7 @@ import { CommentsView } from '@/features/comments-view';
 import { OriginalTextView } from '@/features/original-text-view';
 import type { SelectedFileType } from '@/app/types';
 
-const ImageView = () => <div>Image View (Not Migrated)</div>;
+const ImageView = () => <div data-testid="image-view">Image View (Not Migrated)</div>;
 
 interface AssessmentTabProps {
   selectedFileType: SelectedFileType;

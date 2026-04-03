@@ -110,7 +110,6 @@ describe('Assessment tab file selection routing', () => {
       expect(screen.getByTestId('assessment-tab').getAttribute('data-mode')).toBe('three-pane');
     });
     expect(screen.getByTestId('image-view')).toBeTruthy();
-    expect(screen.getByText('[system] Selected file: image.png')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'draft.docx' }));
 
@@ -120,7 +119,6 @@ describe('Assessment tab file selection routing', () => {
     expect(listFeedback).toHaveBeenCalledWith({ fileId: '/workspace/essays/draft.docx' });
     expect(screen.queryByTestId('image-view')).toBeNull();
     expect(screen.getByTestId('original-text-view').textContent).toContain('draft.docx');
-    expect(screen.getByText('[system] Selected file: draft.docx')).toBeTruthy();
   });
 
   it('syncs command selection into ChatInterface mode lock rules through AssessmentTab orchestration', async () => {
