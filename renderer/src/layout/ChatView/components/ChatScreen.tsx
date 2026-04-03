@@ -1,4 +1,6 @@
 import type { ChatViewMessageItem } from '../application/chatView.service';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatScreenProps {
   items: ChatViewMessageItem[];
@@ -33,7 +35,14 @@ export function ChatScreen({ items, isLoading, error, showLlmLoading = false, sh
       <ul className="chat-log" data-testid="chat-screen">
         {items.map((item, index) => (
           <li key={item.id} className={`msg ${item.roleClassName}`}>
-            {item.text}
+            <div className="msg-role">{item.roleLabel}</div>
+            {item.roleClassName === 'assistant' ? (
+              <div className="msg-body msg-markdown">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <div className="msg-body msg-body-plain">{item.content}</div>
+            )}
             {showThinking && latestAssistantIndex === index ? <div>-----thinking-----</div> : null}
           </li>
         ))}

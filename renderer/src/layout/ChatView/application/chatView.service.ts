@@ -4,14 +4,16 @@ import type { ChatMessage } from '@/layout/ChatInterface/domain';
 export interface ChatViewMessageItem {
   id: string;
   roleClassName: string;
-  text: string;
+  roleLabel: string;
+  content: string;
 }
 
 export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessageItem[] {
   return messages.map((message) => ({
     id: message.id,
     roleClassName: message.role,
-    text: `[${message.role}] ${message.content}`
+    roleLabel: toRoleLabel(message.role),
+    content: message.content
   }));
 }
 
@@ -19,7 +21,8 @@ export function toSessionTurnItems(sessionId: string, turns: LlmSessionTurnDto[]
   return turns.map((turn, index) => ({
     id: `${sessionId}:${turn.role}:${index}`,
     roleClassName: turn.role,
-    text: turn.content
+    roleLabel: toRoleLabel(turn.role),
+    content: turn.content
   }));
 }
 
@@ -33,4 +36,8 @@ export function toSessionChatMessages(sessionId: string, fileEntityUuid: string,
     sessionId,
     createdAt
   }));
+}
+
+function toRoleLabel(role: string): string {
+  return role.slice(0, 1).toUpperCase() + role.slice(1);
 }
