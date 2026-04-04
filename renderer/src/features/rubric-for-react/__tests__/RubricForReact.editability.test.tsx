@@ -45,6 +45,7 @@ describe('RubricForReact editability', () => {
         requestLlmAssessment: vi.fn()
       },
       chat: {
+        listMessages: vi.fn(),
         sendMessage: vi.fn(),
         onStreamChunk: vi.fn().mockReturnValue(() => {})
       },
@@ -62,6 +63,8 @@ describe('RubricForReact editability', () => {
         setLastUsed: vi.fn()
       },
       llmManager: {
+        isAvailable: vi.fn().mockReturnValue(true),
+        supportsDownload: vi.fn().mockReturnValue(true),
         listCatalogModels: vi.fn(),
         listDownloadedModels: vi.fn(),
         getActiveModel: vi.fn(),

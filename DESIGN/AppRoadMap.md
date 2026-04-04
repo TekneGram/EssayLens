@@ -1,5 +1,14 @@
 # App Road Map
 
+## Bug in rubric
+- Rubric can remain in editing mode and when we switch to scoring it is still in editing mode.
+- That is weird
+- Fix: Ensure editing switches off when moving away from the screen
+
+## Bug in ChatView
+- List of Chats lists Chat 1, Chat 2 in opposite order to the order they were done
+- Fix: reverse the order
+
 ## Prompt logging feature
 - *Purpose* inspecting the shape of prompts, including the system prompt.
 - *Function*: Be able to inspect the prompts that are sent to the LLM.

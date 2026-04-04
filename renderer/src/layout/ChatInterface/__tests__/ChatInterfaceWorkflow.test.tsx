@@ -96,37 +96,56 @@ function createRubricMocks() {
     getGradingContext: vi.fn().mockResolvedValue({
       ok: true,
       data: {
-        selectedRubricId: null,
-        selectedMatrix: null,
-        availableRubrics: []
+        fileId: '/workspace/essays/draft.docx',
+        lockedRubricId: null,
+        selectedRubricIdForFile: null
       }
     }),
     getFileScores: vi.fn().mockResolvedValue({
       ok: true,
       data: {
-        rubricId: null,
-        selections: []
+        instance: null,
+        scores: []
       }
     }),
     clearAppliedRubric: vi.fn().mockResolvedValue({
       ok: true,
       data: {
-        cleared: true
+        fileId: '/workspace/essays/draft.docx',
+        filepathId: '/workspace/essays/draft.docx',
+        clearedRubricId: 'rubric-1'
       }
     }),
     saveFileScores: vi.fn().mockResolvedValue({
       ok: true,
       data: {
-        rubricId: null,
-        selections: [],
-        updatedAt: new Date().toISOString()
+        instance: {
+          uuid: 'instance-1',
+          fileEntityUuid: '/workspace/essays/draft.docx',
+          rubricEntityUuid: 'rubric-1',
+          createdAt: new Date().toISOString()
+        },
+        scores: []
       }
     }),
     setLastUsed: vi.fn().mockResolvedValue({
       ok: true,
-      data: { rubricId: null, updatedAt: new Date().toISOString() }
+      data: { rubricId: 'rubric-1' }
     }),
-    getMatrix: vi.fn(),
+    getMatrix: vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        rubric: {
+          entityUuid: 'rubric-1',
+          name: 'Standard rubric',
+          type: 'detailed',
+          isActive: true,
+          isArchived: false
+        },
+        details: [],
+        scores: []
+      }
+    }),
     updateMatrix: vi.fn(),
     createRubric: vi.fn(),
     cloneRubric: vi.fn(),
@@ -351,6 +370,7 @@ describe('ChatInterface submit workflow', () => {
       expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
     });
     fireEvent.click(screen.getByRole('button', { name: 'draft.docx' }));
+    await screen.findByTestId('text-view-window');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));

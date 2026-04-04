@@ -9,6 +9,7 @@ from typing import Any
 from app.pipeline_simple import (
     WorkerActionError,
     clear_cached_session,
+    run_evaluate_with_rubric,
     run_chat,
     run_chat_stream,
     warm_runtime,
@@ -154,6 +155,9 @@ def _handle_request(req: dict[str, Any], lifecycle: RuntimeLifecycle) -> dict[st
                 EVALUATE_WITH_RUBRIC_PIPELINE_KEY,
                 BULK_EVALUATE_PIPELINE_KEY,
             }:
+                if pipeline_key == EVALUATE_WITH_RUBRIC_PIPELINE_KEY:
+                    reply = run_evaluate_with_rubric(payload, lifecycle)
+                    return _success(request_id, {"reply": reply})
                 return _failure(
                     request_id,
                     "PY_ACTION_FAILED",

@@ -59,20 +59,52 @@ beforeEach(() => {
     listRubrics: vi.fn().mockResolvedValue({ ok: true, data: { rubrics: [] } }),
     getGradingContext: vi.fn().mockResolvedValue({
       ok: true,
-      data: { selectedRubricId: null, selectedMatrix: null, availableRubrics: [] }
+      data: {
+        fileId: 'file-1',
+        lockedRubricId: null,
+        selectedRubricIdForFile: null
+      }
     }),
-    getFileScores: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: null, selections: [] } }),
-    clearAppliedRubric: vi.fn().mockResolvedValue({ ok: true, data: { cleared: true } }),
+    getFileScores: vi.fn().mockResolvedValue({ ok: true, data: { instance: null, scores: [] } }),
+    clearAppliedRubric: vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        fileId: 'file-1',
+        filepathId: 'file-1',
+        clearedRubricId: null
+      }
+    }),
     saveFileScores: vi.fn().mockResolvedValue({
       ok: true,
-      data: { rubricId: null, selections: [], updatedAt: new Date().toISOString() }
+      data: {
+        instance: {
+          uuid: 'instance-1',
+          fileEntityUuid: 'file-1',
+          rubricEntityUuid: 'rubric-1',
+          createdAt: new Date().toISOString()
+        },
+        scores: []
+      }
     }),
-    setLastUsed: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: null, updatedAt: new Date().toISOString() } }),
-    getMatrix: vi.fn().mockResolvedValue({ ok: true, data: { matrix: null } }),
-    updateMatrix: vi.fn().mockResolvedValue({ ok: true, data: { matrix: null } }),
-    createRubric: vi.fn().mockResolvedValue({ ok: true, data: { rubric: null } }),
-    cloneRubric: vi.fn().mockResolvedValue({ ok: true, data: { rubric: null } }),
-    deleteRubric: vi.fn().mockResolvedValue({ ok: true, data: { deleted: true } }),
+    setLastUsed: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: 'rubric-1' } }),
+    getMatrix: vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        rubric: {
+          entityUuid: 'rubric-1',
+          name: 'Standard rubric',
+          type: 'detailed',
+          isActive: true,
+          isArchived: false
+        },
+        details: [],
+        scores: []
+      }
+    }),
+    updateMatrix: vi.fn().mockResolvedValue({ ok: true, data: { success: true } }),
+    createRubric: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: 'rubric-1' } }),
+    cloneRubric: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: 'rubric-1' } }),
+    deleteRubric: vi.fn().mockResolvedValue({ ok: true, data: { rubricId: 'rubric-1' } }),
     ...existingRubric
   };
 

@@ -166,6 +166,7 @@
   align-items: center;
   gap: 12px;
   min-height: 44px;
+  container-type: inline-size;
 }
 
 .assessment-window-title {
@@ -343,6 +344,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
+  container-type: inline-size;
 }
 
 .text-view-title {
@@ -507,6 +509,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
+  container-type: inline-size;
 }
 
 .comments-view-title {
@@ -537,6 +540,19 @@
 .comments-list {
   display: grid;
   gap: 10px;
+}
+
+@container (max-width: 720px) {
+  .assessment-window-title {
+    display: none;
+  }
+}
+
+@container (max-width: 420px) {
+  .comments-view-title,
+  .text-view-title {
+    display: none;
+  }
 }
 
 .comment-view {
