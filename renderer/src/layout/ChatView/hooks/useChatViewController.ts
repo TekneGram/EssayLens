@@ -4,7 +4,7 @@ import { clearTransientSessionDrafts, setActiveSessionForFile } from '@/layout/C
 import { createTimestampSessionId } from '@/layout/ChatInterface/domain';
 import { usePorts } from '@/app/ports';
 import { useAppDispatch } from '@/app/providers/state';
-import { toActionMessageItems, toChatViewMessageItems } from '../application/chatView.service';
+import { toChatViewMessageItems } from '../application/chatView.service';
 import {
   createAndActivateSession,
   deleteSessionAndRefresh,
@@ -17,7 +17,6 @@ export function useChatViewController() {
   const appDispatch = useAppDispatch();
   const { llmSession } = usePorts();
   const {
-    messages,
     chatStatus,
     selectedFile,
     activeSessionId,
@@ -34,7 +33,6 @@ export function useChatViewController() {
   const [sessionTurnsError, setSessionTurnsError] = useState<string | undefined>(undefined);
 
   const fileEntityUuid = selectedFile?.id ?? null;
-  const actionItems = useMemo(() => toActionMessageItems(messages), [messages]);
   const sessionItems = useMemo(() => toChatViewMessageItems(sessionMessages), [sessionMessages]);
 
   const handleLoadTurns = useCallback(
@@ -197,7 +195,6 @@ export function useChatViewController() {
     sessionTurnsError,
     showLlmLoading: chatStatus === 'sending' && activeSessionSendPhase !== 'thinking',
     showThinking: activeSessionSendPhase === 'thinking',
-    actionItems,
     onBack,
     onSessionSelect,
     onNewChat,

@@ -8,6 +8,7 @@ type RuntimeSettingsRepo = Pick<LlmSettingsRepository, 'getRuntimeSettings' | 'u
 interface LlmServerPathReconcilerDeps {
   settingsRepository?: RuntimeSettingsRepo;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  pathIsFile?: (targetPath: string) => Promise<boolean>;
   resolveDevServerPath?: () => string;
   isDevMode?: () => boolean;
   logWarn?: (message: string, details?: unknown) => void;
@@ -21,6 +22,15 @@ async function defaultPathExists(targetPath: string): Promise<boolean> {
   try {
     await fs.access(targetPath);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+async function defaultPathIsFile(targetPath: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(targetPath);
+    return stats.isFile();
   } catch {
     return false;
   }
@@ -49,6 +59,7 @@ export async function reconcileDevLlmServerPath(deps: LlmServerPathReconcilerDep
         mode: 'dev'
       }));
   const pathExists = deps.pathExists ?? defaultPathExists;
+  const pathIsFile = deps.pathIsFile ?? defaultPathIsFile;
   const logWarn = deps.logWarn ?? ((message: string, details?: unknown) => console.warn(message, details));
 
   try {
@@ -56,7 +67,8 @@ export async function reconcileDevLlmServerPath(deps: LlmServerPathReconcilerDep
     const expectedDevPath = resolveDevServerPath();
     const currentPath = settings.llm_server_path?.trim() ?? '';
     const currentPathExists = currentPath ? await pathExists(currentPath) : false;
-    const shouldReset = !currentPath || !currentPathExists || looksPackagedPath(currentPath);
+    const currentPathIsFile = currentPathExists && currentPath ? await pathIsFile(currentPath) : false;
+    const shouldReset = !currentPath || !currentPathExists || !currentPathIsFile || looksPackagedPath(currentPath);
 
     if (!shouldReset || currentPath === expectedDevPath) {
       return;

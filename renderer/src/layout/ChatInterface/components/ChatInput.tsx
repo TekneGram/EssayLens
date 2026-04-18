@@ -1,10 +1,16 @@
 interface ChatInputProps {
   draftText?: string;
+  placeholder?: string;
   onDraftChange?: (text: string) => void;
   onSubmit?: () => void;
 }
 
-export function ChatInput({ draftText = '', onDraftChange, onSubmit }: ChatInputProps) {
+export function ChatInput({
+  draftText = '',
+  placeholder = 'Write a comment',
+  onDraftChange,
+  onSubmit
+}: ChatInputProps) {
   return (
     <>
       <label htmlFor="chat-input" className="visually-hidden">
@@ -14,7 +20,7 @@ export function ChatInput({ draftText = '', onDraftChange, onSubmit }: ChatInput
         id="chat-input"
         className="chat-input"
         rows={2}
-        placeholder="Chat with me or write a comment."
+        placeholder={placeholder}
         value={draftText}
         onChange={(event) => onDraftChange?.(event.target.value)}
         onKeyDown={(event) => {

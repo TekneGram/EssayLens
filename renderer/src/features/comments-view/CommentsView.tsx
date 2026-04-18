@@ -37,31 +37,37 @@ export function CommentsView({
 
   return (
     <section className="comments-view subpane">
-      <h4>CommentsView</h4>
-      <div role="tablist" aria-label="Comments tabs" className="comments-tabs tabs">
-        <button
-          type="button"
-          className={view.isCommentsActive ? 'tab active is-active' : 'tab'}
-          role="tab"
-          aria-selected={view.isCommentsActive}
-          onClick={view.onSelectCommentsTab}
-        >
-          Comments
-        </button>
-        <button
-          type="button"
-          className={view.isScoreActive ? 'tab active is-active' : 'tab'}
-          role="tab"
-          aria-selected={view.isScoreActive}
-          onClick={view.onSelectScoreTab}
-        >
-          Score
-        </button>
-      </div>
-      <div className="comments-generate-action">
-        <button type="button" onClick={onGenerateFeedbackDocument} disabled={!view.isGenerateEnabled}>
-          {isGeneratePending ? 'Generating...' : 'Generate'}
-        </button>
+      <div className="comments-view-header">
+        <div role="tablist" aria-label="Comments tabs" className="comments-tabs tabs">
+          <button
+            type="button"
+            className={view.isCommentsActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isCommentsActive}
+            onClick={view.onSelectCommentsTab}
+          >
+            Comments
+          </button>
+          <button
+            type="button"
+            className={view.isScoreActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isScoreActive}
+            onClick={view.onSelectScoreTab}
+          >
+            Score
+          </button>
+          <button
+            type="button"
+            className={view.isGenerateActive ? 'tab active is-active' : 'tab'}
+            role="tab"
+            aria-selected={view.isGenerateActive}
+            onClick={view.onSelectGenerateTab}
+          >
+            Generate
+          </button>
+        </div>
+        <h4 className="comments-view-title">CommentsView</h4>
       </div>
       <div className="comments-content">
         <div className="content-block comments-panel" role="tabpanel" hidden={!view.isCommentsActive}>
@@ -87,6 +93,25 @@ export function CommentsView({
         </div>
         <div className="content-block comments-panel" role="tabpanel" hidden={!view.isScoreActive}>
           {view.isScoreActive ? <ScoreTool /> : null}
+        </div>
+        <div className="content-block comments-panel comments-generate-panel" role="tabpanel" hidden={!view.isGenerateActive}>
+          <div className="comments-generate-card">
+            <div className="comments-generate-copy">
+              <h5>Generate Feedback</h5>
+              <p>Create a document that compiles the current comments into a shareable feedback draft.</p>
+            </div>
+            <button
+              type="button"
+              className="comments-generate-button"
+              onClick={onGenerateFeedbackDocument}
+              disabled={!view.isGenerateEnabled}
+            >
+              {isGeneratePending ? 'Generating feedback document...' : 'Create feedback document'}
+            </button>
+            {!canGenerateFeedbackDocument ? (
+              <p className="comments-generate-hint">Add at least one comment before generating a feedback document.</p>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

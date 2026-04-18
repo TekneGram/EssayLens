@@ -41,6 +41,7 @@ Thumbs.db
 .idea/
 .vscode/
 
+third_party
 .planning/text-view
 electron-llm/third_party
 electron-llm/venv/

@@ -3,6 +3,7 @@ import type { AssessmentTabLocalState } from './assessmentTab.types';
 
 export const initialAssessmentTabState: AssessmentTabLocalState = {
   pendingSelection: null,
+  activeCommentSelection: null,
   activeCommand: null,
   chatMode: 'comment',
   activeCommentId: null,
@@ -19,6 +20,11 @@ export function assessmentTabReducer(
         ...state,
         pendingSelection: action.payload
       };
+    case 'assessmentTab/setActiveCommentSelection':
+      return {
+        ...state,
+        activeCommentSelection: action.payload
+      };
     case 'assessmentTab/setActiveCommand':
       return {
         ...state,
@@ -27,7 +33,8 @@ export function assessmentTabReducer(
     case 'assessmentTab/clearActiveCommentIfMatch':
       return {
         ...state,
-        activeCommentId: state.activeCommentId === action.payload ? null : state.activeCommentId
+        activeCommentId: state.activeCommentId === action.payload ? null : state.activeCommentId,
+        activeCommentSelection: state.activeCommentId === action.payload ? null : state.activeCommentSelection
       };
     case 'assessmentTab/setChatMode':
       return {
@@ -37,7 +44,8 @@ export function assessmentTabReducer(
     case 'assessmentTab/setActiveCommentId':
       return {
         ...state,
-        activeCommentId: action.payload
+        activeCommentId: action.payload,
+        activeCommentSelection: action.payload ? state.activeCommentSelection : null
       };
     case 'assessmentTab/setDraftText':
       return {

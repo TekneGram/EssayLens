@@ -1,7 +1,6 @@
 import { ChatControl } from '@/layout/ChatView/components/ChatControl';
 import { ChatListScreen } from '@/layout/ChatView/components/ChatListScreen';
 import { ChatScreen } from '@/layout/ChatView/components/ChatScreen';
-import { ActionsView } from '@/layout/ChatView/components/ActionsView';
 import { useChatViewController } from '@/layout/ChatView/hooks/useChatViewController';
 
 export { ChatCollapsedRail } from '@/layout/ChatView/components/ChatCollapsedRail';
@@ -24,7 +23,6 @@ export function ChatView({ onCollapse }: ChatViewProps) {
     sessionTurnsError,
     showLlmLoading,
     showThinking,
-    actionItems,
     onBack,
     onSessionSelect,
     onNewChat,
@@ -61,12 +59,10 @@ export function ChatView({ onCollapse }: ChatViewProps) {
             items={sessionItems}
             isLoading={isSessionTurnsLoading && sessionItems.length === 0}
             error={sessionTurnsError}
+            showLlmLoading={showLlmLoading}
             showThinking={showThinking}
           />
         ) : null}
-      </div>
-      <div className="chat-actions" data-testid="chat-actions">
-        <ActionsView items={actionItems} showLlmLoading={showLlmLoading} />
       </div>
     </section>
   );

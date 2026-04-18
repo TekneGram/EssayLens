@@ -6,7 +6,7 @@ import { CommentsView } from '@/features/comments-view';
 import { OriginalTextView } from '@/features/original-text-view';
 import type { SelectedFileType } from '@/app/types';
 
-const ImageView = () => <div>Image View (Not Migrated)</div>;
+const ImageView = () => <div data-testid="image-view">Image View (Not Migrated)</div>;
 
 interface AssessmentTabProps {
   selectedFileType: SelectedFileType;
@@ -19,6 +19,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
     originalText,
     comments,
     pendingSelection,
+    activeCommentSelection,
     activeCommentId,
     chatMode,
     isModeLockedToChat,
@@ -68,6 +69,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
         selectedFileId={selectedFileId}
         text={originalText}
         pendingSelection={pendingSelection}
+        activeCommentSelection={activeCommentSelection}
         activeCommentId={activeCommentId}
         onSelectionCaptured={onSelectionCaptured}
         onDocumentTextChange={onDocumentTextChange}

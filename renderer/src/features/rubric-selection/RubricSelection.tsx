@@ -41,14 +41,24 @@ export function RubricSelection(props: RubricSelectionProps) {
           </button>
         ))}
       </div>
-      <div className="content-block">
-        <button type="button" onClick={onCreate}>
+      <div className="content-block rubric-selection-actions">
+        <button type="button" className="rubric-selection-action rubric-selection-action--primary" onClick={onCreate}>
           New Rubric
         </button>
-        <button type="button" onClick={onClone} disabled={!selectedRubricId}>
+        <button
+          type="button"
+          className="rubric-selection-action"
+          onClick={onClone}
+          disabled={!selectedRubricId}
+        >
           Clone
         </button>
-        <button type="button" onClick={() => void onDeleteWithConfirm()} disabled={!selectedRubricId || !canDeleteSelectedRubric}>
+        <button
+          type="button"
+          className="rubric-selection-action rubric-selection-action--danger"
+          onClick={() => void onDeleteWithConfirm()}
+          disabled={!selectedRubricId || !canDeleteSelectedRubric}
+        >
           Delete
         </button>
       </div>

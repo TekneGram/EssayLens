@@ -47,6 +47,13 @@ def _extract_context_text(payload: dict[str, Any]) -> str | None:
     return None
 
 
+def _extract_system_prompt(payload: dict[str, Any]) -> str | None:
+    system_prompt = payload.get("systemPrompt")
+    if isinstance(system_prompt, str) and system_prompt.strip():
+        return system_prompt.strip()
+    return None
+
+
 def _extract_message(payload: dict[str, Any]) -> str:
     message = payload.get("message")
     if not isinstance(message, str):
@@ -88,6 +95,45 @@ def _extract_essay(payload: dict[str, Any]) -> str | None:
     if isinstance(essay, str) and essay.strip():
         return essay.strip()
     return None
+
+
+def _extract_rubric_category(payload: dict[str, Any]) -> str:
+    value = payload.get("rubricCategory")
+    if not isinstance(value, str) or not value.strip():
+        raise WorkerActionError("payload.rubricCategory must be a non-empty string")
+    return value.strip()
+
+
+def _extract_rubric_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_entries = payload.get("rubricEntries")
+    if not isinstance(raw_entries, list) or len(raw_entries) == 0:
+        raise WorkerActionError("payload.rubricEntries must be a non-empty array")
+
+    entries: list[dict[str, Any]] = []
+    for item in raw_entries:
+        if not isinstance(item, dict):
+            raise WorkerActionError("payload.rubricEntries items must be objects")
+        score_value = item.get("scoreValue")
+        description = item.get("description")
+        if not isinstance(score_value, int):
+            raise WorkerActionError("payload.rubricEntries.scoreValue must be an integer")
+        if not isinstance(description, str) or not description.strip():
+            raise WorkerActionError("payload.rubricEntries.description must be a non-empty string")
+        entries.append({"scoreValue": score_value, "description": description.strip()})
+
+    return entries
+
+
+def _build_rubric_system_prompt(category: str, entries: list[dict[str, Any]], essay: str) -> str:
+    lines: list[str] = [f'Here is a rubric for the "{category}" of the essay']
+    for entry in sorted(entries, key=lambda item: (-int(item["scoreValue"]), str(item["description"]))):
+        lines.append(f'## {entry["scoreValue"]}')
+        lines.append(str(entry["description"]))
+    lines.append("Read the essay below and decide which category the essay best suits")
+    lines.append("---Essay Here---")
+    lines.append(essay)
+    lines.append("Explain your decision. Be concise")
+    return "\n".join(lines)
 
 
 def _get_cached_system_prompt(payload: dict[str, Any]) -> str:
@@ -167,6 +213,29 @@ def _compose_prompt(message: str, context_text: str | None, session_turns: list[
     return "\n\n".join(blocks)
 
 
+def _build_rubric_evaluation_prompt(payload: dict[str, Any]) -> tuple[str, str]:
+    essay = _extract_essay(payload)
+    if not essay:
+        raise WorkerActionError("payload.essay must be a non-empty string")
+
+    category = _extract_rubric_category(payload)
+    entries = _extract_rubric_entries(payload)
+
+    system_lines: list[str] = [f'Here is a rubric for the "{category}" category of the essay.']
+    for entry in entries:
+        system_lines.append(f"## {entry['scoreValue']}")
+        system_lines.append(str(entry["description"]))
+    system_lines.append("Read the essay and determine which score best fits this category.")
+    system_lines.append("Explain your decision briefly and cite the relevant rubric language.")
+
+    user_lines = [
+        f"Rubric category: {category}",
+        "---Essay Here---",
+        essay,
+    ]
+    return "\n".join(system_lines), "\n".join(user_lines)
+
+
 def warm_runtime(payload: dict[str, Any], lifecycle: RuntimeLifecycle) -> dict[str, Any]:
     try:
         app_cfg = build_settings_from_payload(payload)
@@ -194,7 +263,32 @@ def run_chat(payload: dict[str, Any], lifecycle: RuntimeLifecycle) -> str:
     if fake_reply is not None:
         return fake_reply
 
+    system_prompt = _extract_system_prompt(payload)
     message = _extract_message(payload)
+    if system_prompt is not None:
+        app_cfg, llm_task_service = _build_runtime(payload, lifecycle)
+        _, _, llm_request = app_cfg.require_real_config()
+        try:
+            response = llm_task_service.llm_service.with_mode("no_think").chat(
+                system=system_prompt,
+                user=message,
+                max_tokens=llm_request.max_tokens,
+                temperature=llm_request.temperature,
+                top_p=llm_request.top_p,
+                top_k=llm_request.top_k,
+                repeat_penalty=llm_request.repeat_penalty,
+                seed=llm_request.seed,
+                stop=llm_request.stop,
+                response_format=llm_request.response_format,
+            )
+        except Exception as exc:
+            raise WorkerActionError(f"LLM request failed: {exc}") from exc
+
+        reply = response.content.strip() if isinstance(response.content, str) else ""
+        if not reply:
+            raise WorkerActionError("LLM request failed: task did not return textual content.")
+        return reply
+
     context_text = _extract_context_text(payload)
     session_turns = _extract_session_turns(payload)
     prompt_text = message
@@ -234,6 +328,37 @@ def run_chat(payload: dict[str, Any], lifecycle: RuntimeLifecycle) -> str:
     return reply.strip()
 
 
+def run_evaluate_with_rubric(payload: dict[str, Any], lifecycle: RuntimeLifecycle) -> str:
+    fake_reply = _extract_fake_reply(payload)
+    if fake_reply is not None:
+        return fake_reply
+
+    system_prompt, user_text = _build_rubric_evaluation_prompt(payload)
+    app_cfg, llm_task_service = _build_runtime(payload, lifecycle)
+    _, _, llm_request = app_cfg.require_real_config()
+
+    try:
+        response = llm_task_service.llm_service.with_mode("no_think").chat(
+            system=system_prompt,
+            user=user_text,
+            max_tokens=llm_request.max_tokens,
+            temperature=llm_request.temperature,
+            top_p=llm_request.top_p,
+            top_k=llm_request.top_k,
+            repeat_penalty=llm_request.repeat_penalty,
+            seed=llm_request.seed,
+            stop=llm_request.stop,
+            response_format=llm_request.response_format,
+        )
+    except Exception as exc:
+        raise WorkerActionError(f"LLM request failed: {exc}") from exc
+
+    reply = response.content.strip() if isinstance(response.content, str) else ""
+    if not reply:
+        raise WorkerActionError("LLM request failed: task did not return textual content.")
+    return reply
+
+
 def run_chat_stream(
     payload: dict[str, Any],
     request_id: str,
@@ -242,15 +367,19 @@ def run_chat_stream(
     success_response_factory: Callable[[str, dict[str, Any]], dict[str, Any]],
 ) -> dict[str, Any]:
     client_request_id = _extract_client_request_id(payload)
-    system_prompt = _get_cached_system_prompt(payload)
+    explicit_system_prompt = _extract_system_prompt(payload)
+    system_prompt = explicit_system_prompt if explicit_system_prompt is not None else _get_cached_system_prompt(payload)
     message = _extract_message(payload)
     context_text = _extract_context_text(payload)
     session_turns = _extract_session_turns(payload)
-    user_text = message
-    if session_turns:
-        user_text = _compose_prompt(message, context_text, session_turns)
-    elif context_text:
-        user_text = _compose_prompt(message, context_text, [])
+    if explicit_system_prompt is None:
+        user_text = message
+        if session_turns:
+            user_text = _compose_prompt(message, context_text, session_turns)
+        elif context_text:
+            user_text = _compose_prompt(message, context_text, [])
+    else:
+        user_text = message
     seq = 1
 
     emit_stream_event(

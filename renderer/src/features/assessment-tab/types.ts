@@ -12,6 +12,7 @@ export interface OriginalTextViewProps {
   selectedFileId: EntityId | null;
   text: string;
   pendingSelection: PendingSelection | null;
+  activeCommentSelection: PendingSelection | null;
   activeCommentId: string | null;
   onSelectionCaptured: (selection: PendingSelection | null) => void;
   onDocumentTextChange?: (text: string | null) => void;

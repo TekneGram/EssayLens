@@ -19,8 +19,8 @@ describe('chat-view application service', () => {
     ]);
 
     expect(items).toEqual([
-      { id: 'm1', roleClassName: 'teacher', text: '[teacher] How is this?' },
-      { id: 'm2', roleClassName: 'assistant', text: '[assistant] Looks good.' }
+      { id: 'm1', roleClassName: 'teacher', roleLabel: 'Teacher', content: 'How is this?' },
+      { id: 'm2', roleClassName: 'assistant', roleLabel: 'Assistant', content: 'Looks good.' }
     ]);
   });
 });

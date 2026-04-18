@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from '../../../App';
 import { AppProviders } from '@/app/providers/AppProviders';
@@ -66,7 +66,7 @@ describe('CommentsView interactions', () => {
     const onApplyComment = vi.fn();
     const onGenerateFeedbackDocument = vi.fn();
 
-    render(
+    const { rerender } = render(
       <CommentsView
         comments={[inlineComment]}
         activeCommentId={null}
@@ -90,11 +90,22 @@ describe('CommentsView interactions', () => {
     expect(onSelectComment).toHaveBeenCalledWith('feedback-inline-1');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send to LLM' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Send command' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+
     fireEvent.change(screen.getByRole('textbox', { name: 'Edit comment text' }), {
       target: { value: 'Updated comment text from tools.' }
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onEditComment).toHaveBeenCalledWith('feedback-inline-1', 'Updated comment text from tools.');
+    expect(screen.getAllByRole('button', { name: 'Delete' })[0]).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Send to LLM' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Send command' })).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
     expect(onDeleteComment).toHaveBeenCalledWith('feedback-inline-1');
@@ -111,11 +122,32 @@ describe('CommentsView interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     expect(onApplyComment).toHaveBeenCalledWith('feedback-inline-1', true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    expect(screen.queryByRole('button', { name: 'Create feedback document' })).toBeNull();
+    rerender(
+      <CommentsView
+        comments={[inlineComment]}
+        activeCommentId={null}
+        isLoading={false}
+        isGeneratePending={false}
+        canGenerateFeedbackDocument={true}
+        onSelectComment={onSelectComment}
+        onEditComment={onEditComment}
+        onDeleteComment={onDeleteComment}
+        onSendToLlm={onSendToLlm}
+        onApplyComment={onApplyComment}
+        onGenerateFeedbackDocument={onGenerateFeedbackDocument}
+        activeTab="generate"
+        onTabChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Generate Feedback')).toBeTruthy();
+    expect(screen.getByText('Create a document that compiles the current comments into a shareable feedback draft.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Create feedback document' }));
     expect(onGenerateFeedbackDocument).toHaveBeenCalledTimes(1);
   });
 
-  it('maps selected inline comment into OriginalTextView pending quote through AssessmentTab', async () => {
+  it('focuses selected inline comments in OriginalTextView without showing pending comment UI', async () => {
     const selectFolder = vi.fn().mockResolvedValue({
       ok: true,
       data: {
@@ -232,21 +264,8 @@ describe('CommentsView interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select Inline comment/i }));
 
     await waitFor(() => {
-      const banner = screen.getByRole('status');
-      expect(within(banner).getByText('Pending Comment')).toBeTruthy();
-      expect(within(banner).getByText(/should get truncated/)).toBeTruthy();
-      expect(screen.getByTestId('highlighted-text-stub').textContent).toContain('should get truncated');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel pending comment' }));
-    await waitFor(() => {
       expect(screen.queryByText('Pending Comment')).toBeNull();
       expect(screen.queryByTestId('highlighted-text-stub')).toBeNull();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /Select Inline comment/i }));
-
-    await waitFor(() => {
       const focusedParagraph = screen.getByTestId('text-view-window').querySelector('.text-paragraph-focused');
       expect(focusedParagraph).toBeTruthy();
     });

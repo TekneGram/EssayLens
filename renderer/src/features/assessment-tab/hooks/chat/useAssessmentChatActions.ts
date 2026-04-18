@@ -7,6 +7,7 @@ import type {
 } from '@/app/ports/assessment.port';
 import { usePorts } from '@/app/ports';
 import { useAppState } from '@/app/providers/state';
+import type { AppState } from '@/app/providers/state/types';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import { makeLocalId, toChatErrorMessage } from '../../domain/assessmentTab.logic';
 import { handleChatStreamChunkWorkflow, submitChatMessageWorkflow } from '../../application/chatWorkflow.service';
@@ -18,11 +19,12 @@ import {
   setActiveSessionForFile,
   setChatError
 } from '@/layout/ChatInterface/state';
-import { resolveSessionIdForSend } from '@/layout/ChatInterface/domain';
+import { createRubricFeedbackSessionId, resolveSessionIdForSend } from '@/layout/ChatInterface/domain';
 import { selectIsModeLockedToChat } from '../../state';
 import type { AssessmentTabAction, AssessmentTabLocalState } from '../../state';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { AssessmentTabChatBindings } from '../../types';
+import type { RubricPort } from '@/app/ports/rubric.port';
 
 type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
 const MAX_ESSAY_WORD_COUNT = 2000;
@@ -47,6 +49,27 @@ function toEssayForChat(rawEssayText: string | null): { essay?: string; wasTrunc
   }
 
   return { essay: words.slice(0, MAX_ESSAY_WORD_COUNT).join(' '), wasTruncated: true };
+}
+
+async function resolveRubricIdForFile(args: {
+  appState: AppState;
+  rubricApi: RubricPort;
+  selectedFileId: string;
+}): Promise<string | null> {
+  const { appState, rubricApi, selectedFileId } = args;
+  const selectedFromState = appState.rubric.selectedGradingRubricIdByFileId[selectedFileId] ?? appState.rubric.lockedGradingRubricId;
+
+  if (selectedFromState) {
+    return selectedFromState;
+  }
+
+  const contextResult = await rubricApi.getGradingContext({ fileId: selectedFileId });
+  if (!contextResult.ok) {
+    throw new Error(contextResult.error.message || 'Unable to load rubric grading context.');
+  }
+
+  const rubricId = contextResult.data.selectedRubricIdForFile ?? contextResult.data.lockedRubricId ?? null;
+  return rubricId;
 }
 
 interface UseAssessmentChatActionsParams {
@@ -74,9 +97,9 @@ export function useAssessmentChatActions({
   selectedEssayText,
   addFeedback
 }: UseAssessmentChatActionsParams): UseAssessmentChatActionsResult {
-  const { chat: chatApi } = usePorts();
+  const { chat: chatApi, rubric: rubricApi, llmSession } = usePorts();
   const appState = useAppState();
-  const { pendingSelection, chatMode, draftText } = localState;
+  const { activeCommand, pendingSelection, chatMode, draftText } = localState;
   const isModeLockedToChat = selectIsModeLockedToChat(localState);
   const activeSessionId = selectActiveSessionIdForFile(appState, selectedFileId);
   const resolvedSessionId = selectedFileId ? resolveSessionIdForSend(selectedFileId, activeSessionId) : undefined;
@@ -106,11 +129,12 @@ export function useAssessmentChatActions({
 
   const handleSubmit = useCallback(async () => {
     const message = draftText.trim();
-    if (!message) {
-      return;
-    }
+    const isRubricFeedbackCommand = activeCommand?.id === 'evaluate-with-rubric';
 
     if (chatMode === 'comment') {
+      if (!message) {
+        return;
+      }
       try {
         await submitCommentFeedbackWorkflow({
           message,
@@ -127,6 +151,10 @@ export function useAssessmentChatActions({
       return;
     }
 
+    if (!isRubricFeedbackCommand && !message) {
+      return;
+    }
+
     if (!selectedFileId) {
       const message = 'Select a file before sending chat messages.';
       appDispatch(setChatError(message));
@@ -136,42 +164,101 @@ export function useAssessmentChatActions({
 
     try {
       localDispatch({ type: 'assessmentTab/setDraftText', payload: '' });
-      if (resolvedSessionId) {
-        appDispatch(setActiveSessionForFile({ fileId: selectedFileId, sessionId: resolvedSessionId }));
-      }
       const preparedEssay = toEssayForChat(selectedEssayText);
-      const essay = resolvedSessionId && essaySentBySessionId.current.has(resolvedSessionId) ? undefined : preparedEssay.essay;
-      if (essay && preparedEssay.wasTruncated) {
-        toast.warn(ESSAY_TRUNCATION_WARNING);
-        appDispatch(
-          addChatMessage({
-            id: makeLocalId('system'),
-            role: 'system',
-            content: ESSAY_TRUNCATION_WARNING,
-            relatedFileId: selectedFileId ?? undefined,
-            sessionId: resolvedSessionId,
-            createdAt: new Date().toISOString()
-          })
-        );
+      const essayForRubricFeedback = preparedEssay.essay;
+      const essayForChat = resolvedSessionId && essaySentBySessionId.current.has(resolvedSessionId) ? undefined : preparedEssay.essay;
+      if (isRubricFeedbackCommand && !essayForRubricFeedback) {
+        const errorMessage = 'Select a file with essay text before sending rubric feedback.';
+        appDispatch(setChatError(errorMessage));
+        toast.error(errorMessage);
+        return;
       }
-      await submitChatMessageWorkflow({
-        chatApi,
-        dispatch: appDispatch,
-        message,
-        essay,
-        selectedFileId,
-        activeSessionId: resolvedSessionId,
-        pendingSelection,
-        streamMessageByClientRequestId: streamMessageByClientRequestId.current,
-        streamSeqByClientRequestId: streamSeqByClientRequestId.current,
-        streamSessionByClientRequestId: streamSessionByClientRequestId.current
-      });
-      if (resolvedSessionId && essay) {
-        essaySentBySessionId.current.add(resolvedSessionId);
+      if (isRubricFeedbackCommand) {
+        const rubricSessionId = createRubricFeedbackSessionId(selectedFileId);
+        const rubricId = await resolveRubricIdForFile({
+          appState,
+          rubricApi,
+          selectedFileId
+        });
+        if (!rubricId) {
+          const errorMessage = 'Select a rubric before sending rubric feedback.';
+          appDispatch(setChatError(errorMessage));
+          toast.error(errorMessage);
+          return;
+        }
+
+        const createResult = await llmSession.create({ sessionId: rubricSessionId, fileEntityUuid: selectedFileId });
+        if (!createResult.ok) {
+          throw new Error(createResult.error.message || 'Unable to create rubric feedback session.');
+        }
+
+        appDispatch(setActiveSessionForFile({ fileId: selectedFileId, sessionId: rubricSessionId }));
+        if (essayForRubricFeedback && preparedEssay.wasTruncated) {
+          toast.warn(ESSAY_TRUNCATION_WARNING);
+          appDispatch(
+            addChatMessage({
+              id: makeLocalId('system'),
+              role: 'system',
+              content: ESSAY_TRUNCATION_WARNING,
+              relatedFileId: selectedFileId ?? undefined,
+              sessionId: rubricSessionId,
+              createdAt: new Date().toISOString()
+            })
+          );
+        }
+
+        await submitChatMessageWorkflow({
+          chatApi,
+          dispatch: appDispatch,
+          kind: 'rubric-feedback',
+          selectedFileId,
+          activeSessionId: rubricSessionId,
+          rubricId,
+          message: undefined,
+          essay: essayForRubricFeedback ?? '',
+          pendingSelection,
+          streamMessageByClientRequestId: streamMessageByClientRequestId.current,
+          streamSeqByClientRequestId: streamSeqByClientRequestId.current,
+          streamSessionByClientRequestId: streamSessionByClientRequestId.current
+        });
+      } else {
+        if (resolvedSessionId) {
+          appDispatch(setActiveSessionForFile({ fileId: selectedFileId, sessionId: resolvedSessionId }));
+        }
+        if (essayForChat && preparedEssay.wasTruncated) {
+          toast.warn(ESSAY_TRUNCATION_WARNING);
+          appDispatch(
+            addChatMessage({
+              id: makeLocalId('system'),
+              role: 'system',
+              content: ESSAY_TRUNCATION_WARNING,
+              relatedFileId: selectedFileId ?? undefined,
+              sessionId: resolvedSessionId,
+              createdAt: new Date().toISOString()
+            })
+          );
+        }
+        await submitChatMessageWorkflow({
+          chatApi,
+          dispatch: appDispatch,
+          message,
+          essay: essayForChat,
+          selectedFileId,
+          activeSessionId: resolvedSessionId,
+          pendingSelection,
+          streamMessageByClientRequestId: streamMessageByClientRequestId.current,
+          streamSeqByClientRequestId: streamSeqByClientRequestId.current,
+          streamSessionByClientRequestId: streamSessionByClientRequestId.current
+        });
+      }
+
+      const sessionIdForEssayTracking = isRubricFeedbackCommand ? undefined : resolvedSessionId;
+      if (sessionIdForEssayTracking && essayForChat) {
+        essaySentBySessionId.current.add(sessionIdForEssayTracking);
       }
       appDispatch(bumpSessionSyncForFile({ fileId: selectedFileId }));
     } catch (error) {
-      const errorMessage = toChatErrorMessage(error, 'Unable to send chat message.');
+      const errorMessage = toChatErrorMessage(error, isRubricFeedbackCommand ? 'Unable to send rubric feedback.' : 'Unable to send chat message.');
       toast.error(errorMessage);
     }
   }, [
@@ -180,11 +267,15 @@ export function useAssessmentChatActions({
     chatApi,
     chatMode,
     draftText,
+    activeCommand,
+    llmSession,
     localDispatch,
     pendingSelection,
     resolvedSessionId,
     selectedEssayText,
-    selectedFileId
+    selectedFileId,
+    rubricApi,
+    appState
   ]);
 
   useEffect(() => {

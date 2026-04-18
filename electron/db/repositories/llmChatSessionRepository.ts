@@ -130,14 +130,30 @@ export class LlmChatSessionRepository {
   }
 
   async appendTurnPair(sessionId: string, teacherMessage: string, assistantReply: string, fileId?: string): Promise<void> {
+    await this.appendTurns(
+      sessionId,
+      [
+        { role: 'teacher', content: teacherMessage },
+        { role: 'assistant', content: assistantReply }
+      ],
+      fileId
+    );
+  }
+
+  async appendTurns(sessionId: string, turns: LlmSessionTurn[], fileId?: string): Promise<void> {
     const normalizedSessionId = this.normalizeSessionId(sessionId);
-    const trimmedTeacher = teacherMessage.trim();
-    const trimmedAssistant = assistantReply.trim();
-    if (!trimmedTeacher) {
-      throw new Error('Teacher message cannot be empty.');
+    const normalizedTurns = turns
+      .map((turn) => ({
+        role: turn.role,
+        content: typeof turn.content === 'string' ? turn.content.trim() : ''
+      }))
+      .filter((turn) => turn.content.length > 0);
+
+    if (normalizedTurns.length === 0) {
+      throw new Error('At least one chat session turn is required.');
     }
-    if (!trimmedAssistant) {
-      throw new Error('Assistant reply cannot be empty.');
+    if (normalizedTurns.length !== turns.length) {
+      throw new Error('Chat session turns cannot contain empty content.');
     }
 
     const nowIso = this.now();
@@ -146,34 +162,24 @@ export class LlmChatSessionRepository {
     if (normalizedFileEntityUuid) {
       await this.assertSessionFileAssociation(normalizedSessionId, normalizedFileEntityUuid);
     }
+
     await this.db.exec('BEGIN;');
     try {
-      await this.db.run(
-        `INSERT INTO llm_chat_sessions (session_id, file_entity_uuid, pipeline_key, created_at, updated_at, last_used_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(session_id) DO UPDATE SET
-           file_entity_uuid = COALESCE(llm_chat_sessions.file_entity_uuid, excluded.file_entity_uuid),
-           updated_at = excluded.updated_at,
-           last_used_at = excluded.last_used_at;`,
-        [normalizedSessionId, normalizedFileEntityUuid, DEFAULT_PIPELINE_KEY, nowIso, nowIso, nowIso]
-      );
+      await this.upsertSessionRecord(normalizedSessionId, normalizedFileEntityUuid, nowIso);
 
       const current = await this.db.get<{ max_seq: number | null }>(
         'SELECT MAX(seq) AS max_seq FROM llm_chat_session_turns WHERE session_id = ?;',
         [normalizedSessionId]
       );
-      const startSeq = (current?.max_seq ?? 0) + 1;
-
-      await this.db.run(
-        `INSERT INTO llm_chat_session_turns (uuid, session_id, seq, role, content, created_at)
-         VALUES (?, ?, ?, 'teacher', ?, ?);`,
-        [randomUUID(), normalizedSessionId, startSeq, trimmedTeacher, nowIso]
-      );
-      await this.db.run(
-        `INSERT INTO llm_chat_session_turns (uuid, session_id, seq, role, content, created_at)
-         VALUES (?, ?, ?, 'assistant', ?, ?);`,
-        [randomUUID(), normalizedSessionId, startSeq + 1, trimmedAssistant, nowIso]
-      );
+      let nextSeq = (current?.max_seq ?? 0) + 1;
+      for (const turn of normalizedTurns) {
+        await this.db.run(
+          `INSERT INTO llm_chat_session_turns (uuid, session_id, seq, role, content, created_at)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [randomUUID(), normalizedSessionId, nextSeq, turn.role, turn.content, nowIso]
+        );
+        nextSeq += 1;
+      }
 
       const maxEntries = this.maxTurns * 2;
       await this.db.run(
@@ -240,5 +246,17 @@ export class LlmChatSessionRepository {
     if (existing.file_entity_uuid !== fileEntityUuid) {
       throw new Error('Session is already associated with a different file entity uuid.');
     }
+  }
+
+  private async upsertSessionRecord(sessionId: string, fileEntityUuid: string | null, nowIso: string): Promise<void> {
+    await this.db.run(
+      `INSERT INTO llm_chat_sessions (session_id, file_entity_uuid, pipeline_key, created_at, updated_at, last_used_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(session_id) DO UPDATE SET
+         file_entity_uuid = COALESCE(llm_chat_sessions.file_entity_uuid, excluded.file_entity_uuid),
+         updated_at = excluded.updated_at,
+         last_used_at = excluded.last_used_at;`,
+      [sessionId, fileEntityUuid, DEFAULT_PIPELINE_KEY, nowIso, nowIso, nowIso]
+    );
   }
 }

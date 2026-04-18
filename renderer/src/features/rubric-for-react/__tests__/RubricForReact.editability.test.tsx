@@ -2,24 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RubricForReact } from '@/features/rubric-for-react';
-
-vi.mock('../../../../../ports', () => ({
-  usePorts: () => ({
-    rubric: {
-      listRubrics: vi.fn(),
-      createRubric: vi.fn(),
-      cloneRubric: vi.fn(),
-      deleteRubric: vi.fn(),
-      getFileScores: vi.fn(),
-      saveFileScores: vi.fn(),
-      clearAppliedRubric: vi.fn(),
-      getGradingContext: vi.fn(),
-      getMatrix: vi.fn(),
-      updateMatrix: vi.fn(),
-      setLastUsed: vi.fn()
-    }
-  })
-}));
+import { PortsProvider, type AppPorts } from '@/app/ports';
 
 const sourceData = {
   rubricId: 'rubric-1',
@@ -45,10 +28,68 @@ describe('RubricForReact editability', () => {
         mutations: { retry: false, gcTime: Infinity }
       }
     });
+    const ports: AppPorts = {
+      workspace: {
+        selectFolder: vi.fn().mockResolvedValue({ ok: true, data: { folder: null } }),
+        listFiles: vi.fn().mockResolvedValue({ ok: true, data: { files: [] } })
+      },
+      assessment: {
+        extractDocument: vi.fn(),
+        listFeedback: vi.fn(),
+        addFeedback: vi.fn(),
+        editFeedback: vi.fn(),
+        deleteFeedback: vi.fn(),
+        applyFeedback: vi.fn(),
+        sendFeedbackToLlm: vi.fn(),
+        generateFeedbackDocument: vi.fn(),
+        requestLlmAssessment: vi.fn()
+      },
+      chat: {
+        listMessages: vi.fn(),
+        sendMessage: vi.fn(),
+        onStreamChunk: vi.fn().mockReturnValue(() => {})
+      },
+      rubric: {
+        listRubrics: vi.fn().mockResolvedValue({ ok: true, data: { rubrics: [] } }),
+        createRubric: vi.fn(),
+        cloneRubric: vi.fn(),
+        deleteRubric: vi.fn(),
+        getFileScores: vi.fn(),
+        saveFileScores: vi.fn(),
+        clearAppliedRubric: vi.fn(),
+        getGradingContext: vi.fn(),
+        getMatrix: vi.fn(),
+        updateMatrix: vi.fn(),
+        setLastUsed: vi.fn()
+      },
+      llmManager: {
+        isAvailable: vi.fn().mockReturnValue(true),
+        supportsDownload: vi.fn().mockReturnValue(true),
+        listCatalogModels: vi.fn(),
+        listDownloadedModels: vi.fn(),
+        getActiveModel: vi.fn(),
+        selectModel: vi.fn(),
+        downloadModel: vi.fn(),
+        deleteDownloadedModel: vi.fn(),
+        onDownloadProgress: vi.fn().mockReturnValue(() => {}),
+        getSettings: vi.fn(),
+        updateSettings: vi.fn(),
+        resetSettingsToDefaults: vi.fn()
+      },
+      llmSession: {
+        create: vi.fn(),
+        clear: vi.fn(),
+        delete: vi.fn(),
+        getTurns: vi.fn(),
+        listByFile: vi.fn()
+      }
+    };
 
     render(
       <QueryClientProvider client={queryClient}>
-        <RubricForReact sourceData={sourceData} mode="editing" canEdit={false} />
+        <PortsProvider ports={ports}>
+          <RubricForReact sourceData={sourceData} mode="editing" canEdit={false} />
+        </PortsProvider>
       </QueryClientProvider>
     );
 

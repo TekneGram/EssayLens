@@ -1,4 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams, type SpawnOptionsWithoutStdio } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import type {
   PythonRequest,
@@ -44,6 +45,17 @@ export interface PythonWorkerClientDeps {
   defaultTimeoutMs: number;
 }
 
+interface DefaultDepsResolverOptions {
+  cwd?: string;
+  existsSync?: (targetPath: string) => boolean;
+  platform?: NodeJS.Platform;
+  arch?: string;
+  resourcesPath?: string;
+  pythonExecutable?: string;
+  workerScriptPath?: string;
+  packaged?: boolean;
+}
+
 function isPackagedApp(): boolean {
   try {
     const electron = require('electron') as typeof import('electron');
@@ -53,26 +65,25 @@ function isPackagedApp(): boolean {
   }
 }
 
-function getDefaultWorkerScriptPath(resourcesPath: string): string {
-  if (isPackagedApp()) {
-    return path.resolve(resourcesPath, 'electron-llm', 'main.py');
-  }
-  return path.resolve(process.cwd(), 'electron-llm', 'main.py');
+function getRepoLocalPythonExecutable(cwd: string, platform: NodeJS.Platform, existsSync: (targetPath: string) => boolean) {
+  const candidate =
+    platform === 'win32'
+      ? path.resolve(cwd, '.venv-llm', 'Scripts', 'python.exe')
+      : path.resolve(cwd, '.venv-llm', 'bin', 'python');
+  return existsSync(candidate) ? candidate : null;
 }
 
-function getBundledWorkerExecutablePath(resourcesPath: string): string {
-  const workerRoot = path.resolve(resourcesPath, 'python-worker', `${process.platform}-${process.arch}`);
-  const executable = process.platform === 'win32' ? 'essaylens-llm-worker.exe' : 'essaylens-llm-worker';
-  return path.join(workerRoot, executable);
-}
+export function resolveDefaultPythonWorkerDeps(options: DefaultDepsResolverOptions = {}): PythonWorkerClientDeps {
+  const cwd = options.cwd ?? process.cwd();
+  const existsSync = options.existsSync ?? fs.existsSync;
+  const platform = options.platform ?? process.platform;
+  const arch = options.arch ?? process.arch;
+  const resourcesPath = options.resourcesPath ?? process.resourcesPath;
+  const packaged = options.packaged ?? isPackagedApp();
+  const pythonExecutable = options.pythonExecutable ?? process.env.PYTHON_EXECUTABLE;
+  const workerScriptPath = options.workerScriptPath ?? process.env.PYTHON_WORKER_PATH;
 
-function getDefaultDeps(): PythonWorkerClientDeps {
-  const resourcesPath = process.resourcesPath;
-  const packaged = isPackagedApp();
-  const pythonExecutable = process.env.PYTHON_EXECUTABLE;
-  const workerScriptPath = process.env.PYTHON_WORKER_PATH ?? getDefaultWorkerScriptPath(resourcesPath);
-
-  if (pythonExecutable) {
+  if (pythonExecutable && workerScriptPath) {
     return {
       spawn,
       workerCommand: pythonExecutable,
@@ -82,20 +93,30 @@ function getDefaultDeps(): PythonWorkerClientDeps {
   }
 
   if (packaged) {
+    const workerRoot = path.resolve(resourcesPath, 'python-worker', `${platform}-${arch}`);
+    const executable = platform === 'win32' ? 'essaylens-llm-worker.exe' : 'essaylens-llm-worker';
     return {
       spawn,
-      workerCommand: getBundledWorkerExecutablePath(resourcesPath),
+      workerCommand: path.join(workerRoot, executable),
       workerArgs: [],
       defaultTimeoutMs: 180_000
     };
   }
 
+  const repoLocalPython = pythonExecutable
+    ? null
+    : getRepoLocalPythonExecutable(cwd, platform, existsSync);
+
   return {
     spawn,
-    workerCommand: 'python3',
-    workerArgs: ['-u', workerScriptPath],
+    workerCommand: pythonExecutable ?? repoLocalPython ?? 'python3',
+    workerArgs: ['-u', workerScriptPath ?? path.resolve(cwd, 'electron-llm', 'main.py')],
     defaultTimeoutMs: 180_000
   };
+}
+
+function getDefaultDeps(): PythonWorkerClientDeps {
+  return resolveDefaultPythonWorkerDeps();
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -149,6 +170,8 @@ export class PythonWorkerClient {
   private worker: ChildProcessWithoutNullStreams | null = null;
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private stdoutBuffer = '';
+  private stderrBuffer = '';
+  private readonly maxStderrBufferChars = 8_000;
 
   constructor(deps: Partial<PythonWorkerClientDeps> = {}) {
     this.deps = {
@@ -230,14 +253,23 @@ export class PythonWorkerClient {
       );
       this.worker = worker;
       this.stdoutBuffer = '';
+      this.stderrBuffer = '';
 
       worker.stdout.setEncoding('utf8');
+      worker.stderr.setEncoding('utf8');
       worker.stdout.on('data', (chunk: string) => {
         this.handleStdoutChunk(chunk);
       });
+      worker.stderr.on('data', (chunk: string) => {
+        this.handleStderrChunk(chunk);
+      });
       worker.on('error', (error) => {
         this.rejectAllPending(
-          new PythonBridgeError('PY_PROCESS_DOWN', 'Python worker failed to start or crashed.', error)
+          new PythonBridgeError(
+            'PY_PROCESS_DOWN',
+            this.formatProcessDownMessage('Python worker failed to start or crashed.'),
+            this.buildProcessDownDetails(error)
+          )
         );
       });
       worker.on('exit', (code, signal) => {
@@ -245,7 +277,10 @@ export class PythonWorkerClient {
         this.rejectAllPending(
           new PythonBridgeError(
             'PY_PROCESS_DOWN',
-            `Python worker exited before responding (code=${String(code)}, signal=${String(signal)}).`
+            this.formatProcessDownMessage(
+              `Python worker exited before responding (code=${String(code)}, signal=${String(signal)}).`
+            ),
+            this.buildProcessDownDetails({ code, signal })
           )
         );
       });
@@ -316,6 +351,57 @@ export class PythonWorkerClient {
       this.pendingRequests.delete(envelope.requestId);
       pending.resolve(envelope);
     }
+  }
+
+  private handleStderrChunk(chunk: string): void {
+    this.stderrBuffer += chunk;
+    if (this.stderrBuffer.length > this.maxStderrBufferChars) {
+      this.stderrBuffer = this.stderrBuffer.slice(-this.maxStderrBufferChars);
+    }
+  }
+
+  private formatProcessDownMessage(baseMessage: string): string {
+    const stderrTail = this.getStderrTail();
+    if (!stderrTail) {
+      return baseMessage;
+    }
+    return `${baseMessage} stderr: ${stderrTail}`;
+  }
+
+  private buildProcessDownDetails(details: unknown): unknown {
+    const stderrTail = this.getStderrTail();
+    if (!stderrTail) {
+      return details;
+    }
+
+    if (isPlainObject(details)) {
+      return {
+        ...details,
+        stderr: stderrTail
+      };
+    }
+
+    return {
+      cause: details,
+      stderr: stderrTail
+    };
+  }
+
+  private getStderrTail(): string | null {
+    const trimmed = this.stderrBuffer.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const lines = trimmed
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    if (lines.length === 0) {
+      return null;
+    }
+
+    return lines.slice(-8).join(' | ');
   }
 
   private rejectPending(requestId: string, error: PythonBridgeError): void {

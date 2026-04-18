@@ -3,6 +3,7 @@ export { createFallbackTitle, isCommentSelectKey } from './commentView.logic';
 export {
   canGenerateDocument,
   isCommentsTabActive,
+  isGenerateTabActive,
   isScoreTabActive,
   shouldRenderCommentsList,
   shouldShowEmptyCommentsState

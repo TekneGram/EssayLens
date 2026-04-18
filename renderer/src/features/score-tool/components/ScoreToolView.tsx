@@ -12,19 +12,25 @@ export function ScoreToolView({ viewModel }: ScoreToolViewProps) {
 
   return (
     <>
-      <div className="content-block">
+      <div className="content-block score-tool-toolbar">
         {viewModel.lockedFromDb ? (
-          <>
-            <div>Applied rubric: {viewModel.appliedRubricName}</div>
-            <button type="button" onClick={viewModel.onRequestChangeRubric} disabled={viewModel.isChangingRubric}>
+          <div className="score-tool-toolbar__row">
+            <p className="score-tool-toolbar__applied">Applied rubric: {viewModel.appliedRubricName}</p>
+            <button
+              type="button"
+              className="score-tool-button"
+              onClick={viewModel.onRequestChangeRubric}
+              disabled={viewModel.isChangingRubric}
+            >
               {viewModel.isChangingRubric ? 'Changing...' : 'Change Rubric'}
             </button>
-          </>
+          </div>
         ) : (
-          <>
-            <label htmlFor="grading-rubric-select">Grading rubric</label>{' '}
+          <label className="score-tool-select-field" htmlFor="grading-rubric-select">
+            <span className="score-tool-select-field__label">Grading rubric</span>
             <select
               id="grading-rubric-select"
+              className="score-tool-select"
               value={viewModel.effectiveRubricId}
               onChange={(event) => {
                 viewModel.onSelectRubric(event.target.value);
@@ -36,7 +42,7 @@ export function ScoreToolView({ viewModel }: ScoreToolViewProps) {
                 </option>
               ))}
             </select>
-          </>
+          </label>
         )}
       </div>
       <RubricForReact

@@ -60,7 +60,7 @@
 .rubric-tab {
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(220px, 30%) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
   height: 100%;
   min-height: 0;
 }

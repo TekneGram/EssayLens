@@ -92,9 +92,7 @@ export async function loadSessionsForFile({
       if (preferredSessionId) {
         // Keep the optimistic in-memory session active while persistence catches up.
         appDispatch(setActiveSessionForFile({ fileId: fileEntityUuid, sessionId: preferredSessionId }));
-        return undefined;
       }
-      appDispatch(setActiveSessionForFile({ fileId: fileEntityUuid, sessionId: null }));
       return undefined;
     }
 
@@ -189,7 +187,7 @@ export async function deleteSessionAndRefresh({
 
   appDispatch(clearTransientSessionDrafts({ sessionId: sessionIdToDelete }));
   const preferredSessionId = activeSessionId === sessionIdToDelete ? undefined : activeSessionId ?? undefined;
-  return await loadSessionsForFile({
+  const errorMessage = await loadSessionsForFile({
     appDispatch,
     llmSession,
     fileEntityUuid,
@@ -197,4 +195,8 @@ export async function deleteSessionAndRefresh({
     setIsSessionTurnsLoading,
     setSessionTurnsError
   });
+  if (!errorMessage && activeSessionId === sessionIdToDelete && !preferredSessionId) {
+    appDispatch(setActiveSessionForFile({ fileId: fileEntityUuid, sessionId: null }));
+  }
+  return errorMessage;
 }

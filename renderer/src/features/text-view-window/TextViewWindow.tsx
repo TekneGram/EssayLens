@@ -13,9 +13,11 @@ import { useTextViewSelection } from './hooks/useTextViewSelection';
 import { useTextViewWindowState } from './hooks/useTextViewWindowState';
 
 interface TextViewWindowProps {
+  title?: string;
   selectedFileId: string | null;
   text: string;
   pendingSelection?: PendingSelection | null;
+  activeCommentSelection?: PendingSelection | null;
   activeCommentId?: string | null;
   onSelectionCaptured: (selection: PendingSelection | null) => void;
   onDocumentTextChange?: (text: string | null) => void;
@@ -28,9 +30,11 @@ const DEFAULT_ZOOM_PERCENT = 100;
 const MIN_STAGE_GUTTER = 24;
 
 export function TextViewWindow({
+  title,
   selectedFileId,
   text,
   pendingSelection = null,
+  activeCommentSelection = null,
   activeCommentId = null,
   onSelectionCaptured,
   onDocumentTextChange
@@ -80,18 +84,18 @@ export function TextViewWindow({
 
   useTextViewFocus({
     activeCommentId,
-    pendingSelection,
+    activeCommentSelection,
     document,
     bridgeRef
   });
 
   useEffect(() => {
     const root = windowRef.current;
-    if (!root || document || !activeCommentId || !pendingSelection) {
+    if (!root || document || !activeCommentId || !activeCommentSelection) {
       return;
     }
 
-    const startIndex = pendingSelection.startAnchor.paragraphIndex;
+    const startIndex = activeCommentSelection.startAnchor.paragraphIndex;
     const startParagraph = root.querySelector<HTMLElement>(`[data-paragraph-index="${startIndex}"]`);
     if (!startParagraph) {
       return;
@@ -105,7 +109,7 @@ export function TextViewWindow({
     if (typeof startParagraph.scrollIntoView === 'function') {
       startParagraph.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
-  }, [activeCommentId, document, pendingSelection]);
+  }, [activeCommentId, activeCommentSelection, document]);
 
   const captureFallbackSelection = () => {
     const activeSelection = getActiveWindowSelection();
@@ -133,16 +137,19 @@ export function TextViewWindow({
 
   return (
     <div className="text-view-shell">
-      <TextViewToolbar
-        zoomPercent={zoomPercent}
-        minZoomPercent={MIN_ZOOM_PERCENT}
-        maxZoomPercent={MAX_ZOOM_PERCENT}
-        stepPercent={ZOOM_STEP_PERCENT}
-        defaultZoomPercent={DEFAULT_ZOOM_PERCENT}
-        canControlZoom={Boolean(document)}
-        onZoomChange={setZoomPercent}
-        onResetZoom={resetZoom}
-      />
+      <div className="text-view-header">
+        {title ? <h4 className="text-view-title">{title}</h4> : <div aria-hidden="true" />}
+        <TextViewToolbar
+          zoomPercent={zoomPercent}
+          minZoomPercent={MIN_ZOOM_PERCENT}
+          maxZoomPercent={MAX_ZOOM_PERCENT}
+          stepPercent={ZOOM_STEP_PERCENT}
+          defaultZoomPercent={DEFAULT_ZOOM_PERCENT}
+          canControlZoom={Boolean(document)}
+          onZoomChange={setZoomPercent}
+          onResetZoom={resetZoom}
+        />
+      </div>
       <TextViewCanvas
         zoomLevel={zoomLevel}
         text={text}

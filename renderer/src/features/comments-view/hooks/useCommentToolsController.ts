@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer, useRef } from 'react';
 import type { CommentToolsProps } from '@/features/assessment-tab/types';
 import { canSaveCommentEdit, normalizeEditedCommentText, normalizeSendToLlmCommand } from '../application/commentTools.service';
 import { commentToolsReducer, createInitialCommentToolsState } from '../state/commentTools.state';
@@ -23,14 +23,25 @@ export function useCommentToolsController({
   onSendToLlm
 }: UseCommentToolsControllerParams) {
   const [state, dispatch] = useReducer(commentToolsReducer, createInitialCommentToolsState(commentText));
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     dispatch({ type: 'commentTools/syncCommentText', payload: commentText });
   }, [commentText]);
 
+  useEffect(() => {
+    if (!state.isEditing || !inputRef.current) {
+      return;
+    }
+
+    inputRef.current.focus();
+    inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
+  }, [state.isEditing]);
+
   const canSave = useMemo(() => canSaveCommentEdit(state.draftText, commentText), [state.draftText, commentText]);
 
   return {
+    inputRef,
     isEditing: state.isEditing,
     draftText: state.draftText,
     commandId: state.commandId,

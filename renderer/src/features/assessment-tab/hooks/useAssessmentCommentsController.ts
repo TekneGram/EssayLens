@@ -25,6 +25,7 @@ interface UseAssessmentCommentsControllerParams {
 interface UseAssessmentCommentsControllerResult {
   comments: FeedbackItem[];
   pendingSelection: PendingSelection | null;
+  activeCommentSelection: PendingSelection | null;
   activeCommentId: string | null;
   activeCommentsTab: import('@/app/providers/state').CommentsTab;
   isCommentsLoading: boolean;

@@ -2,9 +2,9 @@ import type { AppResult } from '@/app/result';
 
 // --- LLM Manager contract types ---
 
-export type LlmModelKey = 'qwen3_4b_q8' | 'qwen3_8b_q8';
-export type LlmBackend = 'server';
-export type LlmModelFamily = 'instruct/think';
+export type LlmModelKey = string;
+export type LlmBackend = string;
+export type LlmModelFamily = string;
 
 export interface CatalogLlmModelDto {
   key: LlmModelKey;

@@ -64,14 +64,20 @@ export function RubricForReact({
     onSetCellDescription,
     onChange
   });
+  const visualMode = effectiveEditingMode === 'editing' ? 'editing' : 'viewing';
+  const rootClassName = ['rubric', className, classes?.root].filter(Boolean).join(' ');
 
   if (isLoading) {
-    return <section className={['rubric', className, classes?.root].filter(Boolean).join(' ')}>Loading rubric...</section>;
+    return (
+      <section className={rootClassName} data-rubric-mode={visualMode}>
+        Loading rubric...
+      </section>
+    );
   }
 
   if (isError) {
     return (
-      <section className={['rubric', className, classes?.root].filter(Boolean).join(' ')}>
+      <section className={rootClassName} data-rubric-mode={visualMode}>
         Unable to load rubric.
         {errorMessage ? ` ${errorMessage}` : ''}
       </section>
@@ -79,12 +85,15 @@ export function RubricForReact({
   }
 
   return (
-    <section className={['rubric', className, classes?.root].filter(Boolean).join(' ')}>
+    <section className={rootClassName} data-rubric-mode={visualMode}>
       <div className="rubric-modebar">
-        <h2 className="rubric-modebar__title">
-          {state.rubricName}
-          {isGrading && <span className="rubric-modebar__tag">can grade</span>}
-        </h2>
+        <div className="rubric-modebar__heading">
+          <h2 className="rubric-modebar__title">
+            {state.rubricName}
+            {isGrading && <span className="rubric-modebar__tag">can grade</span>}
+          </h2>
+          <span className="rubric-modebar__badge">{visualMode === 'editing' ? 'Editing' : 'Viewing'}</span>
+        </div>
         {!isGrading && canEdit && (
           <button type="button" className="rubric-modebar__toggle" onClick={toggleMode}>
             {effectiveEditingMode === 'editing' ? 'Switch to Viewing' : 'Switch to Editing'}

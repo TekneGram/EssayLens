@@ -14,6 +14,14 @@ export function useCommentViewController({ comment, onSelectComment }: UseCommen
       title: createFallbackTitle(comment.id, comment.kind),
       onSelect: () => onSelectComment(comment.id),
       onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+        const target = event.target;
+        if (
+          target instanceof HTMLElement &&
+          (target !== event.currentTarget || target.closest('button, textarea, input, select, option, a, [contenteditable="true"]'))
+        ) {
+          return;
+        }
+
         if (!isCommentSelectKey(event.key)) {
           return;
         }

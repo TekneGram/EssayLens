@@ -2,6 +2,7 @@ import type { ActiveCommand, ChatMode, PendingSelection } from '@/layout/ChatInt
 
 export type AssessmentTabAction =
   | { type: 'assessmentTab/setPendingSelection'; payload: PendingSelection | null }
+  | { type: 'assessmentTab/setActiveCommentSelection'; payload: PendingSelection | null }
   | { type: 'assessmentTab/setActiveCommand'; payload: ActiveCommand | null }
   | { type: 'assessmentTab/clearActiveCommentIfMatch'; payload: string }
   | { type: 'assessmentTab/setChatMode'; payload: ChatMode }
