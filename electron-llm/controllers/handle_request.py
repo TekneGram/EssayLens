@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from app.pipeline_simple import (
-    WorkerActionError,
     clear_cached_session,
-    run_evaluate_with_rubric,
     run_chat,
     run_chat_stream,
     warm_runtime,
 )
+from app.pipeline_rubric_eval import run_evaluate_with_rubric
 from controllers.responses import success
 from app.runtime_lifecycle import RuntimeLifecycle
+from app.pipeline_errors import WorkerActionError
 
 # define constants
 
