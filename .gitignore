@@ -42,6 +42,8 @@ Thumbs.db
 .vscode/
 
 third_party
+third_party_new
+third_party_prismml
 .planning/text-view
 electron-llm/third_party
 electron-llm/venv/
@@ -49,6 +51,7 @@ electron-llm/.venv/
 **/__pycache__/
 *.py[cod]
 .venv-pyinstaller/
+assets
 
 # Vendored/runtime native binaries and local Python installs
 vendor/python/

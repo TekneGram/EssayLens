@@ -20,6 +20,16 @@ def wait_for_server(base_url: str, timeout_s: float = 60.0) -> None:
         time.sleep(0.5)
     raise TimeoutError(f"Server did not become healthy in {timeout_s}s: {health_url}")
 
+def get_prompts(system_prompt_path: str, user_prompt_path: str) -> tuple[str, str]:
+    repo_root = Path(__file__).resolve().parents[1]
+    system_prompt_path = repo_root / system_prompt_path
+    user_prompt_path = repo_root / user_prompt_path
+
+    system_prompt = system_prompt_path.read_text(encoding="utf-8")
+    user_content = user_prompt_path.read_text(encoding="utf-8")
+
+    return (system_prompt, user_content)
+
 def main() -> None:
     # Set up arguments for command line
     parser = argparse.ArgumentParser()
@@ -29,13 +39,13 @@ def main() -> None:
     parser.add_argument("--cache-k", default="turbo3", choices=["f16", "q8_0", "turbo2", "turbo3", "turbo4"])
     parser.add_argument("--cache-v", default="turbo3", choices=["f16", "q8_0", "turbo2", "turbo3", "turbo4"])
     parser.add_argument("--n-gpu-layers", type=int, default=99)
-    parser.add_argument("--max-tokens", type=int, default=128)
+    parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--temp", type=float, default=0.7)
     args = parser.parse_args()
 
     # File path to server
     repo_root = Path(__file__).resolve().parents[1]
-    llama_server = repo_root / "third_party" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
+    llama_server = repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
 
     # Basic server settings
     cmd = [
@@ -54,21 +64,28 @@ def main() -> None:
     proc = subprocess.Popen(cmd)
     base_url = f"http://127.0.0.1:{args.port}"
 
+    # Get system prompt and user prompt
+    prompts = get_prompts("experiments/system_prompts/paragraph_feedback.md", "experiments/writing_examples/w1.md")
+    system_prompt = prompts[0]
+    user_prompt = prompts[1]
+
+    # Run basic inference
     try:
         wait_for_server(base_url)
 
         payload = {
             "model": "local-gguf",
             "messages": [
-                {"role": "system", "content": "You are concise"},
-                {"role": "user", "content": "Explain turboquant in 3 bullet points."},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
             ],
             "max_tokens": args.max_tokens,
-            "temperature": args.temp
+            "temperature": args.temp,
+            "chat_template_kwargs": {"enable_thinking": False}
         }
 
         r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
-        r.riase_for_status()
+        r.raise_for_status()
         data = r.json()
 
         print("\n=== Raw JSON ===")
@@ -83,5 +100,10 @@ def main() -> None:
         except subprocess.TimeoutExpired:
             proc.kill()
 
+# main
 if __name__ == "__main__":
     main()
+
+# To run a quick experiment
+# python experiments/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k f16 --cache-v f16
+# python experiments/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
