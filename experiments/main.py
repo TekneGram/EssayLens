@@ -30,22 +30,30 @@ def get_prompts(system_prompt_path: str, user_prompt_path: str) -> tuple[str, st
 
     return (system_prompt, user_content)
 
+def select_server_for_model(model: str) -> str:
+    repo_root = Path(__file__).resolve().parents[1]
+    if model == "gemma":
+        return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
+    if model == "bonsai":
+        return repo_root / "third_party_prismml" / "llama-cpp" / "build" / "bin" / "llama-server"
+
 def main() -> None:
     # Set up arguments for command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, help="Path to GGUF model")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--ctx", type=int, default=8192)
-    parser.add_argument("--cache-k", default="turbo3", choices=["f16", "q8_0", "turbo2", "turbo3", "turbo4"])
-    parser.add_argument("--cache-v", default="turbo3", choices=["f16", "q8_0", "turbo2", "turbo3", "turbo4"])
+    parser.add_argument("--cache-k", default="turbo3", choices=["f32", "f16", "bf16" "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"])
+    parser.add_argument("--cache-v", default="turbo3", choices=["f32", "f16", "bf16" "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"])
     parser.add_argument("--n-gpu-layers", type=int, default=99)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--temp", type=float, default=0.7)
     args = parser.parse_args()
 
     # File path to server
-    repo_root = Path(__file__).resolve().parents[1]
-    llama_server = repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
+    llama_server = select_server_for_model("bonsai")
+    # repo_root = Path(__file__).resolve().parents[1]
+    # llama_server = repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
 
     # Basic server settings
     cmd = [
@@ -105,5 +113,5 @@ if __name__ == "__main__":
     main()
 
 # To run a quick experiment
-# python experiments/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k f16 --cache-v f16
+# python experiments/main.py --model "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --cache-k="f16" --cache-v="f16"
 # python experiments/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
