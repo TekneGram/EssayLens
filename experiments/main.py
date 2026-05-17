@@ -22,7 +22,8 @@ def wait_for_server(base_url: str, timeout_s: float = 60.0) -> None:
 
 def get_prompts(system_prompt_knowledge_path: str, system_prompt_task_path: str, user_prompt_path: str) -> tuple[str, str]:
     repo_root = Path(__file__).resolve().parents[1]
-    system_prompt_path = repo_root / system_prompt_path
+    system_prompt_task_path = repo_root / system_prompt_task_path
+    system_prompt_knowledge_path = repo_root / system_prompt_knowledge_path
     user_prompt_path = repo_root / user_prompt_path
 
     system_prompt_knowledge = system_prompt_knowledge_path.read_text(encoding="utf-8")
@@ -32,7 +33,7 @@ def get_prompts(system_prompt_knowledge_path: str, system_prompt_task_path: str,
 
     return (system_prompt, user_content)
 
-def select_server_for_model(model: str) -> str:
+def select_server_for_model(model: str) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
     if model == "gemma":
         return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
@@ -54,7 +55,11 @@ def multiple_decision_maker(base_url, system_prompt, user_prompt):
                             "items": {
                                 "type": "string",
                                 "enum": [
+                                    "improve_paragraph_topic_sentence",
                                     "improve_paragraph_with_examples",
+                                    "improve_paragraph_unity",
+                                    "add_definition",
+                                    "add_explanation",
                                     "combine_short_sentences",
                                     "improve_coherence"
                                 ]
@@ -63,7 +68,7 @@ def multiple_decision_maker(base_url, system_prompt, user_prompt):
                         "reason": { "type": "string" }
                     },
                     "required": ["actions", "reason"],
-                    "additionalProperties": "false"
+                    "additionalProperties": False
                 }
             }
         }
@@ -204,7 +209,7 @@ def main() -> None:
     base_url = f"http://127.0.0.1:{args.port}"
 
     # Get system prompt and user prompt
-    prompts = get_prompts("experiments/system_prompts/paragraph_knowledge.md", "experiments/system_prompts/multiple_decision_maker.md", "experiments/writing_examples/w1.md")
+    prompts = get_prompts("experiments/system_prompts/paragraph_knowledge.md", "experiments/system_prompts/multiple_decision_maker.md", "experiments/writing_examples/w4.md")
     system_prompt = prompts[0]
     user_prompt = prompts[1]
 
