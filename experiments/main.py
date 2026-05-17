@@ -20,12 +20,14 @@ def wait_for_server(base_url: str, timeout_s: float = 60.0) -> None:
         time.sleep(0.5)
     raise TimeoutError(f"Server did not become healthy in {timeout_s}s: {health_url}")
 
-def get_prompts(system_prompt_path: str, user_prompt_path: str) -> tuple[str, str]:
+def get_prompts(system_prompt_knowledge_path: str, system_prompt_task_path: str, user_prompt_path: str) -> tuple[str, str]:
     repo_root = Path(__file__).resolve().parents[1]
     system_prompt_path = repo_root / system_prompt_path
     user_prompt_path = repo_root / user_prompt_path
 
-    system_prompt = system_prompt_path.read_text(encoding="utf-8")
+    system_prompt_knowledge = system_prompt_knowledge_path.read_text(encoding="utf-8")
+    system_prompt_task = system_prompt_task_path.read_text(encoding="utf-8")
+    system_prompt = system_prompt_knowledge + "\n" + system_prompt_task
     user_content = user_prompt_path.read_text(encoding="utf-8")
 
     return (system_prompt, user_content)
@@ -95,7 +97,7 @@ def multiple_decision_maker(base_url, system_prompt, user_prompt):
     print("Chosen function:", fn_name)
     print("Arguments:", json.dumps(fn_args, indent=2))
 
-def decision_maker(args, base_url, system_prompt, user_prompt):
+def decision_maker(base_url, system_prompt, user_prompt):
 
     tools = [
         {
@@ -202,7 +204,7 @@ def main() -> None:
     base_url = f"http://127.0.0.1:{args.port}"
 
     # Get system prompt and user prompt
-    prompts = get_prompts("experiments/system_prompts/multiple_decision_maker.md", "experiments/writing_examples/w1.md")
+    prompts = get_prompts("experiments/system_prompts/paragraph_knowledge.md", "experiments/system_prompts/multiple_decision_maker.md", "experiments/writing_examples/w1.md")
     system_prompt = prompts[0]
     user_prompt = prompts[1]
 
@@ -210,6 +212,10 @@ def main() -> None:
     # Call one of the functions improve_paragraph_with_examples OR improve_paragraph_topic_sentence
 
     # Run basic inference
+
+    # Plan for running inference with decision makers
+    # decision_maker returns one decision so extract it and call that function.
+    # multiple_decision_maker returns multiple decisions so extract them and loop through and call each function.
     try:
         wait_for_server(base_url)
         multiple_decision_maker(base_url, system_prompt, user_prompt)
