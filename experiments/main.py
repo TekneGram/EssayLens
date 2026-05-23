@@ -5,6 +5,7 @@ import argparse
 import time
 from pathlib import Path
 from topic_sentences import topic_sentence_identifier, topic_sentence_controlling_idea, topic_sentence_judgement
+from coherence import determine_coherence_level, recommend_coherence_improvement, praise_coherence
 
 import requests
 
@@ -172,11 +173,7 @@ def decision_maker(base_url, system_prompt, user_prompt):
     print("Chosen function:", fn_name)
     print("Arguments:", json.dumps(fn_args, indent=2))
 
-def improve_paragraph_with_examples(args, base_url, system_prompt, user_prompt):
-    print("TODO")
 
-def improve_paragraph_topic_sentence(args, base_url, system_prompt, user_prompt):
-    print("TODO")
 
 
 def main() -> None:
@@ -215,6 +212,7 @@ def main() -> None:
 
     # Extra model-dependent flags
     cmd.extend(cmd_extra)
+    print(cmd)
 
 
     # Start the server
@@ -238,14 +236,27 @@ def main() -> None:
     try:
         wait_for_server(base_url)
         
-        data = topic_sentence_identifier("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w2.md", "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(data, indent=2))
-        topic_sentence = data["choices"][0]["message"]["content"]
-        data_2 = topic_sentence_controlling_idea("experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(data_2, indent=2))
-        controlling_idea = data_2["choices"][0]["message"]["content"]
-        data_3 = topic_sentence_judgement("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w2.md", "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
-        print(json.dumps(data_3, indent=2))
+        # data = topic_sentence_identifier("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w2.md", "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data, indent=2))
+        # topic_sentence = data["choices"][0]["message"]["content"]
+        # data_2 = topic_sentence_controlling_idea("experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data_2, indent=2))
+        # controlling_idea = data_2["choices"][0]["message"]["content"]
+        # data_3 = topic_sentence_judgement("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w2.md", "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data_3, indent=2))
+
+        data_4 = determine_coherence_level("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w4.md", "experiments/system_prompts_v2/coherence_1.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(data_4, indent=2))
+        content = data_4["choices"][0]["message"]["content"]
+        obj = json.loads(content)
+        verdict = obj["verdict"]
+        # Verify that verdicct is either yes or no. If neither, then skip and emit this as an error.
+        if (verdict == "no"):
+            data_5 = recommend_coherence_improvement("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w2.md", "experiments/system_prompts_v2/coherence_2.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(data_5, indent=2))
+        else:
+            data_6 = praise_coherence("experiments/system_prompts_v2/paragraph_knowledge.md", "experiments/writing_examples/w4.md", "experiments/system_prompts_v2/coherence_3.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(data_6, indent=2))
 
     finally:
         proc.terminate()
