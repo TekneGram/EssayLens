@@ -18,14 +18,14 @@ from prompts.chats.caches import clear_cached_session
 SIMPLE_CHAT_PIPELINE_KEY = "simple-chat"
 EVALUATE_SIMPLE_PIPELINE_KEY = "evaluate-simple"
 EVALUATE_WITH_RUBRIC_PIPELINE_KEY = "evaluate-with-rubric"
-BULK_EVALUATE_PIPELINE_KEY = "bulk-evaluate"
+PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY = "paragraph-feedback-bulk"
 
 ACTION_TO_PIPELINE: dict[str, tuple[str, str]] = {
     "llm.chat": (SIMPLE_CHAT_PIPELINE_KEY, "chat"),
     "llm.chatStream": (SIMPLE_CHAT_PIPELINE_KEY, "chatStream"),
     "llm.evaluate.simple": (EVALUATE_SIMPLE_PIPELINE_KEY, "evaluate"),
     "llm.evaluate.withRubric": (EVALUATE_WITH_RUBRIC_PIPELINE_KEY, "evaluate"),
-    "llm.evaluate.bulk": (BULK_EVALUATE_PIPELINE_KEY, "evaluate"),
+    "llm.paragraph.feedback.bulk": (PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY, "evaluate"),
 }
 
 SERVER_START_ACTION = "llm.server.start"
@@ -106,7 +106,7 @@ class HandleRequest:
             if pipeline_key in {
                 EVALUATE_SIMPLE_PIPELINE_KEY,
                 EVALUATE_WITH_RUBRIC_PIPELINE_KEY,
-                BULK_EVALUATE_PIPELINE_KEY,
+                PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY,
             }:
                 if pipeline_key == EVALUATE_WITH_RUBRIC_PIPELINE_KEY:
                     reply = run_evaluate_with_rubric(payload, self.lifecycle)

@@ -40,7 +40,7 @@ Relevant code:
 
 ### 5. Chat command dropdown options are UI-only right now
 
-The user can pick `Overview Comments`, `Rubric based comments`, or `Comment in bulk`, and that does affect UI state by forcing chat mode. But those commands are not sent through the actual chat request payload. These are affordances for a future feature, not real LLM behaviors today.
+The user can pick `Overview Comments`, `Rubric based comments`, or `Paragraph feedback in bulk`, and that does affect UI state by forcing chat mode. But those commands are not sent through the actual chat request payload. These are affordances for a future feature, not real LLM behaviors today.
 
 Relevant code:
 - [renderer/src/layout/ChatInterface/domain/commands.ts](/Users/danielparsons/Documents/Development/EssayLens/renderer/src/layout/ChatInterface/domain/commands.ts#L8)

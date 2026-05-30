@@ -14,7 +14,7 @@ const SUPPORTED_ACTIONS = new Set<LlmAction>([
   'llm.generateFeedbackSummary',
   'llm.evaluate.simple',
   'llm.evaluate.withRubric',
-  'llm.evaluate.bulk',
+  'llm.paragraph.feedback.bulk',
   'llm.session.create',
   'llm.session.clear',
   'llm.simpleChat.clearSessionCache',

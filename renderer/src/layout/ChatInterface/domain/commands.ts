@@ -8,7 +8,7 @@ export interface ChatCommandOption {
 export const CHAT_COMMAND_OPTIONS: ChatCommandOption[] = [
   { id: 'evaluate-simple', label: 'Overview Comments' },
   { id: 'evaluate-with-rubric', label: 'Rubric based comments' },
-  { id: 'bulk-evaluate', label: 'Comment in bulk' }
+  { id: 'paragraph-feedback-bulk', label: 'Paragraph feedback in bulk' }
 ];
 
 export function toActiveCommand(option: ChatCommandOption): ActiveCommand {
