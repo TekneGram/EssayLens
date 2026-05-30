@@ -16,8 +16,9 @@ export interface ListMessagesResponse {
 }
 
 export interface SendChatMessageRequest {
-  kind?: 'chat' | 'rubric-feedback';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
   fileId?: string;
+  fileIds?: string[];
   message?: string;
   essay?: string;
   contextText?: string;
@@ -39,6 +40,16 @@ export interface SendChatMessageResponse {
   rubricFeedback?: {
     replies: RubricFeedbackCategoryReplyDto[];
   };
+  paragraphFeedbackBulk?: {
+    replies: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reply: string;
+      clientRequestId: string;
+    }>;
+    failedFileIds?: string[];
+  };
 }
 
 export type ChatStreamEventType = 'start' | 'chunk' | 'done' | 'error';
@@ -50,6 +61,7 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
+  workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;
   channel?: 'content' | 'reasoning' | 'meta';

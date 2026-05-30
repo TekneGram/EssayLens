@@ -4,17 +4,20 @@ import { LlmChatSessionRepository } from '../../db/repositories/llmChatSessionRe
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository } from '../../db/repositories/llmSettingsRepository';
 import { RubricRepository } from '../../db/repositories/rubricRepository';
+import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { LlmOrchestrator } from './llmOrchestrator';
 import { defaultFileExists, defaultIsExecutable, defaultIsFile, resolveDefaultLlmServerPath } from '../../runtime/llmRuntimeFs';
-import { isRubricFeedbackRequest } from '../../mappers/chatRequestMappers';
+import { isParagraphFeedbackBulkRequest, isRubricFeedbackRequest } from '../../mappers/chatRequestMappers';
 import type { ChatServiceDeps } from './chatService.shared';
 import { SimpleChatService } from './simpleChatService';
 import { RubricFeedbackChatService } from './rubricFeedbackChatService';
+import { ParagraphFeedbackBulkChatService } from './paragraphFeedbackBulkChatService';
 
 export class ChatService {
   private readonly deps: ChatServiceDeps;
   private readonly simpleChatService: SimpleChatService;
   private readonly rubricFeedbackChatService: RubricFeedbackChatService;
+  private readonly paragraphFeedbackBulkChatService: ParagraphFeedbackBulkChatService;
 
   constructor(deps: Partial<ChatServiceDeps> & { llmOrchestrator: LlmOrchestrator }) {
     this.deps = {
@@ -23,6 +26,7 @@ export class ChatService {
       llmChatSessionRepository: new LlmChatSessionRepository(),
       llmSelectionRepository: new LlmSelectionRepository(),
       rubricRepository: new RubricRepository(),
+      workspaceRepository: new WorkspaceRepository(),
       fileExists: defaultFileExists,
       isFile: defaultIsFile,
       isExecutable: defaultIsExecutable,
@@ -31,6 +35,7 @@ export class ChatService {
     };
     this.simpleChatService = new SimpleChatService(this.deps);
     this.rubricFeedbackChatService = new RubricFeedbackChatService(this.deps);
+    this.paragraphFeedbackBulkChatService = new ParagraphFeedbackBulkChatService(this.deps);
   }
 
   async sendMessage(
@@ -39,6 +44,9 @@ export class ChatService {
   ): Promise<SendChatMessageResponse> {
     if (isRubricFeedbackRequest(request)) {
       return this.rubricFeedbackChatService.sendMessage(request, emitToRenderer);
+    }
+    if (isParagraphFeedbackBulkRequest(request)) {
+      return this.paragraphFeedbackBulkChatService.sendMessage(request, emitToRenderer);
     }
     return this.simpleChatService.sendMessage(request, emitToRenderer);
   }

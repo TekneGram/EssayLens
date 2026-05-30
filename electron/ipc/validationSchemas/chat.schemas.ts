@@ -27,6 +27,18 @@ const sendChatMessageSchema = z.discriminatedUnion('kind', [
     sessionId: z.string().optional(),
     rubricId: z.string().optional(),
     systemPrompt: z.string().optional()
+  }),
+  z.object({
+    kind: z.literal('paragraph-feedback-bulk'),
+    fileId: z.string().optional(),
+    fileIds: z.array(z.string().trim().min(1)).min(1, 'paragraph feedback bulk payload must include at least one fileId'),
+    message: z.string().optional(),
+    essay: z.string().optional(),
+    contextText: z.string().optional(),
+    clientRequestId: z.string().optional(),
+    sessionId: z.string().optional(),
+    rubricId: z.string().optional(),
+    systemPrompt: z.string().optional()
   })
 ]);
 
@@ -36,7 +48,12 @@ export const SendChatMessageSchema = z.preprocess(
       return val;
     }
     const recordVal = val as Record<string, unknown>;
-    const kind = recordVal.kind === 'rubric-feedback' ? 'rubric-feedback' : 'chat';
+    const kind =
+      recordVal.kind === 'rubric-feedback'
+        ? 'rubric-feedback'
+        : recordVal.kind === 'paragraph-feedback-bulk'
+          ? 'paragraph-feedback-bulk'
+          : 'chat';
     if (!recordVal.message && typeof recordVal.content === 'string') {
       return { ...recordVal, kind, message: recordVal.content };
     }

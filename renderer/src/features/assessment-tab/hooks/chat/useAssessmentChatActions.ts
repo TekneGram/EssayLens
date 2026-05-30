@@ -100,10 +100,12 @@ export function useAssessmentChatActions({
   const { chat: chatApi, rubric: rubricApi, llmSession } = usePorts();
   const appState = useAppState();
   const { activeCommand, pendingSelection, chatMode, draftText } = localState;
+  const isParagraphFeedbackBulkCommand = activeCommand?.id === 'paragraph-feedback-bulk';
+  const workspaceDocxFileIds = appState.workspace.files.filter((file) => file.kind === 'docx').map((file) => file.id);
   const isModeLockedToChat = selectIsModeLockedToChat(localState);
   const activeSessionId = selectActiveSessionIdForFile(appState, selectedFileId);
   const resolvedSessionId = selectedFileId ? resolveSessionIdForSend(selectedFileId, activeSessionId) : undefined;
-  const isChatSendDisabled = !selectedFileId;
+  const isChatSendDisabled = isParagraphFeedbackBulkCommand ? workspaceDocxFileIds.length === 0 : !selectedFileId;
 
   const streamMessageByClientRequestId = useRef(new Map<string, string>());
   const streamSeqByClientRequestId = useRef(new Map<string, number>());
@@ -130,6 +132,7 @@ export function useAssessmentChatActions({
   const handleSubmit = useCallback(async () => {
     const message = draftText.trim();
     const isRubricFeedbackCommand = activeCommand?.id === 'evaluate-with-rubric';
+    const isParagraphBulkCommand = activeCommand?.id === 'paragraph-feedback-bulk';
 
     if (chatMode === 'comment') {
       if (!message) {
@@ -151,11 +154,11 @@ export function useAssessmentChatActions({
       return;
     }
 
-    if (!isRubricFeedbackCommand && !message) {
+    if (!isRubricFeedbackCommand && !isParagraphBulkCommand && !message) {
       return;
     }
 
-    if (!selectedFileId) {
+    if (!isParagraphBulkCommand && !selectedFileId) {
       const message = 'Select a file before sending chat messages.';
       appDispatch(setChatError(message));
       toast.error(message);
@@ -173,7 +176,33 @@ export function useAssessmentChatActions({
         toast.error(errorMessage);
         return;
       }
-      if (isRubricFeedbackCommand) {
+      if (isParagraphBulkCommand) {
+        if (workspaceDocxFileIds.length === 0) {
+          const errorMessage = 'No DOCX files are available for paragraph feedback.';
+          appDispatch(setChatError(errorMessage));
+          toast.error(errorMessage);
+          return;
+        }
+
+        await submitChatMessageWorkflow({
+          chatApi,
+          dispatch: appDispatch,
+          kind: 'paragraph-feedback-bulk',
+          selectedFileId,
+          bulkFileIds: workspaceDocxFileIds,
+          pendingSelection,
+          streamMessageByClientRequestId: streamMessageByClientRequestId.current,
+          streamSeqByClientRequestId: streamSeqByClientRequestId.current,
+          streamSessionByClientRequestId: streamSessionByClientRequestId.current
+        });
+      } else if (isRubricFeedbackCommand) {
+        if (!selectedFileId) {
+          const errorMessage = 'Select a file before sending rubric feedback.';
+          appDispatch(setChatError(errorMessage));
+          toast.error(errorMessage);
+          return;
+        }
+
         const rubricSessionId = createRubricFeedbackSessionId(selectedFileId);
         const rubricId = await resolveRubricIdForFile({
           appState,
@@ -222,6 +251,13 @@ export function useAssessmentChatActions({
           streamSessionByClientRequestId: streamSessionByClientRequestId.current
         });
       } else {
+        if (!selectedFileId) {
+          const errorMessage = 'Select a file before sending chat messages.';
+          appDispatch(setChatError(errorMessage));
+          toast.error(errorMessage);
+          return;
+        }
+
         if (resolvedSessionId) {
           appDispatch(setActiveSessionForFile({ fileId: selectedFileId, sessionId: resolvedSessionId }));
         }
@@ -252,13 +288,26 @@ export function useAssessmentChatActions({
         });
       }
 
-      const sessionIdForEssayTracking = isRubricFeedbackCommand ? undefined : resolvedSessionId;
+      const sessionIdForEssayTracking = isRubricFeedbackCommand || isParagraphBulkCommand ? undefined : resolvedSessionId;
       if (sessionIdForEssayTracking && essayForChat) {
         essaySentBySessionId.current.add(sessionIdForEssayTracking);
       }
-      appDispatch(bumpSessionSyncForFile({ fileId: selectedFileId }));
+      if (isParagraphBulkCommand) {
+        workspaceDocxFileIds.forEach((fileId) => {
+          appDispatch(bumpSessionSyncForFile({ fileId }));
+        });
+      } else if (selectedFileId) {
+        appDispatch(bumpSessionSyncForFile({ fileId: selectedFileId }));
+      }
     } catch (error) {
-      const errorMessage = toChatErrorMessage(error, isRubricFeedbackCommand ? 'Unable to send rubric feedback.' : 'Unable to send chat message.');
+      const errorMessage = toChatErrorMessage(
+        error,
+        isRubricFeedbackCommand
+          ? 'Unable to send rubric feedback.'
+          : isParagraphBulkCommand
+            ? 'Unable to send paragraph feedback in bulk.'
+            : 'Unable to send chat message.'
+      );
       toast.error(errorMessage);
     }
   }, [
@@ -274,6 +323,7 @@ export function useAssessmentChatActions({
     resolvedSessionId,
     selectedEssayText,
     selectedFileId,
+    workspaceDocxFileIds,
     rubricApi,
     appState
   ]);
@@ -284,6 +334,15 @@ export function useAssessmentChatActions({
     }
 
     const unsubscribe = chatApi.onStreamChunk((event) => {
+      if (event.workflow === 'paragraph-feedback-bulk' && event.type === 'start' && event.fileId) {
+        appDispatch({
+          type: 'workspace/setSelectedFile',
+          payload: { fileId: event.fileId, status: 'ready' }
+        });
+      }
+      if (event.workflow === 'paragraph-feedback-bulk' && event.fileId && event.sessionId) {
+        appDispatch(setActiveSessionForFile({ fileId: event.fileId, sessionId: event.sessionId }));
+      }
       handleChatStreamChunkWorkflow({
         event,
         dispatch: appDispatch,

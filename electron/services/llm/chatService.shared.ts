@@ -9,6 +9,7 @@ import { LlmChatSessionRepository, type LlmSessionTurn } from '../../db/reposito
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository, type LlmRuntimeSettings } from '../../db/repositories/llmSettingsRepository';
 import { RubricRepository } from '../../db/repositories/rubricRepository';
+import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { LlmOrchestrator } from './llmOrchestrator';
 import type { LlmNotReadyErrorDetails } from '../../ipc/contracts/chat.contracts';
 
@@ -19,6 +20,7 @@ export interface ChatServiceDeps {
   llmChatSessionRepository: LlmChatSessionRepository;
   llmSelectionRepository: LlmSelectionRepository;
   rubricRepository: RubricRepository;
+  workspaceRepository: WorkspaceRepository;
   fileExists: (targetPath: string) => Promise<boolean>;
   isFile: (targetPath: string) => Promise<boolean>;
   isExecutable: (targetPath: string) => Promise<boolean>;
@@ -46,6 +48,11 @@ export interface LlmRubricEvaluationPayload {
   rubricEntries: RubricFeedbackCategorySection['entries'];
 }
 
+export interface LlmParagraphFeedbackBulkPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+}
+
 export interface RuntimeReadyResult {
   settings: LlmRuntimeSettings;
   notReadyDetails: LlmNotReadyErrorDetails | null;
@@ -58,6 +65,11 @@ export type RubricFeedbackRequest = SendChatMessageRequest & {
   fileId: string;
   essay: string;
   rubricId?: string;
+};
+
+export type ParagraphFeedbackBulkRequest = SendChatMessageRequest & {
+  kind: 'paragraph-feedback-bulk';
+  fileIds: string[];
 };
 
 export type ChatSendResult = Promise<SendChatMessageResponse>;

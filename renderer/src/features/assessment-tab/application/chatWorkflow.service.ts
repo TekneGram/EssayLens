@@ -20,10 +20,11 @@ import {
 interface SubmitChatMessageWorkflowParams {
   chatApi: ChatPort;
   dispatch: Dispatch<AppAction>;
-  kind?: 'chat' | 'rubric-feedback';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
   message?: string;
   essay?: string;
   rubricId?: string;
+  bulkFileIds?: string[];
   selectedFileId: string | null;
   activeSessionId?: string;
   pendingSelection: PendingSelection | null;
@@ -39,6 +40,7 @@ export async function submitChatMessageWorkflow({
   message,
   essay,
   rubricId,
+  bulkFileIds,
   selectedFileId,
   activeSessionId,
   pendingSelection,
@@ -46,7 +48,12 @@ export async function submitChatMessageWorkflow({
   streamSeqByClientRequestId,
   streamSessionByClientRequestId
 }: SubmitChatMessageWorkflowParams): Promise<void> {
-  const clientRequestId = makeLocalId(kind === 'rubric-feedback' ? 'rubricreq' : 'chatreq');
+  const clientRequestId =
+    kind === 'rubric-feedback'
+      ? makeLocalId('rubricreq')
+      : kind === 'paragraph-feedback-bulk'
+        ? makeLocalId('paragraphbulkreq')
+        : makeLocalId('chatreq');
   const createdAt = new Date().toISOString();
 
   if (kind === 'chat') {
@@ -95,8 +102,9 @@ export async function submitChatMessageWorkflow({
       sessionId: activeSessionId,
       clientRequestId
     } as {
-      kind: 'chat' | 'rubric-feedback';
+      kind: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
       fileId?: string;
+      fileIds?: string[];
       sessionId?: string;
       clientRequestId: string;
       message?: string;
@@ -112,6 +120,9 @@ export async function submitChatMessageWorkflow({
     }
     if (typeof rubricId === 'string') {
       request.rubricId = rubricId;
+    }
+    if (kind === 'paragraph-feedback-bulk' && bulkFileIds && bulkFileIds.length > 0) {
+      request.fileIds = bulkFileIds;
     }
     if (typeof pendingSelection?.exactQuote === 'string') {
       request.contextText = pendingSelection.exactQuote;
@@ -163,6 +174,36 @@ export async function submitChatMessageWorkflow({
         streamSeqByClientRequestId.delete(reply.clientRequestId);
         streamSessionByClientRequestId.delete(reply.clientRequestId);
       }
+    } else if (kind === 'paragraph-feedback-bulk') {
+      for (const reply of result.data.paragraphFeedbackBulk?.replies ?? []) {
+        const responseMessageId = reply.messageId;
+        const responseSessionId = reply.sessionId;
+        const createdAt = new Date().toISOString();
+        if (!streamMessageByClientRequestId.has(reply.clientRequestId)) {
+          dispatch(
+            addChatMessage({
+              id: responseMessageId,
+              role: 'assistant',
+              content: reply.reply,
+              relatedFileId: reply.fileId,
+              sessionId: responseSessionId,
+              createdAt
+            })
+          );
+        } else {
+          dispatch(
+            updateChatMessageContent({
+              messageId: responseMessageId,
+              content: reply.reply,
+              mode: 'replace'
+            })
+          );
+        }
+
+        streamMessageByClientRequestId.delete(reply.clientRequestId);
+        streamSeqByClientRequestId.delete(reply.clientRequestId);
+        streamSessionByClientRequestId.delete(reply.clientRequestId);
+      }
     }
     if (streamMessageByClientRequestId.size === 0) {
       dispatch(setChatStatus('idle'));
@@ -171,7 +212,7 @@ export async function submitChatMessageWorkflow({
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
   } catch (error) {
-    if (kind === 'rubric-feedback') {
+    if (kind === 'rubric-feedback' || kind === 'paragraph-feedback-bulk') {
       streamMessageByClientRequestId.clear();
       streamSeqByClientRequestId.clear();
       streamSessionByClientRequestId.clear();
