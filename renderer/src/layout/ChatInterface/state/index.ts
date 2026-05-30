@@ -2,6 +2,7 @@ export {
   addChatMessage,
   bumpSessionSyncForFile,
   clearTransientSessionDrafts,
+  removeChatMessage,
   setActiveSessionForFile,
   setChatError,
   setChatMessages,

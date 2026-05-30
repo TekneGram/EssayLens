@@ -51,6 +51,7 @@ export interface LlmRubricEvaluationPayload {
 export interface LlmParagraphFeedbackBulkPayload {
   settings: LlmRuntimeSettings;
   essay: string;
+  clientRequestId?: string;
 }
 
 export interface RuntimeReadyResult {

@@ -3,6 +3,7 @@ import type { LlmSessionListItemDto } from '@/app/ports/llmSession.port';
 
 type SetMessagesAction = { type: 'chat/setMessages'; payload: ChatMessage[] };
 type AddMessageAction = { type: 'chat/addMessage'; payload: ChatMessage };
+type RemoveMessageAction = { type: 'chat/removeMessage'; payload: { messageId: string } };
 type SetSessionTranscriptAction = {
   type: 'chat/setSessionTranscript';
   payload: { sessionId: string; messages: ChatMessage[] };
@@ -48,6 +49,10 @@ export function setChatMessages(payload: ChatMessage[]): SetMessagesAction {
 
 export function addChatMessage(payload: ChatMessage): AddMessageAction {
   return { type: 'chat/addMessage', payload };
+}
+
+export function removeChatMessage(payload: RemoveMessageAction['payload']): RemoveMessageAction {
+  return { type: 'chat/removeMessage', payload };
 }
 
 export function setSessionTranscript(payload: SetSessionTranscriptAction['payload']): SetSessionTranscriptAction {
@@ -103,6 +108,7 @@ export function clearTransientSessionDrafts(
 export type ChatInterfaceAction =
   | SetMessagesAction
   | AddMessageAction
+  | RemoveMessageAction
   | SetSessionTranscriptAction
   | UpdateMessageContentAction
   | SetStatusAction

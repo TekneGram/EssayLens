@@ -2,6 +2,7 @@ import type { Dispatch } from 'react';
 import type { ChatStreamChunkEvent } from '@/app/ports/chat.port';
 import {
   addChatMessage,
+  removeChatMessage,
   setChatError,
   setChatStatus,
   setSessionSendPhase,
@@ -179,6 +180,9 @@ export async function submitChatMessageWorkflow({
         const responseMessageId = reply.messageId;
         const responseSessionId = reply.sessionId;
         const createdAt = new Date().toISOString();
+        if (reply.progressMessageId) {
+          dispatch(removeChatMessage({ messageId: reply.progressMessageId }));
+        }
         if (!streamMessageByClientRequestId.has(reply.clientRequestId)) {
           dispatch(
             addChatMessage({
@@ -203,6 +207,37 @@ export async function submitChatMessageWorkflow({
         streamMessageByClientRequestId.delete(reply.clientRequestId);
         streamSeqByClientRequestId.delete(reply.clientRequestId);
         streamSessionByClientRequestId.delete(reply.clientRequestId);
+      }
+
+      for (const failure of result.data.paragraphFeedbackBulk?.failures ?? []) {
+        const createdAt = new Date().toISOString();
+        const existingMessageId = streamMessageByClientRequestId.get(failure.clientRequestId);
+        const failureContent = formatParagraphFeedbackBulkFailure(failure.reason, failure.details);
+
+        if (existingMessageId) {
+          dispatch(
+            updateChatMessageContent({
+              messageId: existingMessageId,
+              content: failureContent,
+              mode: 'replace'
+            })
+          );
+        } else {
+          dispatch(
+            addChatMessage({
+              id: failure.messageId,
+              role: 'assistant',
+              content: failureContent,
+              relatedFileId: failure.fileId,
+              sessionId: failure.sessionId,
+              createdAt
+            })
+          );
+        }
+
+        streamMessageByClientRequestId.delete(failure.clientRequestId);
+        streamSeqByClientRequestId.delete(failure.clientRequestId);
+        streamSessionByClientRequestId.delete(failure.clientRequestId);
       }
     }
     if (streamMessageByClientRequestId.size === 0) {
@@ -328,7 +363,32 @@ export function handleChatStreamChunkWorkflow({
     return;
   }
 
+  if (event.type === 'status') {
+    dispatch(
+      updateChatMessageContent({
+        messageId: assistantMessageId,
+        content: event.text || 'Processing paragraph feedback...',
+        mode: 'replace'
+      })
+    );
+    if (activeSessionId) {
+      dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: 'thinking' }));
+    }
+    return;
+  }
+
   if (event.type === 'done') {
+    if (event.workflow === 'paragraph-feedback-bulk' && !event.feedbackType) {
+      dispatch(removeChatMessage({ messageId: assistantMessageId }));
+      streamMessageByClientRequestId.delete(clientRequestId);
+      streamSeqByClientRequestId.delete(clientRequestId);
+      streamSessionByClientRequestId.delete(clientRequestId);
+      if (activeSessionId) {
+        dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
+      }
+      return;
+    }
+
     if (activeSessionId) {
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
@@ -336,14 +396,43 @@ export function handleChatStreamChunkWorkflow({
   }
 
   if (event.type === 'error') {
+    const message = event.error?.message || 'Streaming chat request failed.';
+    const detailsText =
+      event.error?.details === undefined
+        ? ''
+        : typeof event.error.details === 'string'
+          ? event.error.details
+          : JSON.stringify(event.error.details);
+    const visibleError = detailsText ? `${message}\n\nDetails: ${detailsText}` : message;
+
+    dispatch(
+      updateChatMessageContent({
+        messageId: assistantMessageId,
+        content: visibleError,
+        mode: 'replace'
+      })
+    );
+
+    if (event.workflow === 'paragraph-feedback-bulk') {
+      if (activeSessionId) {
+        dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
+      }
+      return;
+    }
+
     streamMessageByClientRequestId.delete(clientRequestId);
     streamSeqByClientRequestId.delete(clientRequestId);
     streamSessionByClientRequestId.delete(clientRequestId);
-    const message = event.error?.message || 'Streaming chat request failed.';
     dispatch(setChatStatus('error'));
     dispatch(setChatError(message));
     if (activeSessionId) {
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
   }
+}
+
+function formatParagraphFeedbackBulkFailure(reason: string, details: unknown): string {
+  const detailsText =
+    details === undefined ? '' : typeof details === 'string' ? details : JSON.stringify(details);
+  return detailsText ? `${reason}\n\nDetails: ${detailsText}` : reason;
 }

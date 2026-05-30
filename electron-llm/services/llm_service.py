@@ -25,6 +25,12 @@ class LlmService:
             max_parallel=self.max_parallel,
         )
 
+    def with_timeout(self, timeout_s: float) -> "LlmService":
+        return LlmService(
+            client=self.client.with_timeout(timeout_s),
+            max_parallel=self.max_parallel,
+        )
+
     def chat(
         self,
         system: str,

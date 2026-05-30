@@ -83,6 +83,18 @@ class OpenAICompatChatClient:
             reasoning_mode=mode,
         )
 
+    def with_timeout(self, timeout_s: float) -> "OpenAICompatChatClient":
+        if timeout_s <= 0:
+            raise ValueError("timeout_s must be > 0")
+        return OpenAICompatChatClient(
+            server_url=self.server_url,
+            model_name=self.model_name,
+            model_family=self.model_family,
+            request_cfg=self.request_cfg,
+            timeout_s=timeout_s,
+            reasoning_mode=self.reasoning_mode,
+        )
+
     # ----- INTERNALS -----
 
     def _prepare_user_content(self, user: str) -> str:
@@ -127,6 +139,9 @@ class OpenAICompatChatClient:
             
             if val is not None:
                 payload[field] = val
+
+        if self.model_family.strip().lower() == "instruct/think" and self.reasoning_mode == "no_think":
+            payload["chat_template_kwargs"] = {"enable_thinking": False}
         return payload
 
     @staticmethod
@@ -165,10 +180,15 @@ class OpenAICompatChatClient:
         message = first_choice.get("message")
         message_dict = message if isinstance(message, dict) else {}
         content = (self._extract_str(message_dict.get("content")) or "").strip()
+        finish_reason = self._extract_str(first_choice.get("finish_reason"))
         try:
             return json.loads(content)
         except json.JSONDecodeError as exc:
-            raise RuntimeError(f"Malformed JSON schema response: {content}") from exc
+            tail = content[-220:]
+            raise RuntimeError(
+                "Malformed JSON schema response "
+                f"(finish_reason={finish_reason!r}, content_len={len(content)}): {tail}"
+            ) from exc
         
     def _events_from_stream_line(
         self,

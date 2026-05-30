@@ -67,10 +67,12 @@ export function buildLlmRubricEvaluationPayload(args: {
 export function buildLlmParagraphFeedbackBulkPayload(args: {
   essay: string;
   settings: LlmRuntimeSettings;
+  clientRequestId?: string;
 }): LlmParagraphFeedbackBulkPayload {
   return {
     settings: args.settings,
-    essay: args.essay
+    essay: args.essay,
+    clientRequestId: args.clientRequestId
   };
 }
 

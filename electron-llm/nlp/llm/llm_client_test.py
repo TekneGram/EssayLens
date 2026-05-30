@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+import pytest
 import requests
 
 from config.llm_request_config import LlmRequestConfig
@@ -70,3 +71,28 @@ def test_chat_stream_decodes_utf8_chunks_without_mojibake(monkeypatch) -> None:
     assert response.content == expected_text
     assert "ð" not in response.content
     assert "â" not in response.content
+
+
+def test_parse_json_schema_content_reports_finish_reason_and_length() -> None:
+    client = OpenAICompatChatClient(
+        server_url="http://127.0.0.1:8080/v1/chat/completions",
+        model_name="qwen",
+        model_family="instruct/think",
+        request_cfg=_request_cfg(),
+    )
+
+    malformed = {
+        "choices": [
+            {
+                "finish_reason": "length",
+                "message": {"content": '{"verdict":"perfect","reason":"cut off'},
+            }
+        ]
+    }
+
+    with pytest.raises(RuntimeError) as exc_info:
+        client._parse_json_schema_content(malformed)  # noqa: SLF001 - deliberate unit coverage
+
+    text = str(exc_info.value)
+    assert "finish_reason='length'" in text
+    assert "content_len=" in text

@@ -21,11 +21,32 @@ interface ParagraphFeedbackBulkReply {
   messageId: string;
   reply: string;
   clientRequestId: string;
+  feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+  progressMessageId?: string;
 }
 
 interface ParagraphFeedbackBulkFailure {
   fileId: string;
+  sessionId: string;
+  messageId: string;
   reason: string;
+  clientRequestId: string;
+  details?: unknown;
+  progressMessageId?: string;
+}
+
+interface ParagraphFeedbackTypeResult {
+  verdict: string;
+  reason: string;
+  revision_suggestion: string;
+}
+
+interface ParagraphFeedbackBundle {
+  paragraph_feedback?: {
+    topic_sentence?: ParagraphFeedbackTypeResult;
+    supporting_sentences?: ParagraphFeedbackTypeResult;
+    coherence?: ParagraphFeedbackTypeResult;
+  };
 }
 
 export class ParagraphFeedbackBulkChatService {
@@ -62,7 +83,7 @@ export class ParagraphFeedbackBulkChatService {
 
     for (let index = 0; index < fileIds.length; index += 1) {
       const fileId = fileIds[index];
-      const responseMessageId = randomUUID();
+      const progressMessageId = randomUUID();
       const sessionId = `paragraph-feedback:${fileId}:${Date.now()}:${index + 1}`;
       const perFileClientRequestId = `${baseClientRequestId}:paragraph:${index + 1}`;
 
@@ -71,7 +92,7 @@ export class ParagraphFeedbackBulkChatService {
         clientRequestId: perFileClientRequestId,
         fileId,
         sessionId,
-        messageId: responseMessageId,
+        messageId: progressMessageId,
         workflow: 'paragraph-feedback-bulk',
         type: 'start',
         seq: 1,
@@ -88,10 +109,10 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'Could not find this file in the workspace.'
         });
-        failures.push({ fileId, reason: 'missing-file' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Could not find this file in the workspace.', clientRequestId: perFileClientRequestId, progressMessageId }));
         continue;
       }
 
@@ -102,10 +123,10 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'Only DOCX files are supported for paragraph feedback in bulk.'
         });
-        failures.push({ fileId, reason: 'unsupported-filetype' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Only DOCX files are supported for paragraph feedback in bulk.', clientRequestId: perFileClientRequestId, progressMessageId }));
         continue;
       }
 
@@ -120,11 +141,11 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'Could not read DOCX text for this file.',
           details: error
         });
-        failures.push({ fileId, reason: 'extract-failed' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Could not read DOCX text for this file.', clientRequestId: perFileClientRequestId, details: error, progressMessageId }));
         continue;
       }
 
@@ -135,21 +156,38 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'No text was extracted from this DOCX file.'
         });
-        failures.push({ fileId, reason: 'empty-text' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'No text was extracted from this DOCX file.', clientRequestId: perFileClientRequestId, progressMessageId }));
         continue;
       }
 
       const llmPayload = buildLlmParagraphFeedbackBulkPayload({
         essay: essayText,
-        settings
+        settings,
+        clientRequestId: perFileClientRequestId
       });
 
-      const llmResult = await this.deps.llmOrchestrator.requestAction<typeof llmPayload, SendChatMessageResponse>(
+      const llmResult = await this.deps.llmOrchestrator.requestActionStream<typeof llmPayload, SendChatMessageResponse>(
         'llm.paragraph.feedback.bulk',
-        llmPayload
+        llmPayload,
+        (streamEvent) => {
+          if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') return;
+          emitToRenderer({
+            requestId: streamEvent.requestId,
+            clientRequestId: perFileClientRequestId,
+            fileId,
+            sessionId,
+            messageId: progressMessageId,
+            workflow: 'paragraph-feedback-bulk',
+            type: 'status',
+            seq: streamEvent.data.seq + 1,
+            channel: 'meta',
+            text: streamEvent.data.text,
+            done: false
+          });
+        }
       );
 
       if (!llmResult.ok) {
@@ -159,11 +197,11 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: llmResult.error.message,
           details: llmResult.error.details
         });
-        failures.push({ fileId, reason: 'llm-failed' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: llmResult.error.message, clientRequestId: perFileClientRequestId, details: llmResult.error.details, progressMessageId }));
         continue;
       }
 
@@ -180,47 +218,41 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'Python worker returned an invalid paragraph feedback response.',
           details: error
         });
-        failures.push({ fileId, reason: 'invalid-response' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Python worker returned an invalid paragraph feedback response.', clientRequestId: perFileClientRequestId, details: error, progressMessageId }));
         continue;
       }
 
-      emitToRenderer({
-        requestId: `${perFileClientRequestId}:chunk`,
-        clientRequestId: perFileClientRequestId,
+      const structuredReply = this.tryParseParagraphFeedbackBundle(reply);
+      const feedbackReplies = this.buildFeedbackReplies({
         fileId,
         sessionId,
-        messageId: responseMessageId,
-        workflow: 'paragraph-feedback-bulk',
-        type: 'chunk',
-        seq: 2,
-        channel: 'content',
-        text: reply,
-        done: false
+        baseClientRequestId: perFileClientRequestId,
+        fallbackMessageId: randomUUID(),
+        progressMessageId,
+        structuredReply,
+        fallbackReply: reply
       });
 
       try {
         await this.deps.llmChatSessionRepository.createSession(sessionId, fileId);
         await this.deps.llmChatSessionRepository.appendTurns(
           sessionId,
-          [
-            {
-              role: 'assistant',
-              content: reply
-            }
-          ],
+          feedbackReplies.map((item) => ({ role: 'assistant' as const, content: item.reply })),
           fileId
         );
-        await this.deps.repository.addMessage({
-          id: responseMessageId,
-          role: 'assistant',
-          content: reply,
-          relatedFileId: fileId,
-          createdAt: new Date().toISOString()
-        });
+        for (const item of feedbackReplies) {
+          await this.deps.repository.addMessage({
+            id: item.messageId,
+            role: 'assistant',
+            content: item.reply,
+            relatedFileId: fileId,
+            createdAt: new Date().toISOString()
+          });
+        }
       } catch (error) {
         this.emitBulkError({
           emitToRenderer,
@@ -228,41 +260,67 @@ export class ParagraphFeedbackBulkChatService {
           clientRequestId: perFileClientRequestId,
           fileId,
           sessionId,
-          messageId: responseMessageId,
+          messageId: progressMessageId,
           reason: 'Paragraph feedback was generated but could not be persisted.',
           details: error
         });
-        failures.push({ fileId, reason: 'persist-failed' });
+        failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Paragraph feedback was generated but could not be persisted.', clientRequestId: perFileClientRequestId, details: error, progressMessageId }));
         continue;
       }
 
+      for (let replyIndex = 0; replyIndex < feedbackReplies.length; replyIndex += 1) {
+        const item = feedbackReplies[replyIndex];
+        emitToRenderer({
+          requestId: `${item.clientRequestId}:chunk`,
+          clientRequestId: item.clientRequestId,
+          fileId,
+          sessionId,
+          messageId: item.messageId,
+          workflow: 'paragraph-feedback-bulk',
+          feedbackType: item.feedbackType,
+          type: 'chunk',
+          seq: 2,
+          channel: 'content',
+          text: item.reply,
+          done: false
+        });
+        emitToRenderer({
+          requestId: `${item.clientRequestId}:done`,
+          clientRequestId: item.clientRequestId,
+          fileId,
+          sessionId,
+          messageId: item.messageId,
+          workflow: 'paragraph-feedback-bulk',
+          feedbackType: item.feedbackType,
+          type: 'done',
+          seq: 3,
+          channel: 'meta',
+          text: '',
+          done: true
+        });
+      }
       emitToRenderer({
-        requestId: `${perFileClientRequestId}:done`,
+        requestId: `${perFileClientRequestId}:progress-done`,
         clientRequestId: perFileClientRequestId,
         fileId,
         sessionId,
-        messageId: responseMessageId,
+        messageId: progressMessageId,
         workflow: 'paragraph-feedback-bulk',
         type: 'done',
-        seq: 3,
+        seq: 999,
         channel: 'meta',
         text: '',
         done: true
       });
 
-      replies.push({
-        fileId,
-        sessionId,
-        messageId: responseMessageId,
-        reply,
-        clientRequestId: perFileClientRequestId
-      });
+      replies.push(...feedbackReplies);
     }
 
     return {
       reply: replies[replies.length - 1]?.reply ?? '',
       paragraphFeedbackBulk: {
         replies,
+        failures,
         failedFileIds: failures.map((item) => item.fileId)
       }
     };
@@ -296,5 +354,82 @@ export class ParagraphFeedbackBulkChatService {
         details: args.details
       }
     });
+  }
+
+  private tryParseParagraphFeedbackBundle(text: string): ParagraphFeedbackBundle | null {
+    try {
+      const parsed = JSON.parse(text) as unknown;
+      if (typeof parsed !== 'object' || parsed === null) return null;
+      return parsed as ParagraphFeedbackBundle;
+    } catch {
+      return null;
+    }
+  }
+
+  private formatParagraphTypeReply(label: string, value: ParagraphFeedbackTypeResult): string {
+    return `### ${label}
+- Verdict: ${value.verdict}
+- Reason: ${value.reason}
+- Revision suggestion: ${value.revision_suggestion}`;
+  }
+
+  private buildFeedbackReplies(args: {
+    fileId: string;
+    sessionId: string;
+    baseClientRequestId: string;
+    fallbackMessageId: string;
+    progressMessageId: string;
+    structuredReply: ParagraphFeedbackBundle | null;
+    fallbackReply: string;
+  }): ParagraphFeedbackBulkReply[] {
+    const { fileId, sessionId, baseClientRequestId, fallbackMessageId, progressMessageId, structuredReply, fallbackReply } = args;
+    const paragraphFeedback = structuredReply?.paragraph_feedback;
+
+    const entries: Array<{
+      key: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+      label: string;
+      value: ParagraphFeedbackTypeResult | undefined;
+    }> = [
+      { key: 'topic_sentence', label: 'Topic Sentence', value: paragraphFeedback?.topic_sentence },
+      { key: 'supporting_sentences', label: 'Supporting Sentences', value: paragraphFeedback?.supporting_sentences },
+      { key: 'coherence', label: 'Coherence', value: paragraphFeedback?.coherence }
+    ];
+
+    const typedReplies = entries
+      .filter(
+        (entry): entry is typeof entry & { value: ParagraphFeedbackTypeResult } =>
+          !!entry.value &&
+          typeof entry.value.verdict === 'string' &&
+          typeof entry.value.reason === 'string' &&
+          typeof entry.value.revision_suggestion === 'string'
+      )
+      .map((entry, index) => ({
+        fileId,
+        sessionId,
+        messageId: randomUUID(),
+        reply: this.formatParagraphTypeReply(entry.label, entry.value),
+        clientRequestId: `${baseClientRequestId}:${entry.key}:${index + 1}`,
+        feedbackType: entry.key,
+        progressMessageId
+      }));
+
+    if (typedReplies.length > 0) {
+      return typedReplies;
+    }
+
+    return [
+      {
+        fileId,
+        sessionId,
+        messageId: fallbackMessageId,
+        reply: fallbackReply,
+        clientRequestId: `${baseClientRequestId}:fallback`,
+        progressMessageId
+      }
+    ];
+  }
+
+  private buildFailure(args: ParagraphFeedbackBulkFailure): ParagraphFeedbackBulkFailure {
+    return args;
   }
 }

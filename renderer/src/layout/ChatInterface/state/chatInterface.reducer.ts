@@ -14,6 +14,11 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
         ...state,
         messages: [...state.messages, action.payload]
       };
+    case 'chat/removeMessage':
+      return {
+        ...state,
+        messages: state.messages.filter((message) => message.id !== action.payload.messageId)
+      };
     case 'chat/setSessionTranscript': {
       const retained = state.messages.filter((message) => message.sessionId !== action.payload.sessionId);
       return {

@@ -47,12 +47,23 @@ export interface SendChatMessageResponse {
       messageId: string;
       reply: string;
       clientRequestId: string;
+      feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+      progressMessageId?: string;
+    }>;
+    failures?: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reason: string;
+      clientRequestId: string;
+      details?: unknown;
+      progressMessageId?: string;
     }>;
     failedFileIds?: string[];
   };
 }
 
-export type ChatStreamEventType = 'start' | 'chunk' | 'done' | 'error';
+export type ChatStreamEventType = 'start' | 'status' | 'chunk' | 'done' | 'error';
 
 export interface ChatStreamChunkEvent {
   requestId: string;
@@ -61,6 +72,7 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
+  feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;
