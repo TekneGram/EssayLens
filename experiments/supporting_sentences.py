@@ -1,7 +1,7 @@
 from pathlib import Path
 import requests
 
-def determine_coherence_level(
+def find_supporting_sentences(
         system_knowledge_path,
         paragraph_path,
         task_path,
@@ -33,12 +33,112 @@ def determine_coherence_level(
         "response_format": { 
             "type": "json_schema",
             "json_schema": {
-                "name": "determine_coherence_level",
+                "name": "identify_types_of_sentences",
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "verdict": { "type": "string", "enum": ["strong", "reasonable", "weak"]},
-                        "reason": { "type": "string" },
+                        "facts": { "type": "string" },
+                        "definitions": { "type": "string" },
+                    },
+                    "required": [],
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data
+
+def find_supporting_sentences_more(
+        system_knowledge_path,
+        paragraph_path,
+        task_path,
+        base_url,
+        max_tokens,
+        temperature
+):
+    # Get prompts and concatenate
+    repo_root = Path(__file__).resolve().parents[1]
+    system_knowledge_path = repo_root / system_knowledge_path
+    paragraph_path = repo_root / paragraph_path
+    task_path = repo_root / task_path
+
+    knowledge = system_knowledge_path.read_text(encoding="utf-8")
+    paragraph = paragraph_path.read_text(encoding="utf-8")
+    task = task_path.read_text(encoding="utf-8")
+    system_prompt = knowledge
+    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + task
+
+    payload = {
+        "model": "local-gguf",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "response_format": { 
+            "type": "json_schema",
+            "json_schema": {
+                "name": "identify_types_of_sentences",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "examples": { "type": "string" },
+                        "descriptions": { "type": "string" },
+                    },
+                    "required": [],
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data
+
+def judge_fact(
+    system_knowledge_path,
+    paragraph_path,
+    task_path,
+    facts,
+    base_url,
+    max_tokens,
+    temperature
+):
+    # Get prompts and concatenate
+    repo_root = Path(__file__).resolve().parents[1]
+    system_knowledge_path = repo_root / system_knowledge_path
+    paragraph_path = repo_root / paragraph_path
+    task_path = repo_root / task_path
+
+    knowledge = system_knowledge_path.read_text(encoding="utf-8")
+    paragraph = paragraph_path.read_text(encoding="utf-8")
+    task = task_path.read_text(encoding="utf-8")
+    system_prompt = knowledge
+    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + "These are facts identified from the paragraph: " + facts + "\n" + task
+    payload = {
+        "model": "local-gguf",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "response_format": { 
+            "type": "json_schema",
+            "json_schema": {
+                "name": "fact_judgement",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "verdict": { "type": "string", "enum": ["supports the controlling idea well", "does not support the controlling idea well"]},
+                        "reason": { "type": "string" }
                     },
                     "required": ["verdict", "reason"],
                     "additionalProperties": False
@@ -51,13 +151,14 @@ def determine_coherence_level(
     data = r.json()
     return data
 
-def recommend_coherence_improvement(
-        system_knowledge_path,
-        paragraph_path,
-        task_path,
-        base_url,
-        max_tokens,
-        temperature
+def judge_definition(
+    system_knowledge_path,
+    paragraph_path,
+    task_path,
+    definitions,
+    base_url,
+    max_tokens,
+    temperature
 ):
     # Get prompts and concatenate
     repo_root = Path(__file__).resolve().parents[1]
@@ -69,8 +170,7 @@ def recommend_coherence_improvement(
     paragraph = paragraph_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
     system_prompt = knowledge
-    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + task
-
+    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + "These are definitions identified in the paragraph: " + definitions + "\n" + task
     payload = {
         "model": "local-gguf",
         "messages": [
@@ -83,15 +183,14 @@ def recommend_coherence_improvement(
         "response_format": { 
             "type": "json_schema",
             "json_schema": {
-                "name": "improve_coherence",
+                "name": "judge_definitions",
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "improvement_1": { "type": "string" },
-                        "improvement_2": { "type": "string" },
-                        "improvement_3": { "type": "string" },
+                        "verdict": { "type": "string", "enum": ["useful definition", "not a useful definition"]},
+                        "reason": { "type": "string" }
                     },
-                    "required": ["improvement_1, improvement_2"],
+                    "required": ["verdict", "reason"],
                     "additionalProperties": False
                 }
             }
@@ -102,13 +201,14 @@ def recommend_coherence_improvement(
     data = r.json()
     return data
 
-def praise_coherence(
-        system_knowledge_path,
-        paragraph_path,
-        task_path,
-        base_url,
-        max_tokens,
-        temperature
+def judge_example(
+    system_knowledge_path,
+    paragraph_path,
+    task_path,
+    examples,
+    base_url,
+    max_tokens,
+    temperature
 ):
     # Get prompts and concatenate
     repo_root = Path(__file__).resolve().parents[1]
@@ -120,8 +220,7 @@ def praise_coherence(
     paragraph = paragraph_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
     system_prompt = knowledge
-    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + task
-
+    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + "These are examples used in the paragraph: " + examples + "\n" + task
     payload = {
         "model": "local-gguf",
         "messages": [
@@ -134,15 +233,14 @@ def praise_coherence(
         "response_format": { 
             "type": "json_schema",
             "json_schema": {
-                "name": "praise_coherence",
+                "name": "judge_examples",
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "praise_1": { "type": "string" },
-                        "praise_2": { "type": "string" },
-                        "praise_3": { "type": "string" },
+                        "verdict": { "type": "string", "enum": ["useful example", "not a useful example"]},
+                        "reason": { "type": "string" }
                     },
-                    "required": ["praise_1, praise_2"],
+                    "required": ["verdict", "reason"],
                     "additionalProperties": False
                 }
             }
@@ -153,13 +251,14 @@ def praise_coherence(
     data = r.json()
     return data
 
-def identify_transition_words(
-        system_knowledge_path,
-        paragraph_path,
-        task_path,
-        base_url,
-        max_tokens,
-        temperature
+def judge_description(
+    system_knowledge_path,
+    paragraph_path,
+    task_path,
+    descriptions,
+    base_url,
+    max_tokens,
+    temperature
 ):
     # Get prompts and concatenate
     repo_root = Path(__file__).resolve().parents[1]
@@ -171,8 +270,7 @@ def identify_transition_words(
     paragraph = paragraph_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
     system_prompt = knowledge
-    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + task
-
+    user_prompt = "\n Here is a paragraph: \n" + paragraph + "\n" + "These are descriptions used in the paragraph: " + descriptions + "\n" + task
     payload = {
         "model": "local-gguf",
         "messages": [
@@ -185,18 +283,14 @@ def identify_transition_words(
         "response_format": { 
             "type": "json_schema",
             "json_schema": {
-                "name": "identify_transition_words",
+                "name": "judge_descriptions",
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "transition_words": { 
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "minItems": 0,
-                            "uniqueItems": True
-                        },
+                        "verdict": { "type": "string", "enum": ["useful description", "not a useful description"]},
+                        "reason": { "type": "string" }
                     },
-                    "required": ["transition_words"],
+                    "required": ["verdict", "reason"],
                     "additionalProperties": False
                 }
             }
