@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from '@/App';
 import { AppProviders } from '@/app/providers/AppProviders';
 import { createAppQueryClient } from '@/app/providers/queryClient';
+import type { FeedbackItem } from '@/features/feedback/domain';
+import type { AddBlockFeedbackRequest } from '@/app/ports/assessment.port';
 
 interface SessionApiMocks {
   listByFile: ReturnType<typeof vi.fn>;
@@ -13,7 +15,12 @@ interface SessionApiMocks {
   onStreamChunk: ReturnType<typeof vi.fn>;
 }
 
-function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>) {
+interface AssessmentApiMocks {
+  listFeedback: ReturnType<typeof vi.fn>;
+  addFeedback: ReturnType<typeof vi.fn>;
+}
+
+function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, assessmentApiMocks?: Partial<AssessmentApiMocks>) {
   const listByFile =
     sessionApiMocks?.listByFile ??
     vi.fn().mockResolvedValue({
@@ -60,6 +67,29 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>) {
   const onStreamChunk =
     sessionApiMocks?.onStreamChunk ??
     vi.fn().mockImplementation(() => () => {});
+  const listFeedback =
+    assessmentApiMocks?.listFeedback ??
+    vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        feedback: []
+      }
+    });
+  const addFeedback =
+    assessmentApiMocks?.addFeedback ??
+    vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        feedback: {
+          id: 'feedback-created-1',
+          fileId: 'file-1',
+          source: 'llm',
+          kind: 'block',
+          commentText: 'Created comment',
+          createdAt: new Date('2026-02-24T00:00:00.000Z').toISOString()
+        }
+      }
+    });
 
   Object.defineProperty(window, 'api', {
     value: {
@@ -94,8 +124,8 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>) {
       },
       assessment: {
         extractDocument: async () => ({ ok: true, data: { fileId: 'file-1', text: 'stub', markdown: 'stub' } }),
-        listFeedback: async () => ({ ok: true, data: { feedback: [] } }),
-        addFeedback: async () => ({ ok: true, data: { feedback: null } }),
+        listFeedback,
+        addFeedback,
         editFeedback: async () => ({ ok: true, data: { feedback: null } }),
         deleteFeedback: async () => ({ ok: true, data: { deleted: true } }),
         applyFeedback: async () => ({ ok: true, data: { feedback: null } }),
@@ -160,7 +190,7 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>) {
     configurable: true
   });
 
-  return { listByFile, getTurns, create, deleteSession, sendMessage, onStreamChunk };
+  return { listByFile, getTurns, create, deleteSession, sendMessage, onStreamChunk, listFeedback, addFeedback };
 }
 
 function renderApp() {
@@ -278,6 +308,134 @@ describe('ChatView session orchestration', () => {
     expect(await screen.findByTestId('chat-screen')).toBeTruthy();
     expect(screen.getByText('Assistant')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Session B turn' })).toBeTruthy();
+  });
+
+  it('creates an editable block comment from an assistant chat bubble', async () => {
+    const assistantText = 'Use stronger evidence in this paragraph.\n\n- cite the data';
+    const feedbackStore: FeedbackItem[] = [];
+    const listByFile = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        fileEntityUuid: 'file-1',
+        sessions: [
+          {
+            sessionId: 'session-a',
+            fileEntityUuid: 'file-1',
+            createdAt: '2026-02-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+            lastUsedAt: '2026-02-03T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    const getTurns = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        sessionId: 'session-a',
+        fileEntityUuid: 'file-1',
+        turns: [
+          { role: 'teacher', content: 'Teacher prompt' },
+          { role: 'assistant', content: assistantText },
+          { role: 'system', content: 'System note' }
+        ]
+      }
+    });
+    const listFeedback = vi.fn().mockImplementation(async () => ({
+      ok: true,
+      data: {
+        feedback: feedbackStore
+      }
+    }));
+    const addFeedback = vi.fn().mockImplementation(async (request: Omit<AddBlockFeedbackRequest, 'fileId'>) => {
+      const feedback: FeedbackItem = {
+        id: 'feedback-from-chat-1',
+        fileId: 'file-1',
+        createdAt: new Date('2026-02-24T00:00:00.000Z').toISOString(),
+        ...request
+      };
+      feedbackStore.push(feedback);
+      return {
+        ok: true,
+        data: {
+          feedback
+        }
+      };
+    });
+    installWindowApiMocks({ listByFile, getTurns }, { listFeedback, addFeedback });
+    renderApp();
+
+    await selectFileFromWorkspace();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Chat 1' }));
+    expect(await screen.findByTestId('chat-screen')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Add to comments' })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add to comments' }));
+
+    await waitFor(() => {
+      expect(addFeedback).toHaveBeenCalledWith({
+        kind: 'block',
+        source: 'llm',
+        commentText: assistantText,
+        fileId: 'file-1'
+      });
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Select Block comment/i }).getAttribute('data-active')).toBe('true');
+    });
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+  });
+
+  it('does not create a duplicate when assistant text exactly matches an existing comment', async () => {
+    const assistantText = 'This exact comment already exists.';
+    const existingComment: FeedbackItem = {
+      id: 'feedback-existing-1',
+      fileId: 'file-1',
+      source: 'llm',
+      kind: 'block',
+      commentText: assistantText,
+      createdAt: new Date('2026-02-24T00:00:00.000Z').toISOString()
+    };
+    const listByFile = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        fileEntityUuid: 'file-1',
+        sessions: [
+          {
+            sessionId: 'session-a',
+            fileEntityUuid: 'file-1',
+            createdAt: '2026-02-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+            lastUsedAt: '2026-02-03T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    const getTurns = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        sessionId: 'session-a',
+        fileEntityUuid: 'file-1',
+        turns: [{ role: 'assistant', content: assistantText }]
+      }
+    });
+    const listFeedback = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        feedback: [existingComment]
+      }
+    });
+    const addFeedback = vi.fn();
+    installWindowApiMocks({ listByFile, getTurns }, { listFeedback, addFeedback });
+    renderApp();
+
+    await selectFileFromWorkspace();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Chat 1' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to comments' }));
+
+    await waitFor(() => {
+      expect(addFeedback).not.toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: /Select Block comment/i }).getAttribute('data-active')).toBe('true');
+    });
   });
 
   it('creates a new chat session and refreshes session list', async () => {

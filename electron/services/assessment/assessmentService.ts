@@ -251,6 +251,7 @@ export class AssessmentService {
         });
       }
       const inlineFeedback = feedback.filter((item) => item.kind === 'inline');
+      const appliedBlockFeedback = feedback.filter((item) => item.kind === 'block' && item.applied === true);
       const outputPath = sourceFile.path.replace(/\.docx$/i, '.annotated.docx');
       const result = await this.deps.generateFeedbackFile({
         sourceFilePath: sourceFile.path,
@@ -270,6 +271,9 @@ export class AssessmentService {
             runIndex: 0,
             charOffset: 0
           }
+        })),
+        blockComments: appliedBlockFeedback.map((item) => ({
+          commentText: item.commentText
         }))
       });
 

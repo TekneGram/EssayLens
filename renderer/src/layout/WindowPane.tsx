@@ -30,7 +30,14 @@ export default function WindowPane() {
         rubricPanel={<RubricTab />}
         llmPanel={<LlmManager />}
       />
-      {isChatCollapsed ? <ChatCollapsedRail onExpand={expandChat} /> : <ChatView onCollapse={collapseChat} />}
+      {isChatCollapsed ? (
+        <ChatCollapsedRail onExpand={expandChat} />
+      ) : (
+        <ChatView
+          onCollapse={collapseChat}
+          onCreateCommentFromChatMessage={assessmentChatBindings?.onCreateCommentFromChatMessage}
+        />
+      )}
       <ChatInterface onChatIntent={expandChat} {...(assessmentChatBindings ?? {})} />
     </div>
   );

@@ -8,9 +8,10 @@ export { collapseChatPanel, expandChatPanel, selectIsChatCollapsed } from '@/lay
 
 interface ChatViewProps {
   onCollapse: () => void;
+  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
 }
 
-export function ChatView({ onCollapse }: ChatViewProps) {
+export function ChatView({ onCollapse, onCreateCommentFromChatMessage }: ChatViewProps) {
   const {
     fileEntityUuid,
     activeScreen,
@@ -61,6 +62,7 @@ export function ChatView({ onCollapse }: ChatViewProps) {
             error={sessionTurnsError}
             showLlmLoading={showLlmLoading}
             showThinking={showThinking}
+            onCreateCommentFromChatMessage={onCreateCommentFromChatMessage}
           />
         ) : null}
       </div>

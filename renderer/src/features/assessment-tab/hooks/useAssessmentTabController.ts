@@ -47,17 +47,6 @@ export function useAssessmentTabController({
     [localState.chatMode]
   );
 
-  const { chatMode, isModeLockedToChat } = useAssessmentChatController({
-    appDispatch,
-    localState,
-    localDispatch,
-    selectedFileId,
-    selectedEssayText,
-    addFeedback,
-    onChatBindingsChange,
-    setActiveCommandWithModeRule
-  });
-
   const {
     comments,
     pendingSelection,
@@ -75,7 +64,8 @@ export function useAssessmentTabController({
     onApplyComment,
     onSendToLlm,
     onGenerateFeedbackDocument,
-    onCommentsTabChange
+    onCommentsTabChange,
+    onCreateCommentFromChatMessage
   } = useAssessmentCommentsController({
     appState,
     appDispatch,
@@ -85,7 +75,20 @@ export function useAssessmentTabController({
     selectedFileType,
     isAddFeedbackPending,
     addFeedbackErrorMessage,
+    addFeedback,
     setActiveCommandWithModeRule
+  });
+
+  const { chatMode, isModeLockedToChat } = useAssessmentChatController({
+    appDispatch,
+    localState,
+    localDispatch,
+    selectedFileId,
+    selectedEssayText,
+    addFeedback,
+    onChatBindingsChange,
+    setActiveCommandWithModeRule,
+    onCreateCommentFromChatMessage
   });
 
   const originalText =

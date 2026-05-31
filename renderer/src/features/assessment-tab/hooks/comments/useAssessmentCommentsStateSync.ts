@@ -5,6 +5,8 @@ import type { AssessmentTabLocalState } from '../../state';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { FeedbackItem } from '@/features/feedback/domain';
 
+const EMPTY_COMMENTS: FeedbackItem[] = [];
+
 interface UseAssessmentCommentsStateSyncParams {
   appState: AppState;
   localState: AssessmentTabLocalState;
@@ -22,7 +24,7 @@ export function useAssessmentCommentsStateSync({
   isAddFeedbackPending,
   addFeedbackErrorMessage
 }: UseAssessmentCommentsStateSyncParams) {
-  const comments = feedbackListQuery.data ?? [];
+  const comments = feedbackListQuery.data ?? EMPTY_COMMENTS;
   const canGenerateFeedbackDocument = selectedFileType === 'docx' && comments.length > 0;
   const activeCommentsTab = selectActiveCommentsTab(appState);
   const commentsError =

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Dispatch } from 'react';
 import { toast } from 'react-toastify';
 import type {
@@ -101,7 +101,10 @@ export function useAssessmentChatActions({
   const appState = useAppState();
   const { activeCommand, pendingSelection, chatMode, draftText } = localState;
   const isParagraphFeedbackBulkCommand = activeCommand?.id === 'paragraph-feedback-bulk';
-  const workspaceDocxFileIds = appState.workspace.files.filter((file) => file.kind === 'docx').map((file) => file.id);
+  const workspaceDocxFileIds = useMemo(
+    () => appState.workspace.files.filter((file) => file.kind === 'docx').map((file) => file.id),
+    [appState.workspace.files]
+  );
   const isModeLockedToChat = selectIsModeLockedToChat(localState);
   const activeSessionId = selectActiveSessionIdForFile(appState, selectedFileId);
   const resolvedSessionId = selectedFileId ? resolveSessionIdForSend(selectedFileId, activeSessionId) : undefined;

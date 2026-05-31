@@ -9,6 +9,12 @@ import type { AppAction } from '@/app/providers/state/actions';
 import type { Dispatch } from 'react';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
 import type { FeedbackItem } from '@/features/feedback/domain';
+import type {
+  AddBlockFeedbackRequest,
+  AddInlineFeedbackRequest
+} from '@/app/ports/assessment.port';
+
+type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
 
 interface UseAssessmentCommentsControllerParams {
   appState: AppState;
@@ -19,6 +25,7 @@ interface UseAssessmentCommentsControllerParams {
   selectedFileType: SelectedFileType;
   isAddFeedbackPending: boolean;
   addFeedbackErrorMessage?: string;
+  addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
 }
 
@@ -40,6 +47,7 @@ interface UseAssessmentCommentsControllerResult {
   onSendToLlm: (commentId: string, commandId?: string) => Promise<void>;
   onGenerateFeedbackDocument: () => Promise<void>;
   onCommentsTabChange: (tab: import('@/app/providers/state').CommentsTab) => void;
+  onCreateCommentFromChatMessage: (text: string) => Promise<void>;
 }
 
 export function useAssessmentCommentsController({
@@ -51,6 +59,7 @@ export function useAssessmentCommentsController({
   selectedFileType,
   isAddFeedbackPending,
   addFeedbackErrorMessage,
+  addFeedback,
   setActiveCommandWithModeRule
 }: UseAssessmentCommentsControllerParams): UseAssessmentCommentsControllerResult {
   const feedbackListQuery = useFeedbackListQuery(selectedFileId);
@@ -70,6 +79,7 @@ export function useAssessmentCommentsController({
     selectedFileId,
     feedbackListQuery,
     comments: synced.comments,
+    addFeedback,
     canGenerateFeedbackDocument: synced.canGenerateFeedbackDocument,
     setActiveCommandWithModeRule
   });
