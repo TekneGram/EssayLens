@@ -3,6 +3,7 @@ import { ChatRepository } from '../../db/repositories/chatRepository';
 import { LlmChatSessionRepository } from '../../db/repositories/llmChatSessionRepository';
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository } from '../../db/repositories/llmSettingsRepository';
+import { LlmFeedbackCompletionRepository } from '../../db/repositories/llmFeedbackCompletionRepository';
 import { RubricRepository } from '../../db/repositories/rubricRepository';
 import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { LlmOrchestrator } from './llmOrchestrator';
@@ -25,6 +26,7 @@ export class ChatService {
       llmSettingsRepository: new LlmSettingsRepository(),
       llmChatSessionRepository: new LlmChatSessionRepository(),
       llmSelectionRepository: new LlmSelectionRepository(),
+      llmFeedbackCompletionRepository: new LlmFeedbackCompletionRepository(),
       rubricRepository: new RubricRepository(),
       workspaceRepository: new WorkspaceRepository(),
       fileExists: defaultFileExists,

@@ -5,6 +5,7 @@ import type { AppResult } from '@/app/result';
 export type LlmModelKey = string;
 export type LlmBackend = string;
 export type LlmModelFamily = string;
+export type BulkLlmRecyclePolicy = 'never' | 'after_each_file';
 
 export interface CatalogLlmModelDto {
   key: LlmModelKey;
@@ -51,6 +52,7 @@ export interface LlmRuntimeSettings {
   request_seed: number | null;
   use_fake_reply: boolean;
   fake_reply_text: string | null;
+  bulk_llm_recycle_policy: BulkLlmRecyclePolicy;
 }
 
 export interface ListCatalogModelsResponse {

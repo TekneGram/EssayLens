@@ -109,6 +109,7 @@ beforeEach(() => {
   };
 
   appWindow.api.chat = {
+    checkParagraphFeedbackCompletions: vi.fn().mockResolvedValue({ ok: true, data: { activeModel: null, completions: [] } }),
     sendMessage: vi.fn().mockResolvedValue({ ok: true, data: { reply: '' } }),
     onStreamChunk: vi.fn().mockReturnValue(() => {}),
     ...existingChat

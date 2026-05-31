@@ -8,6 +8,7 @@ import { ChatRepository } from '../../db/repositories/chatRepository';
 import { LlmChatSessionRepository, type LlmSessionTurn } from '../../db/repositories/llmChatSessionRepository';
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository, type LlmRuntimeSettings } from '../../db/repositories/llmSettingsRepository';
+import { LlmFeedbackCompletionRepository } from '../../db/repositories/llmFeedbackCompletionRepository';
 import { RubricRepository } from '../../db/repositories/rubricRepository';
 import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { LlmOrchestrator } from './llmOrchestrator';
@@ -19,6 +20,7 @@ export interface ChatServiceDeps {
   llmSettingsRepository: LlmSettingsRepository;
   llmChatSessionRepository: LlmChatSessionRepository;
   llmSelectionRepository: LlmSelectionRepository;
+  llmFeedbackCompletionRepository: LlmFeedbackCompletionRepository;
   rubricRepository: RubricRepository;
   workspaceRepository: WorkspaceRepository;
   fileExists: (targetPath: string) => Promise<boolean>;
@@ -71,6 +73,7 @@ export type RubricFeedbackRequest = SendChatMessageRequest & {
 export type ParagraphFeedbackBulkRequest = SendChatMessageRequest & {
   kind: 'paragraph-feedback-bulk';
   fileIds: string[];
+  redoCompletedFileIds?: string[];
 };
 
 export type ChatSendResult = Promise<SendChatMessageResponse>;

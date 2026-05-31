@@ -3,6 +3,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AppException } from '../../core/appException';
 import type { SendChatMessageResponse } from '../../ipc/contracts/chat.contracts';
+import type { StopLlmServerResponse } from '../../ipc/contracts/llmServer.contracts';
 import {
   buildLlmParagraphFeedbackBulkPayload,
   requireReplyText
@@ -34,6 +35,15 @@ interface ParagraphFeedbackBulkFailure {
   reason: string;
   clientRequestId: string;
   details?: unknown;
+  progressMessageId?: string;
+}
+
+interface ParagraphFeedbackBulkSkip {
+  fileId: string;
+  sessionId: string;
+  messageId: string;
+  reason: string;
+  clientRequestId: string;
   progressMessageId?: string;
 }
 
@@ -90,6 +100,22 @@ export class ParagraphFeedbackBulkChatService {
     const baseClientRequestId = request.clientRequestId ?? randomUUID();
     const replies: ParagraphFeedbackBulkReply[] = [];
     const failures: ParagraphFeedbackBulkFailure[] = [];
+    const skipped: ParagraphFeedbackBulkSkip[] = [];
+    const activeModel = await this.deps.llmSelectionRepository.getActiveModel();
+    const redoCompletedFileIds = new Set(
+      (request.redoCompletedFileIds ?? []).map((fileId) => fileId.trim()).filter(Boolean)
+    );
+    const completedFileIds = activeModel
+      ? new Set(
+          (
+            await this.deps.llmFeedbackCompletionRepository.listCompletedForFiles({
+              fileIds,
+              workflowKey: 'paragraph_feedback',
+              modelKey: activeModel.key
+            })
+          ).map((completion) => completion.fileId)
+        )
+      : new Set<string>();
 
     for (let index = 0; index < fileIds.length; index += 1) {
       const fileId = fileIds[index];
@@ -110,6 +136,31 @@ export class ParagraphFeedbackBulkChatService {
         text: '',
         done: false
       });
+
+      if (completedFileIds.has(fileId) && !redoCompletedFileIds.has(fileId)) {
+        emitToRenderer({
+          requestId: `${perFileClientRequestId}:already-complete`,
+          clientRequestId: perFileClientRequestId,
+          fileId,
+          sessionId,
+          messageId: progressMessageId,
+          workflow: 'paragraph-feedback-bulk',
+          type: 'done',
+          seq: 999,
+          channel: 'meta',
+          text: '',
+          done: true
+        });
+        skipped.push({
+          fileId,
+          sessionId,
+          messageId: progressMessageId,
+          reason: 'Paragraph feedback already exists for this file and LLM.',
+          clientRequestId: perFileClientRequestId,
+          progressMessageId
+        });
+        continue;
+      }
 
       const sourceFile = await this.deps.workspaceRepository.resolveFileById(fileId);
       if (!sourceFile) {
@@ -212,6 +263,7 @@ export class ParagraphFeedbackBulkChatService {
           details: llmResult.error.details
         });
         failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: llmResult.error.message, clientRequestId: perFileClientRequestId, details: llmResult.error.details, progressMessageId }));
+        await this.recycleBulkRuntimeAfterFile(settings, fileId);
         continue;
       }
 
@@ -233,6 +285,7 @@ export class ParagraphFeedbackBulkChatService {
           details: error
         });
         failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Python worker returned an invalid paragraph feedback response.', clientRequestId: perFileClientRequestId, details: error, progressMessageId }));
+        await this.recycleBulkRuntimeAfterFile(settings, fileId);
         continue;
       }
 
@@ -275,7 +328,18 @@ export class ParagraphFeedbackBulkChatService {
           details: error
         });
         failures.push(this.buildFailure({ fileId, sessionId, messageId: progressMessageId, reason: 'Paragraph feedback was generated but could not be persisted.', clientRequestId: perFileClientRequestId, details: error, progressMessageId }));
+        await this.recycleBulkRuntimeAfterFile(settings, fileId);
         continue;
+      }
+
+      if (activeModel) {
+        await this.deps.llmFeedbackCompletionRepository.addCompletion({
+          fileId,
+          workflowKey: 'paragraph_feedback',
+          modelKey: activeModel.key,
+          modelDisplayName: activeModel.displayName,
+          sessionId
+        });
       }
 
       for (let replyIndex = 0; replyIndex < feedbackReplies.length; replyIndex += 1) {
@@ -328,6 +392,7 @@ export class ParagraphFeedbackBulkChatService {
       });
 
       replies.push(...feedbackReplies);
+      await this.recycleBulkRuntimeAfterFile(settings, fileId);
     }
 
     return {
@@ -335,9 +400,28 @@ export class ParagraphFeedbackBulkChatService {
       paragraphFeedbackBulk: {
         replies,
         failures,
-        failedFileIds: failures.map((item) => item.fileId)
+        failedFileIds: failures.map((item) => item.fileId),
+        skippedFileIds: skipped.map((item) => item.fileId)
       }
     };
+  }
+
+  private shouldRecycleBulkRuntime(settings: { bulk_llm_recycle_policy?: string }): boolean {
+    return (settings.bulk_llm_recycle_policy ?? 'after_each_file') === 'after_each_file';
+  }
+
+  private async recycleBulkRuntimeAfterFile(settings: { bulk_llm_recycle_policy?: string }, fileId: string): Promise<void> {
+    if (!this.shouldRecycleBulkRuntime(settings)) {
+      return;
+    }
+
+    const result = await this.deps.llmOrchestrator.requestAction<{}, StopLlmServerResponse>('llm.server.stop', {});
+    if (!result.ok) {
+      console.warn('Could not recycle LLM runtime after bulk paragraph feedback file.', {
+        fileId,
+        error: result.error
+      });
+    }
   }
 
   private emitBulkError(args: {

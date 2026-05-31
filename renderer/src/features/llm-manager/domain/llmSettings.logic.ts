@@ -2,6 +2,7 @@ import type { LlmSettings } from './llmManager.types';
 
 export type SettingKey = keyof LlmSettings;
 export type EditableValue = string | number | boolean | null;
+export type EnumSettingOption = { value: string; label: string };
 
 const BOOLEAN_KEYS: ReadonlySet<SettingKey> = new Set(['llm_use_jinja', 'llm_cache_prompt', 'llm_flash_attn', 'use_fake_reply']);
 
@@ -23,7 +24,15 @@ const NULLABLE_NUMBER_KEYS: ReadonlySet<SettingKey> = new Set([
 
 const NULLABLE_STRING_KEYS: ReadonlySet<SettingKey> = new Set(['llm_gguf_path', 'llm_mmproj_path', 'fake_reply_text']);
 
+const ENUM_OPTIONS: Partial<Record<SettingKey, readonly EnumSettingOption[]>> = {
+  bulk_llm_recycle_policy: [
+    { value: 'after_each_file', label: 'after_each_file' },
+    { value: 'never', label: 'never' }
+  ]
+};
+
 const EDITABLE_KEYS: ReadonlySet<SettingKey> = new Set([
+  'bulk_llm_recycle_policy',
   'fake_reply_text',
   'llm_n_batch',
   'llm_n_ctx',
@@ -39,6 +48,14 @@ const EDITABLE_KEYS: ReadonlySet<SettingKey> = new Set([
 
 export function isBooleanSettingKey(key: SettingKey): boolean {
   return BOOLEAN_KEYS.has(key);
+}
+
+export function isEnumSettingKey(key: SettingKey): boolean {
+  return Boolean(ENUM_OPTIONS[key]);
+}
+
+export function getEnumSettingOptions(key: SettingKey): readonly EnumSettingOption[] {
+  return ENUM_OPTIONS[key] ?? [];
 }
 
 export function isEditableSettingKey(key: SettingKey): boolean {
@@ -77,6 +94,14 @@ export function parseSettingStringValue(key: SettingKey, rawValue: string): Edit
 
   if (NULLABLE_STRING_KEYS.has(key)) {
     return rawValue.trim() ? rawValue : null;
+  }
+
+  if (isEnumSettingKey(key)) {
+    const options = getEnumSettingOptions(key);
+    if (!options.some((option) => option.value === rawValue)) {
+      throw new Error(`Value for ${key} must be one of: ${options.map((option) => option.value).join(', ')}.`);
+    }
+    return rawValue;
   }
 
   return rawValue;

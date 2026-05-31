@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import type { LlmSettings } from '../domain/llmManager.types';
 import {
   formatSettingValue,
+  getEnumSettingOptions,
   isBooleanSettingKey,
+  isEnumSettingKey,
   isEditableSettingKey,
   parseSettingStringValue,
   type EditableValue,
@@ -73,6 +75,8 @@ export function useLlmSettingsEditor({ settings, isSaving, onSave }: UseLlmSetti
     isSaving,
     isEditableSettingKey,
     isBooleanSettingKey,
+    isEnumSettingKey,
+    getEnumSettingOptions,
     formatSettingValue,
     setDraftValue,
     setDraftBooleanValue,

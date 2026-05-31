@@ -30,6 +30,7 @@ interface LlmSettingsRow {
   request_seed: number | null;
   use_fake_reply: number;
   fake_reply_text: string | null;
+  bulk_llm_recycle_policy: LlmRuntimeSettings['bulk_llm_recycle_policy'];
 }
 
 export class LlmSettingsRepository {
@@ -48,7 +49,7 @@ export class LlmSettingsRepository {
          llm_seed, llm_rope_freq_base, llm_rope_freq_scale,
          llm_use_jinja, llm_cache_prompt, llm_flash_attn,
          max_tokens, temperature, top_p, top_k, repeat_penalty, request_seed,
-         use_fake_reply, fake_reply_text
+         use_fake_reply, fake_reply_text, bulk_llm_recycle_policy
        FROM llm_settings
        WHERE id = 'default'
        LIMIT 1;`
@@ -83,7 +84,8 @@ export class LlmSettingsRepository {
       repeat_penalty: row.repeat_penalty,
       request_seed: row.request_seed,
       use_fake_reply: row.use_fake_reply === 1,
-      fake_reply_text: row.fake_reply_text
+      fake_reply_text: row.fake_reply_text,
+      bulk_llm_recycle_policy: row.bulk_llm_recycle_policy
     };
   }
 

@@ -8,7 +8,7 @@ import { ParagraphFeedbackBulkChatService } from './paragraphFeedbackBulkChatSer
 
 const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
-function buildRuntimeSettings(): LlmRuntimeSettings {
+function buildRuntimeSettings(overrides: Partial<LlmRuntimeSettings> = {}): LlmRuntimeSettings {
   return {
     llm_server_path: '/tmp/llama-server',
     llm_gguf_path: '/tmp/model.gguf',
@@ -34,7 +34,9 @@ function buildRuntimeSettings(): LlmRuntimeSettings {
     repeat_penalty: null,
     request_seed: null,
     use_fake_reply: false,
-    fake_reply_text: null
+    fake_reply_text: null,
+    bulk_llm_recycle_policy: 'never',
+    ...overrides
   };
 }
 
@@ -53,7 +55,15 @@ async function createMinimalDocx(filePath: string): Promise<void> {
   await fs.writeFile(filePath, buffer);
 }
 
-async function createService(reply: string) {
+async function createService(
+  reply: string,
+  runtimeSettings: LlmRuntimeSettings = buildRuntimeSettings(),
+  options: {
+    activeModel?: { key: string; displayName: string } | null;
+    completedFileIds?: string[];
+    redoCompletedFileIds?: string[];
+  } = {}
+) {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-paragraph-feedback-'));
   const sourcePath = path.join(tempDir, 'source.docx');
   await createMinimalDocx(sourcePath);
@@ -66,22 +76,45 @@ async function createService(reply: string) {
     data: { reply },
     timestamp: '2026-02-24T00:00:00.000Z'
   });
+  const requestAction = vi.fn().mockResolvedValue({
+    requestId: 'stop-request-1',
+    ok: true,
+    data: { stopped: true, hasRuntime: false, serverRunning: false },
+    timestamp: '2026-02-24T00:00:00.000Z'
+  });
+  const activeModel = options.activeModel ?? null;
+  const listCompletedForFiles = vi.fn().mockResolvedValue(
+    (options.completedFileIds ?? []).map((fileId) => ({
+      id: `completion-${fileId}`,
+      fileId,
+      workflowKey: 'paragraph_feedback',
+      modelKey: activeModel?.key ?? 'model-1',
+      modelDisplayName: activeModel?.displayName ?? 'Model 1',
+      sessionId: `session-${fileId}`,
+      completedAt: '2026-02-24T00:00:00.000Z'
+    }))
+  );
+  const addCompletion = vi.fn().mockResolvedValue(undefined);
 
   const service = new ParagraphFeedbackBulkChatService({
     llmOrchestrator: {
-      requestAction: vi.fn(),
+      requestAction,
       requestActionStream
     } as any,
     llmSettingsRepository: {
-      getRuntimeSettings: vi.fn().mockResolvedValue(buildRuntimeSettings())
+      getRuntimeSettings: vi.fn().mockResolvedValue(runtimeSettings)
     } as any,
     llmChatSessionRepository: {
       createSession: vi.fn().mockResolvedValue(undefined),
       appendTurns
     } as any,
     llmSelectionRepository: {
-      getActiveModel: vi.fn().mockResolvedValue(null),
+      getActiveModel: vi.fn().mockResolvedValue(activeModel),
       resetSettingsToDefaults: vi.fn().mockResolvedValue(null)
+    } as any,
+    llmFeedbackCompletionRepository: {
+      listCompletedForFiles,
+      addCompletion
     } as any,
     workspaceRepository: {
       resolveFileById: vi.fn().mockResolvedValue({
@@ -101,7 +134,7 @@ async function createService(reply: string) {
     resolveLlmServerPath: vi.fn().mockReturnValue('/tmp/llama-server')
   });
 
-  return { service, appendTurns, addMessage, requestActionStream };
+  return { service, appendTurns, addMessage, requestAction, requestActionStream, listCompletedForFiles, addCompletion };
 }
 
 describe('ParagraphFeedbackBulkChatService', () => {
@@ -287,5 +320,93 @@ describe('ParagraphFeedbackBulkChatService', () => {
       'file-1'
     );
     expect(addMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('recycles the LLM runtime after each generated bulk file when configured', async () => {
+    const { service, requestAction, requestActionStream } = await createService(
+      'Plain fallback paragraph feedback.',
+      buildRuntimeSettings({ bulk_llm_recycle_policy: 'after_each_file' })
+    );
+
+    await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      vi.fn()
+    );
+
+    expect(requestActionStream).toHaveBeenCalledTimes(1);
+    expect(requestAction).toHaveBeenCalledWith('llm.server.stop', {});
+  });
+
+  it('records paragraph feedback completion after successful persistence for the active model', async () => {
+    const { service, addCompletion } = await createService('Plain fallback paragraph feedback.', buildRuntimeSettings(), {
+      activeModel: { key: 'gemma4_e4b_it_q4_k_m', displayName: 'Gemma 4 E4B Instruct Q4_K_M' }
+    });
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      vi.fn()
+    );
+
+    expect(result.paragraphFeedbackBulk?.skippedFileIds).toEqual([]);
+    expect(addCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fileId: 'file-1',
+        workflowKey: 'paragraph_feedback',
+        modelKey: 'gemma4_e4b_it_q4_k_m',
+        modelDisplayName: 'Gemma 4 E4B Instruct Q4_K_M',
+        sessionId: expect.stringContaining('paragraph-feedback:file-1:')
+      })
+    );
+  });
+
+  it('skips same-model completed files unless redo is requested', async () => {
+    const { service, requestActionStream, addCompletion } = await createService('Should not run.', buildRuntimeSettings(), {
+      activeModel: { key: 'qwen3_4b_q8', displayName: 'Qwen3 4B Q8_0' },
+      completedFileIds: ['file-1']
+    });
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      vi.fn()
+    );
+
+    expect(result.paragraphFeedbackBulk?.replies).toHaveLength(0);
+    expect(result.paragraphFeedbackBulk?.skippedFileIds).toEqual(['file-1']);
+    expect(requestActionStream).not.toHaveBeenCalled();
+    expect(addCompletion).not.toHaveBeenCalled();
+  });
+
+  it('redoes same-model completed files in a new session when redo is requested', async () => {
+    const { service, requestActionStream, addCompletion } = await createService('Plain fallback paragraph feedback.', buildRuntimeSettings(), {
+      activeModel: { key: 'qwen3_4b_q8', displayName: 'Qwen3 4B Q8_0' },
+      completedFileIds: ['file-1']
+    });
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        redoCompletedFileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      vi.fn()
+    );
+
+    expect(result.paragraphFeedbackBulk?.replies).toHaveLength(1);
+    expect(result.paragraphFeedbackBulk?.skippedFileIds).toEqual([]);
+    expect(requestActionStream).toHaveBeenCalledTimes(1);
+    expect(addCompletion).toHaveBeenCalledTimes(1);
   });
 });

@@ -28,6 +28,8 @@ export function LlmConfiguration({
     localError,
     isEditableSettingKey,
     isBooleanSettingKey,
+    isEnumSettingKey,
+    getEnumSettingOptions,
     formatSettingValue,
     setDraftValue,
     setDraftBooleanValue,
@@ -59,6 +61,7 @@ export function LlmConfiguration({
                 const value = settings[key];
                 const isEditing = editingKey === key;
                 const isBoolean = isBooleanSettingKey(key);
+                const isEnum = isEnumSettingKey(key);
                 const isEditable = isEditableSettingKey(key);
 
                 return (
@@ -76,6 +79,18 @@ export function LlmConfiguration({
                               />
                               <span>{draftBooleanValue ? 'true' : 'false'}</span>
                             </label>
+                          ) : isEnum ? (
+                            <select
+                              value={draftValue}
+                              onChange={(event) => setDraftValue(event.target.value)}
+                              aria-label={`Value for ${key}`}
+                            >
+                              {getEnumSettingOptions(key).map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
                           ) : (
                             <input
                               type="text"

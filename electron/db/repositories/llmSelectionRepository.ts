@@ -252,7 +252,8 @@ export class LlmSelectionRepository {
          repeat_penalty,
          request_seed,
          use_fake_reply,
-         fake_reply_text
+         fake_reply_text,
+         bulk_llm_recycle_policy
        )
        SELECT
          'default',
@@ -280,7 +281,8 @@ export class LlmSelectionRepository {
          d.repeat_penalty,
          d.request_seed,
          d.use_fake_reply,
-         d.fake_reply_text
+         d.fake_reply_text,
+         d.bulk_llm_recycle_policy
        FROM llm_selection_defaults d
        WHERE d.model_key = ?
        ON CONFLICT(id) DO UPDATE SET
@@ -308,7 +310,8 @@ export class LlmSelectionRepository {
          repeat_penalty = excluded.repeat_penalty,
          request_seed = excluded.request_seed,
          use_fake_reply = excluded.use_fake_reply,
-         fake_reply_text = excluded.fake_reply_text;`,
+         fake_reply_text = excluded.fake_reply_text,
+         bulk_llm_recycle_policy = excluded.bulk_llm_recycle_policy;`,
       [modelKey]
     );
 

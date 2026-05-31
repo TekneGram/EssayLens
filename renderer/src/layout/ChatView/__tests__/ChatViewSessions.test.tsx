@@ -170,7 +170,8 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, asses
                 repeat_penalty: 1.1,
                 llm_use_jinja: true,
                 llm_cache_prompt: true,
-                llm_flash_attn: true
+                llm_flash_attn: true,
+                bulk_llm_recycle_policy: 'after_each_file'
               }
             }
           }),

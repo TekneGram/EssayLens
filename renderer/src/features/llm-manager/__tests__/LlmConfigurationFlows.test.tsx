@@ -32,6 +32,7 @@ function makeSettings(overrides: Partial<LlmRuntimeSettings> = {}): LlmRuntimeSe
     request_seed: null,
     use_fake_reply: false,
     fake_reply_text: null,
+    bulk_llm_recycle_policy: 'after_each_file',
     ...overrides
   };
 }
@@ -121,6 +122,7 @@ describe('LlmConfiguration flows', () => {
     const editTemperatureButton = await screen.findByRole('button', { name: 'Edit setting temperature' });
     expect(editTemperatureButton.textContent).toBe('0.2');
     expect(screen.getByRole('button', { name: 'Edit setting use_fake_reply' }).textContent).toBe('false');
+    expect(screen.getByRole('button', { name: 'Edit setting bulk_llm_recycle_policy' }).textContent).toBe('after_each_file');
     expect(screen.queryByRole('button', { name: 'Edit setting llm_host' })).toBeNull();
     expect(screen.getByText('127.0.0.1')).toBeTruthy();
 
@@ -136,6 +138,16 @@ describe('LlmConfiguration flows', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Edit setting temperature' }).textContent).toBe('0.45');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit setting bulk_llm_recycle_policy' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Value for bulk_llm_recycle_policy' }), {
+      target: { value: 'never' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(updateSettingsApi).toHaveBeenCalledWith({ settings: { bulk_llm_recycle_policy: 'never' } });
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Reset defaults' }));

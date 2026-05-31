@@ -28,7 +28,8 @@ function buildRuntimeSettings(): LlmRuntimeSettings {
     repeat_penalty: null,
     request_seed: null,
     use_fake_reply: false,
-    fake_reply_text: null
+    fake_reply_text: null,
+    bulk_llm_recycle_policy: 'never'
   };
 }
 

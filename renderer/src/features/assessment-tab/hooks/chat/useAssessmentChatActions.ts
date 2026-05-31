@@ -25,10 +25,27 @@ import type { AssessmentTabAction, AssessmentTabLocalState } from '../../state';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { AssessmentTabChatBindings } from '../../types';
 import type { RubricPort } from '@/app/ports/rubric.port';
+import type { ParagraphFeedbackCompletionDto } from '@/app/ports/chat.port';
 
 type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
 const MAX_ESSAY_WORD_COUNT = 2000;
 const ESSAY_TRUNCATION_WARNING = 'Only the first 2000 words of the essay are currently being considered.';
+
+function resolveParagraphFeedbackDuplicateChoice(args: {
+  completions: ParagraphFeedbackCompletionDto[];
+  modelDisplayName: string;
+}): 'skip' | 'redo' | 'cancel' {
+  const count = args.completions.length;
+  const plural = count === 1 ? 'essay already has' : 'essays already have';
+  const redo = window.confirm(
+    `${count} ${plural} paragraph feedback from ${args.modelDisplayName}.\n\nSelect OK to redo completed essays in new chat sessions. Select Cancel to choose whether to skip them.`
+  );
+  if (redo) {
+    return 'redo';
+  }
+  const skip = window.confirm('Skip completed essays and run feedback only for essays without existing feedback?');
+  return skip ? 'skip' : 'cancel';
+}
 
 function toEssayForChat(rawEssayText: string | null): { essay?: string; wasTruncated: boolean } {
   if (!rawEssayText) {
@@ -187,12 +204,39 @@ export function useAssessmentChatActions({
           return;
         }
 
+        const completionCheck = await chatApi.checkParagraphFeedbackCompletions({ fileIds: workspaceDocxFileIds });
+        if (!completionCheck.ok) {
+          throw new Error(completionCheck.error.message || 'Unable to check existing paragraph feedback.');
+        }
+        const completedFileIds = new Set(completionCheck.data.completions.map((completion) => completion.fileId));
+        let bulkFileIds = workspaceDocxFileIds;
+        let redoCompletedFileIds: string[] | undefined;
+        if (completionCheck.data.activeModel && completionCheck.data.completions.length > 0) {
+          const choice = resolveParagraphFeedbackDuplicateChoice({
+            completions: completionCheck.data.completions,
+            modelDisplayName: completionCheck.data.activeModel.displayName
+          });
+          if (choice === 'cancel') {
+            return;
+          }
+          if (choice === 'skip') {
+            bulkFileIds = workspaceDocxFileIds.filter((fileId) => !completedFileIds.has(fileId));
+            if (bulkFileIds.length === 0) {
+              toast.info('All essays already have paragraph feedback from the current LLM.');
+              return;
+            }
+          } else {
+            redoCompletedFileIds = completionCheck.data.completions.map((completion) => completion.fileId);
+          }
+        }
+
         await submitChatMessageWorkflow({
           chatApi,
           dispatch: appDispatch,
           kind: 'paragraph-feedback-bulk',
           selectedFileId,
-          bulkFileIds: workspaceDocxFileIds,
+          bulkFileIds,
+          redoCompletedFileIds,
           pendingSelection,
           streamMessageByClientRequestId: streamMessageByClientRequestId.current,
           streamSeqByClientRequestId: streamSeqByClientRequestId.current,

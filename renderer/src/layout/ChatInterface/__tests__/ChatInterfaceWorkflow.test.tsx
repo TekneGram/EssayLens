@@ -74,7 +74,8 @@ function createLlmManagerMocks() {
           repeat_penalty: 1.1,
           request_seed: null,
           use_fake_reply: false,
-          fake_reply_text: null
+          fake_reply_text: null,
+          bulk_llm_recycle_policy: 'after_each_file'
         }
       }
     }),
@@ -389,17 +390,137 @@ describe('ChatInterface submit workflow', () => {
         expect.objectContaining({
           fileId: '/workspace/essays/draft.docx',
           message: 'How should I sequence feedback?',
-          contextText: undefined,
           clientRequestId: expect.any(String)
         })
       );
     });
+    expect((sendMessage.mock.calls[0]?.[0] as { contextText?: string }).contextText).toBeUndefined();
     expect(addFeedback).not.toHaveBeenCalled();
 
     await waitFor(() => {
       expect((screen.getByRole('textbox', { name: 'Message' }) as HTMLTextAreaElement).value).toBe('');
     });
 
+  });
+
+  it('skips completed paragraph feedback files when the user chooses skip', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: { key: 'qwen3_4b_q8', displayName: 'Qwen3 4B Q8_0' },
+        completions: [
+          {
+            fileId: '/workspace/essays/draft.docx',
+            modelKey: 'qwen3_4b_q8',
+            modelDisplayName: 'Qwen3 4B Q8_0',
+            sessionId: 'paragraph-feedback-existing',
+            completedAt: '2026-02-24T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    const sendMessage = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm')
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { checkParagraphFeedbackCompletions, sendMessage },
+        llmManager: createLlmManagerMocks(),
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Paragraph feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(checkParagraphFeedbackCompletions).toHaveBeenCalledWith({ fileIds: ['/workspace/essays/draft.docx'] });
+    });
+    expect(confirmSpy).toHaveBeenCalledTimes(2);
+    expect(sendMessage).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('redoes completed paragraph feedback files in new sessions when the user chooses redo', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: { key: 'qwen3_4b_q8', displayName: 'Qwen3 4B Q8_0' },
+        completions: [
+          {
+            fileId: '/workspace/essays/draft.docx',
+            modelKey: 'qwen3_4b_q8',
+            modelDisplayName: 'Qwen3 4B Q8_0',
+            sessionId: 'paragraph-feedback-existing',
+            completedAt: '2026-02-24T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    const sendMessage = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        reply: '',
+        paragraphFeedbackBulk: {
+          replies: [],
+          failures: [],
+          failedFileIds: [],
+          skippedFileIds: []
+        }
+      }
+    });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { checkParagraphFeedbackCompletions, sendMessage },
+        llmManager: createLlmManagerMocks(),
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Paragraph feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'paragraph-feedback-bulk',
+          fileIds: ['/workspace/essays/draft.docx'],
+          redoCompletedFileIds: ['/workspace/essays/draft.docx']
+        })
+      );
+    });
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+
+    confirmSpy.mockRestore();
   });
 
   it('updates assistant message from stream chunks before sendMessage resolves', async () => {

@@ -1,6 +1,8 @@
 import { invokeRequest } from '@/app/invokeRequest';
 import type { 
   ChatPort, 
+  CheckParagraphFeedbackCompletionsRequest,
+  CheckParagraphFeedbackCompletionsResponse,
   ChatStreamChunkEvent, 
   ListMessagesResponse, 
   SendChatMessageRequest, 
@@ -9,11 +11,8 @@ import type {
 
 const CHANNELS = {
   listMessages: 'chat/listMessages',
+  checkParagraphFeedbackCompletions: 'chat/checkParagraphFeedbackCompletions',
   sendMessage: 'chat/sendMessage'
-} as const;
-
-const EVENTS = {
-  streamChunk: 'chat/streamChunk'
 } as const;
 
 function getElectronChatApi() {
@@ -30,6 +29,8 @@ function getElectronChatApi() {
 export function createElectronChatAdapter(): ChatPort {
   return {
     listMessages: (fileId?: string) => invokeRequest<ListMessagesResponse>(CHANNELS.listMessages, { fileId }),
+    checkParagraphFeedbackCompletions: (request: CheckParagraphFeedbackCompletionsRequest) =>
+      invokeRequest<CheckParagraphFeedbackCompletionsResponse>(CHANNELS.checkParagraphFeedbackCompletions, request),
     sendMessage: (request: SendChatMessageRequest) => invokeRequest<SendChatMessageResponse>(CHANNELS.sendMessage, request),
     onStreamChunk: (listener: (event: ChatStreamChunkEvent) => void) => {
       const chatApi = getElectronChatApi();

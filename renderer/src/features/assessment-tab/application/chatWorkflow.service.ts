@@ -27,6 +27,7 @@ interface SubmitChatMessageWorkflowParams {
   essay?: string;
   rubricId?: string;
   bulkFileIds?: string[];
+  redoCompletedFileIds?: string[];
   selectedFileId: string | null;
   activeSessionId?: string;
   pendingSelection: PendingSelection | null;
@@ -43,6 +44,7 @@ export async function submitChatMessageWorkflow({
   essay,
   rubricId,
   bulkFileIds,
+  redoCompletedFileIds,
   selectedFileId,
   activeSessionId,
   pendingSelection,
@@ -108,6 +110,7 @@ export async function submitChatMessageWorkflow({
       kind: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
       fileId?: string;
       fileIds?: string[];
+      redoCompletedFileIds?: string[];
       sessionId?: string;
       clientRequestId: string;
       message?: string;
@@ -126,6 +129,9 @@ export async function submitChatMessageWorkflow({
     }
     if (kind === 'paragraph-feedback-bulk' && bulkFileIds && bulkFileIds.length > 0) {
       request.fileIds = bulkFileIds;
+    }
+    if (kind === 'paragraph-feedback-bulk' && redoCompletedFileIds && redoCompletedFileIds.length > 0) {
+      request.redoCompletedFileIds = redoCompletedFileIds;
     }
     if (typeof pendingSelection?.exactQuote === 'string') {
       request.contextText = pendingSelection.exactQuote;

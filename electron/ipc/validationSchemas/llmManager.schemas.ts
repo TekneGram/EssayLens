@@ -27,7 +27,8 @@ const llmRuntimeSettingsPartialSchema = z.object({
   repeat_penalty: z.number().nullable().optional(),
   request_seed: z.number().int().nullable().optional(),
   use_fake_reply: z.boolean().optional(),
-  fake_reply_text: z.string().nullable().optional()
+  fake_reply_text: z.string().nullable().optional(),
+  bulk_llm_recycle_policy: z.enum(['never', 'after_each_file']).optional()
 });
 
 export const llmManagerSchemas = {
