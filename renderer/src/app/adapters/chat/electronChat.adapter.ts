@@ -46,6 +46,7 @@ export function createElectronChatAdapter(): ChatPort {
           messageId: rawEvent.messageId,
           rubricCategory: rawEvent.rubricCategory,
           feedbackType: rawEvent.feedbackType,
+          feedbackSection: rawEvent.feedbackSection,
           workflow: rawEvent.workflow,
           type: rawEvent.type,
           seq: rawEvent.seq,

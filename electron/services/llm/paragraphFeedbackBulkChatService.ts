@@ -22,6 +22,7 @@ interface ParagraphFeedbackBulkReply {
   reply: string;
   clientRequestId: string;
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   progressMessageId?: string;
 }
 
@@ -278,6 +279,7 @@ export class ParagraphFeedbackBulkChatService {
           messageId: item.messageId,
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
+          feedbackSection: item.feedbackSection,
           type: 'chunk',
           seq: 2,
           channel: 'content',
@@ -292,6 +294,7 @@ export class ParagraphFeedbackBulkChatService {
           messageId: item.messageId,
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
+          feedbackSection: item.feedbackSection,
           type: 'done',
           seq: 3,
           channel: 'meta',
@@ -366,11 +369,9 @@ export class ParagraphFeedbackBulkChatService {
     }
   }
 
-  private formatParagraphTypeReply(label: string, value: ParagraphFeedbackTypeResult): string {
+  private formatParagraphSectionReply(label: string, sectionLabel: string, text: string): string {
     return `### ${label}
-- Verdict: ${value.verdict}
-- Reason: ${value.reason}
-- Revision suggestion: ${value.revision_suggestion}`;
+${sectionLabel}: ${text}`;
   }
 
   private buildFeedbackReplies(args: {
@@ -403,15 +404,28 @@ export class ParagraphFeedbackBulkChatService {
           typeof entry.value.reason === 'string' &&
           typeof entry.value.revision_suggestion === 'string'
       )
-      .map((entry, index) => ({
-        fileId,
-        sessionId,
-        messageId: randomUUID(),
-        reply: this.formatParagraphTypeReply(entry.label, entry.value),
-        clientRequestId: `${baseClientRequestId}:${entry.key}:${index + 1}`,
-        feedbackType: entry.key,
-        progressMessageId
-      }));
+      .flatMap((entry, index) => {
+        const sections: Array<{
+          key: 'verdict' | 'reason' | 'revision_suggestion';
+          label: string;
+          text: string;
+        }> = [
+          { key: 'verdict', label: 'Verdict', text: entry.value.verdict },
+          { key: 'reason', label: 'Reason', text: entry.value.reason },
+          { key: 'revision_suggestion', label: 'Revision suggestion', text: entry.value.revision_suggestion }
+        ];
+
+        return sections.map((section) => ({
+          fileId,
+          sessionId,
+          messageId: randomUUID(),
+          reply: this.formatParagraphSectionReply(entry.label, section.label, section.text),
+          clientRequestId: `${baseClientRequestId}:${entry.key}:${section.key}:${index + 1}`,
+          feedbackType: entry.key,
+          feedbackSection: section.key,
+          progressMessageId
+        }));
+      });
 
     if (typedReplies.length > 0) {
       return typedReplies;

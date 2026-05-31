@@ -48,6 +48,7 @@ export interface SendChatMessageResponse {
       reply: string;
       clientRequestId: string;
       feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
       progressMessageId?: string;
     }>;
     failures?: Array<{
@@ -73,6 +74,7 @@ export interface ChatStreamChunkEvent {
   messageId?: string;
   rubricCategory?: string;
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;
