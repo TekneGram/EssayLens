@@ -23,3 +23,4 @@ Students also have the following common knowledge about writing style:
 ## Instructions
 Always refer to this knowledge when considering feedback.
 Always address the learner as *you* since this is student facing feedback.
+Be concise.

@@ -8,3 +8,4 @@ Note that "for many reasons" and "a number of issues", and any kind of enumerati
 Look at the controlling idea of the topic sentence in the paragraph.
 Use it to judge whether the topic sentence is too general, too specific, or perfect.
 Explain your reason briefly by referring to details from the paragraph.
+Be concise.

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from nlp.llm.tasks.paragraph_feedback import _run_json_schema_chat
+from nlp.llm.tasks.paragraph_feedback import _run_json_schema_chat, _sanitize_field_value
+
+
+PROMPT_DIR = Path(__file__).resolve().parents[3] / "prompts" / "paragraph_feedback"
 
 
 class _DummyRequestConfig:
@@ -106,3 +111,24 @@ def test_run_json_schema_chat_fails_fast_on_non_truncation_error() -> None:
             schema={"type": "object"},
         )
     assert len(service.calls) == 1
+
+
+def test_sanitize_field_value_uses_doubled_schema_limit() -> None:
+    value = "x" * 700
+
+    result = _sanitize_field_value(
+        field="reason",
+        value=value,
+        field_schema={"type": "string", "maxLength": 560},
+    )
+
+    assert len(result) == 560
+    assert result == "x" * 560
+
+
+def test_all_paragraph_feedback_prompts_include_be_concise() -> None:
+    prompt_files = sorted(PROMPT_DIR.glob("*.md"))
+
+    assert prompt_files
+    for prompt_file in prompt_files:
+        assert "be concise" in prompt_file.read_text(encoding="utf-8").lower()

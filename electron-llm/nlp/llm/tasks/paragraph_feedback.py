@@ -210,8 +210,8 @@ def _run_topic_sentence_feedback(
             "type": "object",
             "properties": {
                 "verdict": {"type": "string", "enum": ["too general", "too specific", "perfect"]},
-                "reason": {"type": "string", "maxLength": 280},
-                "revision_suggestion": {"type": "string", "maxLength": 320},
+                "reason": {"type": "string", "maxLength": 560},
+                "revision_suggestion": {"type": "string", "maxLength": 640},
             },
             "required": ["verdict", "reason", "revision_suggestion"],
             "additionalProperties": False,
@@ -243,7 +243,7 @@ def _run_coherence_feedback(
             "type": "object",
             "properties": {
                 "verdict": {"type": "string", "enum": ["strong", "reasonable", "weak"]},
-                "reason": {"type": "string", "maxLength": 280},
+                "reason": {"type": "string", "maxLength": 560},
             },
             "required": ["verdict", "reason"],
             "additionalProperties": False,
@@ -263,9 +263,9 @@ def _run_coherence_feedback(
             schema={
                 "type": "object",
                 "properties": {
-                    "praise_1": {"type": "string", "maxLength": 260},
-                    "praise_2": {"type": "string", "maxLength": 260},
-                    "praise_3": {"type": "string", "maxLength": 260},
+                    "praise_1": {"type": "string", "maxLength": 520},
+                    "praise_2": {"type": "string", "maxLength": 520},
+                    "praise_3": {"type": "string", "maxLength": 520},
                 },
                 "required": ["praise_1", "praise_2"],
                 "additionalProperties": False,
@@ -284,9 +284,9 @@ def _run_coherence_feedback(
             schema={
                 "type": "object",
                 "properties": {
-                    "improvement_1": {"type": "string", "maxLength": 260},
-                    "improvement_2": {"type": "string", "maxLength": 260},
-                    "improvement_3": {"type": "string", "maxLength": 260},
+                    "improvement_1": {"type": "string", "maxLength": 520},
+                    "improvement_2": {"type": "string", "maxLength": 520},
+                    "improvement_3": {"type": "string", "maxLength": 520},
                 },
                 "required": ["improvement_1", "improvement_2"],
                 "additionalProperties": False,
@@ -324,8 +324,8 @@ def _run_supporting_sentences_feedback(
         schema={
             "type": "object",
             "properties": {
-                    "facts": {"type": "string", "maxLength": 320},
-                    "definitions": {"type": "string", "maxLength": 320},
+                    "facts": {"type": "string", "maxLength": 640},
+                    "definitions": {"type": "string", "maxLength": 640},
             },
             "additionalProperties": False,
         },
@@ -340,8 +340,8 @@ def _run_supporting_sentences_feedback(
         schema={
             "type": "object",
             "properties": {
-                    "examples": {"type": "string", "maxLength": 320},
-                    "descriptions": {"type": "string", "maxLength": 320},
+                    "examples": {"type": "string", "maxLength": 640},
+                    "descriptions": {"type": "string", "maxLength": 640},
             },
             "additionalProperties": False,
         },
@@ -366,7 +366,7 @@ def _run_supporting_sentences_feedback(
                 "type": "object",
                 "properties": {
                     "verdict": {"type": "string", "enum": ["supports the controlling idea well", "does not support the controlling idea well"]},
-                    "reason": {"type": "string", "maxLength": 260},
+                    "reason": {"type": "string", "maxLength": 520},
                 },
                 "required": ["verdict", "reason"],
                 "additionalProperties": False,
@@ -385,7 +385,7 @@ def _run_supporting_sentences_feedback(
                 "type": "object",
                 "properties": {
                     "verdict": {"type": "string", "enum": ["useful definition", "not a useful definition"]},
-                    "reason": {"type": "string", "maxLength": 260},
+                    "reason": {"type": "string", "maxLength": 520},
                 },
                 "required": ["verdict", "reason"],
                 "additionalProperties": False,
@@ -404,7 +404,7 @@ def _run_supporting_sentences_feedback(
                 "type": "object",
                 "properties": {
                     "verdict": {"type": "string", "enum": ["useful example", "not a useful example"]},
-                    "reason": {"type": "string", "maxLength": 260},
+                    "reason": {"type": "string", "maxLength": 520},
                 },
                 "required": ["verdict", "reason"],
                 "additionalProperties": False,
@@ -423,7 +423,7 @@ def _run_supporting_sentences_feedback(
                 "type": "object",
                 "properties": {
                     "verdict": {"type": "string", "enum": ["useful description", "not a useful description"]},
-                    "reason": {"type": "string", "maxLength": 260},
+                    "reason": {"type": "string", "maxLength": 520},
                 },
                 "required": ["verdict", "reason"],
                 "additionalProperties": False,
