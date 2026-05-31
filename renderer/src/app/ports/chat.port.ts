@@ -48,7 +48,7 @@ export interface SendChatMessageResponse {
       reply: string;
       clientRequestId: string;
       feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
       supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
       progressMessageId?: string;
     }>;
@@ -75,7 +75,7 @@ export interface ChatStreamChunkEvent {
   messageId?: string;
   rubricCategory?: string;
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
   supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;

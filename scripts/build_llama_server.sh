@@ -11,7 +11,7 @@ vendor/llama-server/<platform-arch>.
 
 Options:
   --source-dir PATH     Source checkout for llama-cpp-turboquant.
-                        Default: third_party/llama-cpp-turboquant
+                        Default: third_party_new/llama-cpp-turboquant
   --build-dir PATH      CMake build directory.
                         Default: <source-dir>/build-distribution
   --stage-dir PATH      Install staging directory.
@@ -350,7 +350,7 @@ print_verification_hints() {
 }
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE_DIR="$REPO_ROOT/third_party/llama-cpp-turboquant"
+SOURCE_DIR="$REPO_ROOT/third_party_new/llama-cpp-turboquant"
 BUILD_DIR=""
 STAGE_DIR=""
 VENDOR_DIR="$REPO_ROOT/vendor/llama-server"

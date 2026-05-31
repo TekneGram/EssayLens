@@ -1000,7 +1000,7 @@
 .msg-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .msg-action-button {

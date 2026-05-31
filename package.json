@@ -73,7 +73,7 @@
     ],
     "extraResources": [
       {
-        "from": "electron/main/db/migrations",
+        "from": "electron/db/migrations",
         "to": "db/migrations",
         "filter": [
           "**/*.sql"

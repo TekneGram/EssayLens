@@ -22,7 +22,7 @@ interface ParagraphFeedbackBulkReply {
   reply: string;
   clientRequestId: string;
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
   supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
   progressMessageId?: string;
 }
@@ -46,6 +46,7 @@ interface ParagraphFeedbackTypeResult {
 
 interface SupportingSentenceTypeResult {
   kind: 'facts' | 'definitions' | 'examples' | 'descriptions';
+  extracted_text?: string;
   verdict: string;
   reason: string;
 }
@@ -390,6 +391,11 @@ Verdict: ${verdict}
 Reason: ${reason}`;
   }
 
+  private formatSupportingSentenceExtractionReply(typeLabel: string, extractedText: string): string {
+    return `### Supporting Sentences: ${typeLabel}
+Extracted ${typeLabel.toLowerCase()}: ${extractedText}`;
+  }
+
   private supportingSentenceTypeLabel(kind: SupportingSentenceTypeResult['kind']): string {
     return kind
       .split('_')
@@ -402,6 +408,7 @@ Reason: ${reason}`;
     const item = value as Partial<SupportingSentenceTypeResult>;
     return (
       (item.kind === 'facts' || item.kind === 'definitions' || item.kind === 'examples' || item.kind === 'descriptions') &&
+      (item.extracted_text === undefined || typeof item.extracted_text === 'string') &&
       typeof item.verdict === 'string' &&
       typeof item.reason === 'string'
     );
@@ -419,19 +426,40 @@ Reason: ${reason}`;
     const { fileId, sessionId, baseClientRequestId, fallbackMessageId, progressMessageId, structuredReply, fallbackReply } = args;
     const paragraphFeedback = structuredReply?.paragraph_feedback;
 
-    const supportingSentenceTypeReplies =
+    const supportingSentenceTypeResults =
       paragraphFeedback?.supporting_sentences?.supporting_sentence_types
-        ?.filter((item): item is SupportingSentenceTypeResult => this.isSupportingSentenceTypeResult(item))
-        .map((item) => ({
+        ?.filter((item): item is SupportingSentenceTypeResult => this.isSupportingSentenceTypeResult(item)) ?? [];
+
+    const supportingSentenceTypeReplies = supportingSentenceTypeResults.flatMap((item) => {
+      const typeLabel = this.supportingSentenceTypeLabel(item.kind);
+      const extractedText = item.extracted_text?.trim() ?? '';
+      const extractedReply = extractedText
+        ? [{
           fileId,
           sessionId,
           messageId: randomUUID(),
-          reply: this.formatSupportingSentenceTypeReply(this.supportingSentenceTypeLabel(item.kind), item.verdict, item.reason),
+          reply: this.formatSupportingSentenceExtractionReply(typeLabel, extractedText),
+          clientRequestId: `${baseClientRequestId}:supporting_sentences:${item.kind}:extracted_text`,
+          feedbackType: 'supporting_sentences' as const,
+          feedbackSection: 'extracted_text' as const,
+          supportingSentenceType: item.kind,
+          progressMessageId
+        }]
+        : [];
+      return [
+        ...extractedReply,
+        {
+          fileId,
+          sessionId,
+          messageId: randomUUID(),
+          reply: this.formatSupportingSentenceTypeReply(typeLabel, item.verdict, item.reason),
           clientRequestId: `${baseClientRequestId}:supporting_sentences:${item.kind}`,
           feedbackType: 'supporting_sentences' as const,
           supportingSentenceType: item.kind,
           progressMessageId
-        })) ?? [];
+        }
+      ];
+    });
 
     const entries: Array<{
       key: 'topic_sentence' | 'supporting_sentences' | 'coherence';

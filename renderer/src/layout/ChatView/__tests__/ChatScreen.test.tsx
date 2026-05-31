@@ -6,7 +6,7 @@ describe('ChatScreen comment actions', () => {
   it('shows add comment only for completed assistant messages', () => {
     const onCreateCommentFromChatMessage = vi.fn();
 
-    render(
+    const { container } = render(
       <ChatScreen
         items={[
           {
@@ -37,6 +37,12 @@ describe('ChatScreen comment actions', () => {
     );
 
     expect(screen.getAllByRole('button', { name: 'Add to comments' })).toHaveLength(1);
+    const replyBubble = container.querySelector('li.msg.assistant:nth-of-type(2)');
+    const actions = replyBubble?.querySelector('.msg-actions');
+    const body = replyBubble?.querySelector('.msg-body');
+    expect(actions).not.toBeNull();
+    expect(body).not.toBeNull();
+    expect(actions!.compareDocumentPosition(body!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     fireEvent.click(screen.getByRole('button', { name: 'Add to comments' }));
     expect(onCreateCommentFromChatMessage).toHaveBeenCalledWith('Final feedback.');
   });

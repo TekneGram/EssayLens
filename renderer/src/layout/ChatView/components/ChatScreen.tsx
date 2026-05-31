@@ -46,9 +46,6 @@ export function ChatScreen({
             <div className="msg-role">{item.roleLabel}</div>
             {item.roleClassName === 'assistant' ? (
               <>
-                <div className="msg-body msg-markdown">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
-                </div>
                 {onCreateCommentFromChatMessage && item.canCreateComment && item.content.trim().length > 0 ? (
                   <div className="msg-actions">
                     <button
@@ -60,6 +57,9 @@ export function ChatScreen({
                     </button>
                   </div>
                 ) : null}
+                <div className="msg-body msg-markdown">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
+                </div>
               </>
             ) : (
               <div className="msg-body msg-body-plain">{item.content}</div>

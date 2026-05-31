@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from nlp.llm.tasks.paragraph_feedback import _run_json_schema_chat, _sanitize_field_value
+from nlp.llm.tasks.paragraph_feedback import (
+    _run_json_schema_chat,
+    _run_supporting_sentences_feedback,
+    _sanitize_field_value,
+)
 
 
 PROMPT_DIR = Path(__file__).resolve().parents[3] / "prompts" / "paragraph_feedback"
@@ -124,6 +128,54 @@ def test_sanitize_field_value_uses_doubled_schema_limit() -> None:
 
     assert len(result) == 560
     assert result == "x" * 560
+
+
+def test_supporting_sentence_feedback_returns_extracted_text_with_each_judgement() -> None:
+    service = _FakeLlmService(
+        responses=[
+            {"facts": "Fact sentence.", "definitions": "Definition sentence."},
+            {"examples": "Example sentence.", "descriptions": "Description sentence."},
+            {"verdict": "supports the controlling idea well", "reason": "Fact reason."},
+            {"verdict": "useful definition", "reason": "Definition reason."},
+            {"verdict": "useful example", "reason": "Example reason."},
+            {"verdict": "useful description", "reason": "Description reason."},
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+
+    result = _run_supporting_sentences_feedback(
+        llm_service=service,
+        app_cfg=app_cfg,
+        system_prompt="sys",
+        prefix_context="Here is a paragraph:\nA paragraph.",
+    )
+
+    assert result["supporting_sentence_types"] == [
+        {
+            "kind": "facts",
+            "extracted_text": "Fact sentence.",
+            "verdict": "supports the controlling idea well",
+            "reason": "Fact reason.",
+        },
+        {
+            "kind": "definitions",
+            "extracted_text": "Definition sentence.",
+            "verdict": "useful definition",
+            "reason": "Definition reason.",
+        },
+        {
+            "kind": "examples",
+            "extracted_text": "Example sentence.",
+            "verdict": "useful example",
+            "reason": "Example reason.",
+        },
+        {
+            "kind": "descriptions",
+            "extracted_text": "Description sentence.",
+            "verdict": "useful description",
+            "reason": "Description reason.",
+        },
+    ]
 
 
 def test_all_paragraph_feedback_prompts_include_be_concise() -> None:

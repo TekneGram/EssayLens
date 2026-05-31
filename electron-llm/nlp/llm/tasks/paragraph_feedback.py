@@ -372,7 +372,12 @@ def _run_supporting_sentences_feedback(
                 "additionalProperties": False,
             },
         )
-        judgments.append({"kind": "facts", "verdict": str(fact_judgement.get("verdict", "")).strip(), "reason": str(fact_judgement.get("reason", "")).strip()})
+        judgments.append({
+            "kind": "facts",
+            "extracted_text": facts,
+            "verdict": str(fact_judgement.get("verdict", "")).strip(),
+            "reason": str(fact_judgement.get("reason", "")).strip(),
+        })
     if definitions:
         _emit_status(on_status, "Judging definition support")
         definition_judgement = _run_json_schema_chat(
@@ -391,7 +396,12 @@ def _run_supporting_sentences_feedback(
                 "additionalProperties": False,
             },
         )
-        judgments.append({"kind": "definitions", "verdict": str(definition_judgement.get("verdict", "")).strip(), "reason": str(definition_judgement.get("reason", "")).strip()})
+        judgments.append({
+            "kind": "definitions",
+            "extracted_text": definitions,
+            "verdict": str(definition_judgement.get("verdict", "")).strip(),
+            "reason": str(definition_judgement.get("reason", "")).strip(),
+        })
     if examples:
         _emit_status(on_status, "Judging example support")
         example_judgement = _run_json_schema_chat(
@@ -410,7 +420,12 @@ def _run_supporting_sentences_feedback(
                 "additionalProperties": False,
             },
         )
-        judgments.append({"kind": "examples", "verdict": str(example_judgement.get("verdict", "")).strip(), "reason": str(example_judgement.get("reason", "")).strip()})
+        judgments.append({
+            "kind": "examples",
+            "extracted_text": examples,
+            "verdict": str(example_judgement.get("verdict", "")).strip(),
+            "reason": str(example_judgement.get("reason", "")).strip(),
+        })
     if descriptions:
         _emit_status(on_status, "Judging descriptive support")
         description_judgement = _run_json_schema_chat(
@@ -429,7 +444,12 @@ def _run_supporting_sentences_feedback(
                 "additionalProperties": False,
             },
         )
-        judgments.append({"kind": "descriptions", "verdict": str(description_judgement.get("verdict", "")).strip(), "reason": str(description_judgement.get("reason", "")).strip()})
+        judgments.append({
+            "kind": "descriptions",
+            "extracted_text": descriptions,
+            "verdict": str(description_judgement.get("verdict", "")).strip(),
+            "reason": str(description_judgement.get("reason", "")).strip(),
+        })
 
     has_negative = any("not" in item["verdict"].lower() or "does not" in item["verdict"].lower() for item in judgments)
     has_positive = any("useful" in item["verdict"].lower() or "supports" in item["verdict"].lower() for item in judgments)

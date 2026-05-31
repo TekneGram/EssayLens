@@ -118,10 +118,10 @@ describe('ParagraphFeedbackBulkChatService', () => {
           reason: 'Support reason',
           revision_suggestion: 'Support revision',
           supporting_sentence_types: [
-            { kind: 'facts', verdict: 'Facts verdict', reason: 'Facts reason' },
-            { kind: 'definitions', verdict: 'Definitions verdict', reason: 'Definitions reason' },
-            { kind: 'examples', verdict: 'Examples verdict', reason: 'Examples reason' },
-            { kind: 'descriptions', verdict: 'Descriptions verdict', reason: 'Descriptions reason' }
+            { kind: 'facts', extracted_text: 'Fact sentence.', verdict: 'Facts verdict', reason: 'Facts reason' },
+            { kind: 'definitions', extracted_text: 'Definition sentence.', verdict: 'Definitions verdict', reason: 'Definitions reason' },
+            { kind: 'examples', extracted_text: 'Example sentence.', verdict: 'Examples verdict', reason: 'Examples reason' },
+            { kind: 'descriptions', extracted_text: 'Description sentence.', verdict: 'Descriptions verdict', reason: 'Descriptions reason' }
           ]
         },
         coherence: {
@@ -144,14 +144,18 @@ describe('ParagraphFeedbackBulkChatService', () => {
     );
 
     const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(11);
+    expect(replies).toHaveLength(15);
     expect(replies.map((reply) => reply.reply)).toEqual([
       '### Topic Sentence\nVerdict: Topic verdict',
       '### Topic Sentence\nReason: Topic reason',
       '### Topic Sentence\nRevision suggestion: Topic revision',
+      '### Supporting Sentences: Facts\nExtracted facts: Fact sentence.',
       '### Supporting Sentences: Facts\nVerdict: Facts verdict\nReason: Facts reason',
+      '### Supporting Sentences: Definitions\nExtracted definitions: Definition sentence.',
       '### Supporting Sentences: Definitions\nVerdict: Definitions verdict\nReason: Definitions reason',
+      '### Supporting Sentences: Examples\nExtracted examples: Example sentence.',
       '### Supporting Sentences: Examples\nVerdict: Examples verdict\nReason: Examples reason',
+      '### Supporting Sentences: Descriptions\nExtracted descriptions: Description sentence.',
       '### Supporting Sentences: Descriptions\nVerdict: Descriptions verdict\nReason: Descriptions reason',
       '### Supporting Sentences\nRevision suggestion: Support revision',
       '### Coherence\nVerdict: Coherence verdict',
@@ -163,24 +167,29 @@ describe('ParagraphFeedbackBulkChatService', () => {
       undefined,
       undefined,
       'facts',
+      'facts',
+      'definitions',
       'definitions',
       'examples',
+      'examples',
+      'descriptions',
       'descriptions',
       undefined,
       undefined,
       undefined,
       undefined
     ]);
-    expect(replies.filter((reply) => reply.feedbackType === 'supporting_sentences')).toHaveLength(5);
+    expect(replies.filter((reply) => reply.feedbackType === 'supporting_sentences')).toHaveLength(9);
+    expect(replies.filter((reply) => reply.feedbackSection === 'extracted_text')).toHaveLength(4);
     expect(replies.filter((reply) => reply.feedbackSection === 'revision_suggestion')).toHaveLength(3);
     expect(appendTurns).toHaveBeenCalledWith(
       expect.any(String),
       replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(11);
-    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(11);
-    expect(emittedEvents.filter((event) => event.supportingSentenceType === 'definitions')).toHaveLength(2);
+    expect(addMessage).toHaveBeenCalledTimes(15);
+    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(15);
+    expect(emittedEvents.filter((event) => event.supportingSentenceType === 'definitions')).toHaveLength(4);
   });
 
   it('splits structured paragraph feedback into separate verdict, reason, and revision bubbles', async () => {
