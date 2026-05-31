@@ -26,6 +26,13 @@ async function readDocxParagraphs(filePath: string): Promise<string[]> {
   return paragraphs;
 }
 
+async function readDocumentXml(filePath: string): Promise<Document> {
+  const buffer = await fs.readFile(filePath);
+  const zip = await JSZip.loadAsync(buffer);
+  const xml = await zip.file('word/document.xml')!.async('string');
+  return new DOMParser().parseFromString(xml, 'application/xml');
+}
+
 describe('htmlDocxConverter', () => {
   it('extracts non-empty paragraph text and splits br tags into paragraphs', () => {
     const paragraphs = extractParagraphsFromHtml(`
@@ -57,6 +64,36 @@ describe('htmlDocxConverter', () => {
       'Second',
       'Third'
     ]);
+  });
+
+  it('writes fixed page size and margins so long paragraphs wrap in the viewer', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-html-docx-'));
+    const htmlPath = path.join(tempDir, 'long.html');
+    const outputPath = path.join(tempDir, 'long.docx');
+    const longParagraph = Array.from({ length: 80 }, (_, index) => `word${index}`).join(' ');
+    await fs.writeFile(htmlPath, `<p>${longParagraph}</p>`, 'utf8');
+
+    await convertHtmlFilesToDocx([
+      { path: htmlPath, name: 'long.html', extension: 'html' }
+    ]);
+
+    const documentDoc = await readDocumentXml(outputPath);
+    const body = documentDoc.getElementsByTagNameNS(W_NS, 'body')[0];
+    const paragraphs = documentDoc.getElementsByTagNameNS(W_NS, 'p');
+    const sectionProperties = documentDoc.getElementsByTagNameNS(W_NS, 'sectPr')[0];
+    const pageSize = documentDoc.getElementsByTagNameNS(W_NS, 'pgSz')[0];
+    const pageMargins = documentDoc.getElementsByTagNameNS(W_NS, 'pgMar')[0];
+
+    expect(body).toBeTruthy();
+    expect(paragraphs).toHaveLength(1);
+    expect(sectionProperties).toBeTruthy();
+    expect(pageSize.getAttribute('w:w')).toBe('12240');
+    expect(pageSize.getAttribute('w:h')).toBe('15840');
+    expect(pageMargins.getAttribute('w:top')).toBe('1440');
+    expect(pageMargins.getAttribute('w:right')).toBe('1440');
+    expect(pageMargins.getAttribute('w:bottom')).toBe('1440');
+    expect(pageMargins.getAttribute('w:left')).toBe('1440');
+    await expect(readDocxParagraphs(outputPath)).resolves.toEqual([longParagraph]);
   });
 
   it('skips html without paragraph text', async () => {
