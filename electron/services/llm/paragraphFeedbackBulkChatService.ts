@@ -23,6 +23,7 @@ interface ParagraphFeedbackBulkReply {
   clientRequestId: string;
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
   progressMessageId?: string;
 }
 
@@ -40,6 +41,13 @@ interface ParagraphFeedbackTypeResult {
   verdict: string;
   reason: string;
   revision_suggestion: string;
+  supporting_sentence_types?: SupportingSentenceTypeResult[];
+}
+
+interface SupportingSentenceTypeResult {
+  kind: 'facts' | 'definitions' | 'examples' | 'descriptions';
+  verdict: string;
+  reason: string;
 }
 
 interface ParagraphFeedbackBundle {
@@ -280,6 +288,7 @@ export class ParagraphFeedbackBulkChatService {
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
+          supportingSentenceType: item.supportingSentenceType,
           type: 'chunk',
           seq: 2,
           channel: 'content',
@@ -295,6 +304,7 @@ export class ParagraphFeedbackBulkChatService {
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
+          supportingSentenceType: item.supportingSentenceType,
           type: 'done',
           seq: 3,
           channel: 'meta',
@@ -374,6 +384,29 @@ export class ParagraphFeedbackBulkChatService {
 ${sectionLabel}: ${text}`;
   }
 
+  private formatSupportingSentenceTypeReply(typeLabel: string, verdict: string, reason: string): string {
+    return `### Supporting Sentences: ${typeLabel}
+Verdict: ${verdict}
+Reason: ${reason}`;
+  }
+
+  private supportingSentenceTypeLabel(kind: SupportingSentenceTypeResult['kind']): string {
+    return kind
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  private isSupportingSentenceTypeResult(value: unknown): value is SupportingSentenceTypeResult {
+    if (typeof value !== 'object' || value === null) return false;
+    const item = value as Partial<SupportingSentenceTypeResult>;
+    return (
+      (item.kind === 'facts' || item.kind === 'definitions' || item.kind === 'examples' || item.kind === 'descriptions') &&
+      typeof item.verdict === 'string' &&
+      typeof item.reason === 'string'
+    );
+  }
+
   private buildFeedbackReplies(args: {
     fileId: string;
     sessionId: string;
@@ -386,13 +419,38 @@ ${sectionLabel}: ${text}`;
     const { fileId, sessionId, baseClientRequestId, fallbackMessageId, progressMessageId, structuredReply, fallbackReply } = args;
     const paragraphFeedback = structuredReply?.paragraph_feedback;
 
+    const supportingSentenceTypeReplies =
+      paragraphFeedback?.supporting_sentences?.supporting_sentence_types
+        ?.filter((item): item is SupportingSentenceTypeResult => this.isSupportingSentenceTypeResult(item))
+        .map((item) => ({
+          fileId,
+          sessionId,
+          messageId: randomUUID(),
+          reply: this.formatSupportingSentenceTypeReply(this.supportingSentenceTypeLabel(item.kind), item.verdict, item.reason),
+          clientRequestId: `${baseClientRequestId}:supporting_sentences:${item.kind}`,
+          feedbackType: 'supporting_sentences' as const,
+          supportingSentenceType: item.kind,
+          progressMessageId
+        })) ?? [];
+
     const entries: Array<{
       key: 'topic_sentence' | 'supporting_sentences' | 'coherence';
       label: string;
       value: ParagraphFeedbackTypeResult | undefined;
     }> = [
       { key: 'topic_sentence', label: 'Topic Sentence', value: paragraphFeedback?.topic_sentence },
-      { key: 'supporting_sentences', label: 'Supporting Sentences', value: paragraphFeedback?.supporting_sentences },
+      {
+        key: 'supporting_sentences',
+        label: 'Supporting Sentences',
+        value:
+          supportingSentenceTypeReplies.length > 0 && paragraphFeedback?.supporting_sentences
+            ? {
+                verdict: '',
+                reason: '',
+                revision_suggestion: paragraphFeedback.supporting_sentences.revision_suggestion
+              }
+            : paragraphFeedback?.supporting_sentences
+      },
       { key: 'coherence', label: 'Coherence', value: paragraphFeedback?.coherence }
     ];
 
@@ -409,7 +467,9 @@ ${sectionLabel}: ${text}`;
           key: 'verdict' | 'reason' | 'revision_suggestion';
           label: string;
           text: string;
-        }> = [
+        }> = entry.key === 'supporting_sentences' && supportingSentenceTypeReplies.length > 0
+          ? [{ key: 'revision_suggestion', label: 'Revision suggestion', text: entry.value.revision_suggestion }]
+          : [
           { key: 'verdict', label: 'Verdict', text: entry.value.verdict },
           { key: 'reason', label: 'Reason', text: entry.value.reason },
           { key: 'revision_suggestion', label: 'Revision suggestion', text: entry.value.revision_suggestion }
@@ -427,8 +487,16 @@ ${sectionLabel}: ${text}`;
         }));
       });
 
-    if (typedReplies.length > 0) {
-      return typedReplies;
+    const replies = supportingSentenceTypeReplies.length > 0
+      ? [
+          ...typedReplies.slice(0, 3),
+          ...supportingSentenceTypeReplies,
+          ...typedReplies.slice(3)
+        ]
+      : typedReplies;
+
+    if (replies.length > 0) {
+      return replies;
     }
 
     return [

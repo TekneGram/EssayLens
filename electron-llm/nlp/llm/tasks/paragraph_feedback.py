@@ -313,7 +313,7 @@ def _run_supporting_sentences_feedback(
     system_prompt: str,
     prefix_context: str,
     on_status: StatusCallback | None = None,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     _emit_status(on_status, "Finding facts and definitions")
     facts_defs = _run_json_schema_chat(
         llm_service=llm_service,
@@ -452,6 +452,7 @@ def _run_supporting_sentences_feedback(
         "verdict": verdict,
         "reason": reason or "The paragraph has limited supporting-sentence evidence to evaluate.",
         "revision_suggestion": revision_suggestion,
+        "supporting_sentence_types": judgments,
     }
 
 

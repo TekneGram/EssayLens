@@ -105,6 +105,84 @@ async function createService(reply: string) {
 }
 
 describe('ParagraphFeedbackBulkChatService', () => {
+  it('splits supporting sentence feedback into type-specific bubbles when category judgments are present', async () => {
+    const structuredReply = JSON.stringify({
+      paragraph_feedback: {
+        topic_sentence: {
+          verdict: 'Topic verdict',
+          reason: 'Topic reason',
+          revision_suggestion: 'Topic revision'
+        },
+        supporting_sentences: {
+          verdict: 'Support verdict',
+          reason: 'Support reason',
+          revision_suggestion: 'Support revision',
+          supporting_sentence_types: [
+            { kind: 'facts', verdict: 'Facts verdict', reason: 'Facts reason' },
+            { kind: 'definitions', verdict: 'Definitions verdict', reason: 'Definitions reason' },
+            { kind: 'examples', verdict: 'Examples verdict', reason: 'Examples reason' },
+            { kind: 'descriptions', verdict: 'Descriptions verdict', reason: 'Descriptions reason' }
+          ]
+        },
+        coherence: {
+          verdict: 'Coherence verdict',
+          reason: 'Coherence reason',
+          revision_suggestion: 'Coherence revision'
+        }
+      }
+    });
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, addMessage } = await createService(structuredReply);
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    const replies = result.paragraphFeedbackBulk?.replies ?? [];
+    expect(replies).toHaveLength(11);
+    expect(replies.map((reply) => reply.reply)).toEqual([
+      '### Topic Sentence\nVerdict: Topic verdict',
+      '### Topic Sentence\nReason: Topic reason',
+      '### Topic Sentence\nRevision suggestion: Topic revision',
+      '### Supporting Sentences: Facts\nVerdict: Facts verdict\nReason: Facts reason',
+      '### Supporting Sentences: Definitions\nVerdict: Definitions verdict\nReason: Definitions reason',
+      '### Supporting Sentences: Examples\nVerdict: Examples verdict\nReason: Examples reason',
+      '### Supporting Sentences: Descriptions\nVerdict: Descriptions verdict\nReason: Descriptions reason',
+      '### Supporting Sentences\nRevision suggestion: Support revision',
+      '### Coherence\nVerdict: Coherence verdict',
+      '### Coherence\nReason: Coherence reason',
+      '### Coherence\nRevision suggestion: Coherence revision'
+    ]);
+    expect(replies.map((reply) => reply.supportingSentenceType)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      'facts',
+      'definitions',
+      'examples',
+      'descriptions',
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    ]);
+    expect(replies.filter((reply) => reply.feedbackType === 'supporting_sentences')).toHaveLength(5);
+    expect(replies.filter((reply) => reply.feedbackSection === 'revision_suggestion')).toHaveLength(3);
+    expect(appendTurns).toHaveBeenCalledWith(
+      expect.any(String),
+      replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
+      'file-1'
+    );
+    expect(addMessage).toHaveBeenCalledTimes(11);
+    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(11);
+    expect(emittedEvents.filter((event) => event.supportingSentenceType === 'definitions')).toHaveLength(2);
+  });
+
   it('splits structured paragraph feedback into separate verdict, reason, and revision bubbles', async () => {
     const structuredReply = JSON.stringify({
       paragraph_feedback: {
