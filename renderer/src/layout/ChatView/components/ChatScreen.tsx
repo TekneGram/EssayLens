@@ -49,7 +49,7 @@ export function ChatScreen({
                 <div className="msg-body msg-markdown">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
                 </div>
-                {onCreateCommentFromChatMessage ? (
+                {onCreateCommentFromChatMessage && item.canCreateComment && item.content.trim().length > 0 ? (
                   <div className="msg-actions">
                     <button
                       type="button"

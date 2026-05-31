@@ -760,6 +760,7 @@ describe('ChatView session orchestration', () => {
     await waitFor(() => {
       expect(screen.getByText('Partial stream')).toBeTruthy();
     });
+    expect(screen.queryByRole('button', { name: 'Add to comments' })).toBeNull();
 
     const currentResolveSend = resolveSend;
     if (typeof currentResolveSend === 'function') {
@@ -770,5 +771,9 @@ describe('ChatView session orchestration', () => {
         }
       });
     }
+
+    await waitFor(() => {
+      expect(screen.getByText('Final stream reply')).toBeTruthy();
+    });
   });
 });

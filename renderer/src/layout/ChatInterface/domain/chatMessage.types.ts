@@ -7,6 +7,7 @@ export interface ChatMessage {
   relatedFileId?: EntityId;
   sessionId?: string;
   createdAt: ISODateString;
+  canCreateComment?: boolean;
 }
 
 export type ChatDataArray = ChatMessage[];

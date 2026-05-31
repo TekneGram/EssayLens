@@ -78,7 +78,7 @@ function paragraphText(paragraph: Element): string {
 }
 
 describe('generateFeedbackFile', () => {
-  it('appends block feedback two blank paragraphs below the document body before section properties', async () => {
+  it('appends block feedback lines as separate paragraphs two blank paragraphs below the document body', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-feedback-'));
     const sourcePath = path.join(tempDir, 'source.docx');
     const outputPath = path.join(tempDir, 'source.annotated.docx');
@@ -97,13 +97,50 @@ describe('generateFeedbackFile', () => {
     const documentDoc = new DOMParser().parseFromString(documentXml, 'application/xml');
     const body = documentDoc.getElementsByTagNameNS(W_NS, 'body')[0];
 
-    expect(directChildLocalNames(body)).toEqual(['p', 'p', 'p', 'p', 'sectPr']);
+    expect(directChildLocalNames(body)).toEqual(['p', 'p', 'p', 'p', 'p', 'sectPr']);
 
     const paragraphs = directChildrenByLocalName(body, 'p');
     expect(paragraphText(paragraphs[0])).toBe('Student writing.');
     expect(paragraphText(paragraphs[1])).toBe('');
     expect(paragraphText(paragraphs[2])).toBe('');
-    expect(paragraphText(paragraphs[3])).toBe('Applied block feedbackSecond line');
-    expect(paragraphs[3].getElementsByTagNameNS(W_NS, 'br')).toHaveLength(1);
+    expect(paragraphText(paragraphs[3])).toBe('Applied block feedback');
+    expect(paragraphText(paragraphs[4])).toBe('Second line');
+    expect(body.getElementsByTagNameNS(W_NS, 'br')).toHaveLength(0);
+  });
+
+  it('starts each applied block comment on a new paragraph and preserves blank lines', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-feedback-'));
+    const sourcePath = path.join(tempDir, 'source.docx');
+    const outputPath = path.join(tempDir, 'source.annotated.docx');
+    await createMinimalDocx(sourcePath);
+
+    await generateFeedbackFile({
+      sourceFilePath: sourcePath,
+      outputPath,
+      comments: [],
+      blockComments: [
+        { commentText: 'First comment' },
+        { commentText: 'Second comment\n\nThird paragraph' }
+      ]
+    });
+
+    const outputBuffer = await fs.readFile(outputPath);
+    const outputZip = await JSZip.loadAsync(outputBuffer);
+    const documentXml = await outputZip.file('word/document.xml')!.async('string');
+    const documentDoc = new DOMParser().parseFromString(documentXml, 'application/xml');
+    const body = documentDoc.getElementsByTagNameNS(W_NS, 'body')[0];
+    const paragraphs = directChildrenByLocalName(body, 'p');
+
+    expect(paragraphs.map(paragraphText)).toEqual([
+      'Student writing.',
+      '',
+      '',
+      'First comment',
+      'Second comment',
+      '',
+      'Third paragraph'
+    ]);
+    expect(directChildLocalNames(body)).toEqual(['p', 'p', 'p', 'p', 'p', 'p', 'p', 'sectPr']);
+    expect(body.getElementsByTagNameNS(W_NS, 'br')).toHaveLength(0);
   });
 });

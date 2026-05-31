@@ -542,6 +542,12 @@
   gap: 10px;
 }
 
+.comments-list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 @container (max-width: 720px) {
   .assessment-window-title {
     display: none;

@@ -12,6 +12,10 @@ type UpdateMessageContentAction = {
   type: 'chat/updateMessageContent';
   payload: { messageId: string; content: string; mode: 'append' | 'replace' };
 };
+type SetMessageCommentableAction = {
+  type: 'chat/setMessageCommentable';
+  payload: { messageId: string; canCreateComment: boolean };
+};
 type SetStatusAction = { type: 'chat/setStatus'; payload: ChatState['status'] };
 type SetErrorAction = { type: 'chat/setError'; payload?: string };
 type SetActiveSessionForFileAction = {
@@ -63,6 +67,10 @@ export function updateChatMessageContent(payload: UpdateMessageContentAction['pa
   return { type: 'chat/updateMessageContent', payload };
 }
 
+export function setChatMessageCommentable(payload: SetMessageCommentableAction['payload']): SetMessageCommentableAction {
+  return { type: 'chat/setMessageCommentable', payload };
+}
+
 export function setChatStatus(payload: ChatState['status']): SetStatusAction {
   return { type: 'chat/setStatus', payload };
 }
@@ -111,6 +119,7 @@ export type ChatInterfaceAction =
   | RemoveMessageAction
   | SetSessionTranscriptAction
   | UpdateMessageContentAction
+  | SetMessageCommentableAction
   | SetStatusAction
   | SetErrorAction
   | SetActiveSessionForFileAction

@@ -44,6 +44,7 @@ interface UseAssessmentCommentsControllerResult {
   onEditComment: (commentId: string, nextText: string) => Promise<void>;
   onDeleteComment: (commentId: string) => Promise<void>;
   onApplyComment: (commentId: string, applied: boolean) => Promise<void>;
+  onApplyAllComments: () => Promise<void>;
   onSendToLlm: (commentId: string, commandId?: string) => Promise<void>;
   onGenerateFeedbackDocument: () => Promise<void>;
   onCommentsTabChange: (tab: import('@/app/providers/state').CommentsTab) => void;

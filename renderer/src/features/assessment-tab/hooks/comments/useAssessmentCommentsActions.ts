@@ -16,6 +16,7 @@ import {
 } from '@/features/comments-view';
 import { useGenerateFeedbackDocumentMutation } from '@/features/comments-view';
 import {
+  applyAllCommentsWorkflow,
   applyCommentWorkflow,
   deleteCommentWorkflow,
   editCommentWorkflow,
@@ -131,6 +132,19 @@ export function useAssessmentCommentsActions({
     [feedbackListQuery]
   );
 
+  const onApplyAllComments = useCallback(async () => {
+    try {
+      await applyAllCommentsWorkflow({
+        comments,
+        applyFeedback: (request) => applyAssessmentFeedback(assessment, request),
+        refetchFeedback: feedbackListQuery.refetch
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to update apply state.';
+      toast.error(message);
+    }
+  }, [comments, feedbackListQuery]);
+
   const onSendToLlm = useCallback(
     async (commentId: string, commandId?: string) => {
       try {
@@ -220,6 +234,7 @@ export function useAssessmentCommentsActions({
     onEditComment,
     onDeleteComment,
     onApplyComment,
+    onApplyAllComments,
     onSendToLlm,
     onGenerateFeedbackDocument,
     onCommentsTabChange,

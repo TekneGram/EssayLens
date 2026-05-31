@@ -380,6 +380,10 @@ function appendSummaryParagraph(doc: Document, body: Element, text: string): voi
   insertParagraphBeforeSectionProperties(body, createTextParagraph(doc, text));
 }
 
+function blockCommentParagraphLines(commentText: string): string[] {
+  return commentText.split(/\r\n|\r|\n/);
+}
+
 function appendBlockFeedbackParagraphs(
   doc: Document,
   body: Element,
@@ -393,7 +397,9 @@ function appendBlockFeedbackParagraphs(
   insertParagraphBeforeSectionProperties(body, createBlankParagraph(doc));
 
   blockComments.forEach((comment) => {
-    insertParagraphBeforeSectionProperties(body, createTextParagraph(doc, comment.commentText));
+    blockCommentParagraphLines(comment.commentText).forEach((line) => {
+      insertParagraphBeforeSectionProperties(body, line.length > 0 ? createTextParagraph(doc, line) : createBlankParagraph(doc));
+    });
   });
 }
 

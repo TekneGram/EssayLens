@@ -5,6 +5,7 @@ export {
   removeChatMessage,
   setActiveSessionForFile,
   setChatError,
+  setChatMessageCommentable,
   setChatMessages,
   setSessionTranscript,
   setSessionListErrorForFile,

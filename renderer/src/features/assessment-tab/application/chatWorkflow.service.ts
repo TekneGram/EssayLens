@@ -3,6 +3,7 @@ import type { ChatStreamChunkEvent } from '@/app/ports/chat.port';
 import {
   addChatMessage,
   removeChatMessage,
+  setChatMessageCommentable,
   setChatError,
   setChatStatus,
   setSessionSendPhase,
@@ -85,7 +86,8 @@ export async function submitChatMessageWorkflow({
         content: '',
         relatedFileId: selectedFileId ?? undefined,
         sessionId: activeSessionId,
-        createdAt
+        createdAt,
+        canCreateComment: false
       })
     );
   }
@@ -142,6 +144,7 @@ export async function submitChatMessageWorkflow({
           mode: 'replace'
         })
       );
+      dispatch(setChatMessageCommentable({ messageId: assistantMessageId, canCreateComment: true }));
       streamMessageByClientRequestId.delete(clientRequestId);
       streamSeqByClientRequestId.delete(clientRequestId);
       streamSessionByClientRequestId.delete(clientRequestId);
@@ -157,7 +160,8 @@ export async function submitChatMessageWorkflow({
               content: reply.reply,
               relatedFileId: selectedFileId ?? undefined,
               sessionId: activeSessionId,
-              createdAt
+              createdAt,
+              canCreateComment: true
             })
           );
           continue;
@@ -170,6 +174,7 @@ export async function submitChatMessageWorkflow({
             mode: 'replace'
           })
         );
+        dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: true }));
 
         streamMessageByClientRequestId.delete(reply.clientRequestId);
         streamSeqByClientRequestId.delete(reply.clientRequestId);
@@ -191,7 +196,8 @@ export async function submitChatMessageWorkflow({
               content: reply.reply,
               relatedFileId: reply.fileId,
               sessionId: responseSessionId,
-              createdAt
+              createdAt,
+              canCreateComment: true
             })
           );
         } else {
@@ -202,6 +208,7 @@ export async function submitChatMessageWorkflow({
               mode: 'replace'
             })
           );
+          dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: true }));
         }
 
         streamMessageByClientRequestId.delete(reply.clientRequestId);
@@ -230,7 +237,8 @@ export async function submitChatMessageWorkflow({
               content: failureContent,
               relatedFileId: failure.fileId,
               sessionId: failure.sessionId,
-              createdAt
+              createdAt,
+              canCreateComment: false
             })
           );
         }
@@ -307,7 +315,8 @@ function ensureStreamAssistantMessage(args: HandleChatStreamChunkWorkflowParams)
       content: '',
       relatedFileId: event.fileId,
       sessionId: event.sessionId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      canCreateComment: false
     })
   );
 
@@ -389,6 +398,7 @@ export function handleChatStreamChunkWorkflow({
       return;
     }
 
+    dispatch(setChatMessageCommentable({ messageId: assistantMessageId, canCreateComment: true }));
     if (activeSessionId) {
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }

@@ -6,6 +6,7 @@ export interface ChatViewMessageItem {
   roleClassName: string;
   roleLabel: string;
   content: string;
+  canCreateComment: boolean;
 }
 
 export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessageItem[] {
@@ -13,7 +14,8 @@ export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessage
     id: message.id,
     roleClassName: message.role,
     roleLabel: toRoleLabel(message.role),
-    content: message.content
+    content: message.content,
+    canCreateComment: message.role === 'assistant' && (message.canCreateComment ?? true)
   }));
 }
 
@@ -22,7 +24,8 @@ export function toSessionTurnItems(sessionId: string, turns: LlmSessionTurnDto[]
     id: `${sessionId}:${turn.role}:${index}`,
     roleClassName: turn.role,
     roleLabel: toRoleLabel(turn.role),
-    content: turn.content
+    content: turn.content,
+    canCreateComment: turn.role === 'assistant'
   }));
 }
 
@@ -34,7 +37,8 @@ export function toSessionChatMessages(sessionId: string, fileEntityUuid: string,
     content: turn.content,
     relatedFileId: fileEntityUuid,
     sessionId,
-    createdAt
+    createdAt,
+    canCreateComment: turn.role === 'assistant'
   }));
 }
 

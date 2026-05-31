@@ -17,6 +17,7 @@ export function CommentsView({
   isGeneratePending,
   canGenerateFeedbackDocument,
   onApplyComment,
+  onApplyAllComments,
   onDeleteComment,
   onEditComment,
   onGenerateFeedbackDocument,
@@ -74,6 +75,18 @@ export function CommentsView({
           {isLoading ? <div>Loading comments...</div> : null}
           {error ? <div>{error}</div> : null}
           {view.showEmptyState ? <div>No comments yet.</div> : null}
+          {view.showApplyAllButton ? (
+            <div className="comments-list-actions">
+              <button
+                type="button"
+                className="comment-tool-button comment-tool-button--accent"
+                onClick={onApplyAllComments}
+                disabled={!view.canApplyAllComments}
+              >
+                Apply all
+              </button>
+            </div>
+          ) : null}
           {view.showCommentsList ? (
             <div className="comments-list">
               {comments.map((comment) => (

@@ -42,6 +42,19 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
           };
         })
       };
+    case 'chat/setMessageCommentable':
+      return {
+        ...state,
+        messages: state.messages.map((message) => {
+          if (message.id !== action.payload.messageId) {
+            return message;
+          }
+          return {
+            ...message,
+            canCreateComment: action.payload.canCreateComment
+          };
+        })
+      };
     case 'chat/setStatus':
       return {
         ...state,

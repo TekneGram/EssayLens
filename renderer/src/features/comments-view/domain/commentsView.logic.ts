@@ -28,3 +28,11 @@ export function shouldShowEmptyCommentsState(args: {
 export function shouldRenderCommentsList(comments: FeedbackItem[]): boolean {
   return comments.length > 0;
 }
+
+export function shouldShowApplyAllCommentsButton(comments: FeedbackItem[]): boolean {
+  return comments.length > 1;
+}
+
+export function canApplyAllComments(comments: FeedbackItem[]): boolean {
+  return comments.some((comment) => !comment.applied);
+}
