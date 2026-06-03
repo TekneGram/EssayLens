@@ -34,6 +34,8 @@ def _base_settings() -> dict[str, object]:
         "llm_seed": 42,
         "llm_rope_freq_base": None,
         "llm_rope_freq_scale": None,
+        "llm_model_family": "instruct/think",
+        "llm_chat_template_path": None,
         "llm_use_jinja": True,
         "llm_cache_prompt": True,
         "llm_flash_attn": False,

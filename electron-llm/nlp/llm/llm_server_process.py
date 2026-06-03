@@ -59,6 +59,11 @@ class LlmServerProcess:
                 raise FileNotFoundError(f"Missing mmproj file: {self.llm_cfg.llm_mmproj_path}")
             if not self.llm_cfg.llm_mmproj_path.is_file():
                 raise FileNotFoundError(f"llm_mmproj_path is not a file: {self.llm_cfg.llm_mmproj_path}")
+        if self.server_cfg.llm_chat_template_path is not None:
+            if not self.server_cfg.llm_chat_template_path.exists():
+                raise FileNotFoundError(f"Missing chat template file: {self.server_cfg.llm_chat_template_path}")
+            if not self.server_cfg.llm_chat_template_path.is_file():
+                raise FileNotFoundError(f"llm_chat_template_path is not a file: {self.server_cfg.llm_chat_template_path}")
 
     def _read_exit_logs(self) -> str:
         if self._proc is None:
@@ -125,7 +130,12 @@ class LlmServerProcess:
             cmd.extend(["--rope-freq-base", str(self.server_cfg.llm_rope_freq_base)])
         if self.server_cfg.llm_rope_freq_scale is not None:
             cmd.extend(["--rope-freq-scale", str(self.server_cfg.llm_rope_freq_scale)])
-        cmd.append("--jinja" if self.server_cfg.llm_use_jinja else "--no-jinja")
+        if self.server_cfg.llm_use_jinja:
+            cmd.append("--jinja")
+            if self.server_cfg.llm_chat_template_path is not None:
+                cmd.extend(["--chat-template-file", str(self.server_cfg.llm_chat_template_path)])
+        else:
+            cmd.append("--no-jinja")
         cmd.append("--cache-prompt" if self.server_cfg.llm_cache_prompt else "--no-cache-prompt")
         if self._supports_flash_attn_value():
             cmd.extend(["--flash-attn", "on" if self.server_cfg.llm_flash_attn else "off"])

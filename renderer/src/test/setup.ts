@@ -124,6 +124,8 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,
@@ -136,6 +138,8 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,
@@ -148,6 +152,8 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,

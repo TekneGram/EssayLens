@@ -19,6 +19,8 @@ interface LlmSettingsRow {
   llm_seed: number | null;
   llm_rope_freq_base: number | null;
   llm_rope_freq_scale: number | null;
+  llm_model_family: string;
+  llm_chat_template_path: string | null;
   llm_use_jinja: number;
   llm_cache_prompt: number;
   llm_flash_attn: number;
@@ -47,6 +49,7 @@ export class LlmSettingsRepository {
          llm_server_url, llm_host, llm_port, llm_n_ctx,
          llm_n_threads, llm_n_gpu_layers, llm_n_batch, llm_n_parallel,
          llm_seed, llm_rope_freq_base, llm_rope_freq_scale,
+         llm_model_family, llm_chat_template_path,
          llm_use_jinja, llm_cache_prompt, llm_flash_attn,
          max_tokens, temperature, top_p, top_k, repeat_penalty, request_seed,
          use_fake_reply, fake_reply_text, bulk_llm_recycle_policy
@@ -74,6 +77,8 @@ export class LlmSettingsRepository {
       llm_seed: row.llm_seed,
       llm_rope_freq_base: row.llm_rope_freq_base,
       llm_rope_freq_scale: row.llm_rope_freq_scale,
+      llm_model_family: row.llm_model_family,
+      llm_chat_template_path: row.llm_chat_template_path,
       llm_use_jinja: row.llm_use_jinja === 1,
       llm_cache_prompt: row.llm_cache_prompt === 1,
       llm_flash_attn: row.llm_flash_attn === 1,

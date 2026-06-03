@@ -24,6 +24,8 @@ function buildRuntimeSettings(overrides: Partial<LlmRuntimeSettings> = {}): LlmR
     llm_seed: 42,
     llm_rope_freq_base: null,
     llm_rope_freq_scale: null,
+    llm_model_family: 'instruct/think',
+    llm_chat_template_path: null,
     llm_use_jinja: true,
     llm_cache_prompt: true,
     llm_flash_attn: false,
@@ -109,6 +111,22 @@ async function createService(
       appendTurns
     } as any,
     llmSelectionRepository: {
+      listCatalogModels: vi.fn().mockResolvedValue(
+        activeModel
+          ? [
+              {
+                key: activeModel.key,
+                displayName: activeModel.displayName,
+                hfRepoId: 'repo',
+                hfFilename: 'model.gguf',
+                mmprojFilename: null,
+                backend: 'server',
+                modelFamily: activeModel.key.startsWith('gemma') ? 'gemma4' : 'instruct/think',
+                chatTemplateAsset: activeModel.key.startsWith('gemma') ? 'models/gemma_4_chat_template.jinja' : null
+              }
+            ]
+          : []
+      ),
       getActiveModel: vi.fn().mockResolvedValue(activeModel),
       resetSettingsToDefaults: vi.fn().mockResolvedValue(null)
     } as any,

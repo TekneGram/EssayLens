@@ -27,6 +27,7 @@ export interface ChatServiceDeps {
   isFile: (targetPath: string) => Promise<boolean>;
   isExecutable: (targetPath: string) => Promise<boolean>;
   resolveLlmServerPath: () => string;
+  resolveLlmAssetPath?: (assetRelativePath: string) => string;
 }
 
 export interface LlmChatPayload extends SendChatMessageRequest {

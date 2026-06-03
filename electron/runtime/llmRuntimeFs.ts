@@ -1,6 +1,6 @@
 import fsPromises from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
-import { resolveLlamaServerPath } from './runtimePaths';
+import { resolveAssetPath, resolveLlamaServerPath } from './runtimePaths';
 
 export async function defaultFileExists(targetPath: string): Promise<boolean> {
   try {
@@ -33,4 +33,9 @@ export async function defaultIsFile(targetPath: string): Promise<boolean> {
 export function resolveDefaultLlmServerPath(): string {
   const runtimeMode = process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === 'development' ? 'dev' : 'packaged';
   return resolveLlamaServerPath({ mode: runtimeMode });
+}
+
+export function resolveDefaultAssetPath(assetRelativePath: string): string {
+  const runtimeMode = process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === 'development' ? 'dev' : 'packaged';
+  return resolveAssetPath({ mode: runtimeMode, assetRelativePath });
 }

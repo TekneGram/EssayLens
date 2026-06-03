@@ -19,6 +19,7 @@ class LlmServerConfig:
     llm_seed: int | None
     llm_rope_freq_base: float | None
     llm_rope_freq_scale: float | None
+    llm_chat_template_path: Path | None
     llm_use_jinja: bool
     llm_cache_prompt: bool
     llm_flash_attn: bool
@@ -38,6 +39,7 @@ class LlmServerConfig:
         llm_seed: int | None,
         llm_rope_freq_base: float | None,
         llm_rope_freq_scale: float | None,
+        llm_chat_template_path: str | Path | None,
         llm_use_jinja: bool,
         llm_cache_prompt: bool,
         llm_flash_attn: bool,
@@ -56,6 +58,7 @@ class LlmServerConfig:
             llm_seed=llm_seed,
             llm_rope_freq_base=llm_rope_freq_base,
             llm_rope_freq_scale=llm_rope_freq_scale,
+            llm_chat_template_path=LlmServerConfig._norm(llm_chat_template_path) if llm_chat_template_path else None,
             llm_use_jinja=llm_use_jinja,
             llm_cache_prompt=llm_cache_prompt,
             llm_flash_attn=llm_flash_attn,
@@ -78,6 +81,11 @@ class LlmServerConfig:
             raise ValueError(f"llm_server_path does not exist: {self.llm_server_path}")
         if not self.llm_server_path.is_file():
             raise ValueError(f"llm_server_path is not a file: {self.llm_server_path}")
+        if self.llm_chat_template_path is not None:
+            if not self.llm_chat_template_path.exists():
+                raise ValueError(f"llm_chat_template_path does not exist: {self.llm_chat_template_path}")
+            if not self.llm_chat_template_path.is_file():
+                raise ValueError(f"llm_chat_template_path is not a file: {self.llm_chat_template_path}")
 
         if self.llm_n_ctx <= 0:
             raise ValueError("llm_n_ctx must be > 0")

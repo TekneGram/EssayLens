@@ -21,6 +21,7 @@ interface CatalogModelRow {
   mmproj_filename: string | null;
   backend: string;
   model_family: string;
+  chat_template_asset: string | null;
 }
 
 interface DownloadedModelRow {
@@ -62,7 +63,7 @@ export class LlmSelectionRepository {
 
   async listCatalogModels(): Promise<CatalogLlmModelDto[]> {
     const rows = await this.db.all<CatalogModelRow>(
-      `SELECT model_key, display_name, hf_repo_id, hf_filename, mmproj_filename, backend, model_family
+      `SELECT model_key, display_name, hf_repo_id, hf_filename, mmproj_filename, backend, model_family, chat_template_asset
        FROM llm_selection_defaults
        ORDER BY display_name COLLATE NOCASE ASC, model_key ASC;`
     );
@@ -73,7 +74,8 @@ export class LlmSelectionRepository {
       hfFilename: row.hf_filename,
       mmprojFilename: row.mmproj_filename,
       backend: row.backend,
-      modelFamily: row.model_family
+      modelFamily: row.model_family,
+      chatTemplateAsset: row.chat_template_asset
     }));
   }
 
@@ -151,7 +153,8 @@ export class LlmSelectionRepository {
 
   async selectModel(
     modelKey: LlmModelKey,
-    llmServerPath?: string
+    llmServerPath?: string,
+    llmChatTemplatePath?: string | null
   ): Promise<{ activeModel: DownloadedLlmModelDto; settings: LlmRuntimeSettings } | null> {
     await this.db.exec('BEGIN;');
     try {
@@ -170,7 +173,13 @@ export class LlmSelectionRepository {
       }
 
       await this.db.run('UPDATE llm_selection SET is_active = CASE WHEN model_key = ? THEN 1 ELSE 0 END;', [modelKey]);
-      await this.applyDefaultsToRuntimeSettings(modelKey, modelRow.local_gguf_path, modelRow.local_mmproj_path, llmServerPath);
+      await this.applyDefaultsToRuntimeSettings(
+        modelKey,
+        modelRow.local_gguf_path,
+        modelRow.local_mmproj_path,
+        llmServerPath,
+        llmChatTemplatePath,
+      );
       await this.db.exec('COMMIT;');
 
       const settings = await this.settingsRepository.getRuntimeSettings();
@@ -192,7 +201,8 @@ export class LlmSelectionRepository {
   }
 
   async resetSettingsToDefaults(
-    llmServerPath?: string
+    llmServerPath?: string,
+    llmChatTemplatePath?: string | null
   ): Promise<{ activeModel: DownloadedLlmModelDto; settings: LlmRuntimeSettings } | null> {
     const active = await this.db.get<DownloadedModelRow>(
       `SELECT model_key, display_name, local_gguf_path, local_mmproj_path, downloaded_at, is_active
@@ -206,7 +216,13 @@ export class LlmSelectionRepository {
 
     await this.db.exec('BEGIN;');
     try {
-      await this.applyDefaultsToRuntimeSettings(active.model_key, active.local_gguf_path, active.local_mmproj_path, llmServerPath);
+      await this.applyDefaultsToRuntimeSettings(
+        active.model_key,
+        active.local_gguf_path,
+        active.local_mmproj_path,
+        llmServerPath,
+        llmChatTemplatePath,
+      );
       await this.db.exec('COMMIT;');
     } catch (error) {
       await this.db.exec('ROLLBACK;');
@@ -223,7 +239,8 @@ export class LlmSelectionRepository {
     modelKey: LlmModelKey,
     ggufPath: string,
     mmprojPath: string | null,
-    llmServerPath?: string
+    llmServerPath?: string,
+    llmChatTemplatePath?: string | null
   ): Promise<void> {
     await this.db.run(
       `INSERT INTO llm_settings (
@@ -242,6 +259,8 @@ export class LlmSelectionRepository {
          llm_seed,
          llm_rope_freq_base,
          llm_rope_freq_scale,
+         llm_model_family,
+         llm_chat_template_path,
          llm_use_jinja,
          llm_cache_prompt,
          llm_flash_attn,
@@ -271,6 +290,8 @@ export class LlmSelectionRepository {
          d.llm_seed,
          d.llm_rope_freq_base,
          d.llm_rope_freq_scale,
+         d.model_family,
+         ?,
          d.llm_use_jinja,
          d.llm_cache_prompt,
          d.llm_flash_attn,
@@ -300,6 +321,8 @@ export class LlmSelectionRepository {
          llm_seed = excluded.llm_seed,
          llm_rope_freq_base = excluded.llm_rope_freq_base,
          llm_rope_freq_scale = excluded.llm_rope_freq_scale,
+         llm_model_family = excluded.llm_model_family,
+         llm_chat_template_path = excluded.llm_chat_template_path,
          llm_use_jinja = excluded.llm_use_jinja,
          llm_cache_prompt = excluded.llm_cache_prompt,
          llm_flash_attn = excluded.llm_flash_attn,
@@ -312,7 +335,7 @@ export class LlmSelectionRepository {
          use_fake_reply = excluded.use_fake_reply,
          fake_reply_text = excluded.fake_reply_text,
          bulk_llm_recycle_policy = excluded.bulk_llm_recycle_policy;`,
-      [modelKey]
+      [llmChatTemplatePath ?? null, modelKey]
     );
 
     await this.db.run(
@@ -320,10 +343,11 @@ export class LlmSelectionRepository {
        SET llm_server_path = COALESCE(?, llm_server_path),
            llm_gguf_path = ?,
            llm_mmproj_path = ?,
+           llm_chat_template_path = ?,
            use_fake_reply = 0,
            fake_reply_text = NULL
        WHERE id = 'default';`,
-      [llmServerPath ?? null, ggufPath, mmprojPath]
+      [llmServerPath ?? null, ggufPath, mmprojPath, llmChatTemplatePath ?? null]
     );
   }
 

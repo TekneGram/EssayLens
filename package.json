@@ -92,6 +92,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "assets/models",
+        "to": "assets/models",
+        "filter": [
+          "gemma_4_chat_template.jinja"
+        ]
       }
     ]
   }

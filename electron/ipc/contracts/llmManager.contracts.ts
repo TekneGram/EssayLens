@@ -11,6 +11,7 @@ export interface CatalogLlmModelDto {
   mmprojFilename: string | null;
   backend: LlmBackend;
   modelFamily: LlmModelFamily;
+  chatTemplateAsset: string | null;
 }
 
 export interface DownloadedLlmModelDto {
@@ -37,6 +38,8 @@ export interface LlmRuntimeSettings {
   llm_seed: number | null;
   llm_rope_freq_base: number | null;
   llm_rope_freq_scale: number | null;
+  llm_model_family: string;
+  llm_chat_template_path: string | null;
   llm_use_jinja: boolean;
   llm_cache_prompt: boolean;
   llm_flash_attn: boolean;

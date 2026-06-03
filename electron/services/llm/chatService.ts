@@ -7,7 +7,7 @@ import { LlmFeedbackCompletionRepository } from '../../db/repositories/llmFeedba
 import { RubricRepository } from '../../db/repositories/rubricRepository';
 import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { LlmOrchestrator } from './llmOrchestrator';
-import { defaultFileExists, defaultIsExecutable, defaultIsFile, resolveDefaultLlmServerPath } from '../../runtime/llmRuntimeFs';
+import { defaultFileExists, defaultIsExecutable, defaultIsFile, resolveDefaultAssetPath, resolveDefaultLlmServerPath } from '../../runtime/llmRuntimeFs';
 import { isParagraphFeedbackBulkRequest, isRubricFeedbackRequest } from '../../mappers/chatRequestMappers';
 import type { ChatServiceDeps } from './chatService.shared';
 import { SimpleChatService } from './simpleChatService';
@@ -33,6 +33,7 @@ export class ChatService {
       isFile: defaultIsFile,
       isExecutable: defaultIsExecutable,
       resolveLlmServerPath: resolveDefaultLlmServerPath,
+      resolveLlmAssetPath: resolveDefaultAssetPath,
       ...deps
     };
     this.simpleChatService = new SimpleChatService(this.deps);

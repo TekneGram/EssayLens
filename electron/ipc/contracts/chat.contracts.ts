@@ -115,6 +115,8 @@ export interface ChatStreamChunkEvent {
 export type LlmReadinessIssueCode =
   | 'MISSING_GGUF_PATH'
   | 'GGUF_FILE_NOT_FOUND'
+  | 'CHAT_TEMPLATE_FILE_NOT_FOUND'
+  | 'CHAT_TEMPLATE_PATH_NOT_FILE'
   | 'MISSING_SERVER_PATH'
   | 'SERVER_FILE_NOT_FOUND'
   | 'SERVER_PATH_NOT_FILE'
