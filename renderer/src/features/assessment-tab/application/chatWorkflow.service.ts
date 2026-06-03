@@ -203,7 +203,7 @@ export async function submitChatMessageWorkflow({
               relatedFileId: reply.fileId,
               sessionId: responseSessionId,
               createdAt,
-              canCreateComment: true
+              canCreateComment: !reply.diagnosticType
             })
           );
         } else {
@@ -214,7 +214,7 @@ export async function submitChatMessageWorkflow({
               mode: 'replace'
             })
           );
-          dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: true }));
+          dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: !reply.diagnosticType }));
         }
 
         streamMessageByClientRequestId.delete(reply.clientRequestId);

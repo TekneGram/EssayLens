@@ -51,6 +51,7 @@ export interface SendChatMessageResponse {
       feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
       feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
       supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
+      diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
     failures?: Array<{

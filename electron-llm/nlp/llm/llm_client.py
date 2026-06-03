@@ -333,6 +333,24 @@ class OpenAICompatChatClient:
     # ----- API: json_schema_chat, json_schema_chat_async, json_schema_chat_async_many -----
 
     def json_schema_chat(self, system: str, user: str, schema: dict[str, Any], **kwargs) -> Any:
+        response = self.json_schema_chat_response(system=system, user=user, schema=schema, **kwargs)
+        return self._parse_json_schema_content(
+            {
+                "choices": [
+                    {
+                        "finish_reason": response.finish_reason,
+                        "message": {
+                            "content": response.content,
+                            "reasoning_content": response.reasoning_content,
+                        },
+                    }
+                ],
+                "model": response.model,
+                "usage": response.usage,
+            }
+        )
+
+    def json_schema_chat_response(self, system: str, user: str, schema: dict[str, Any], **kwargs) -> ChatResponse:
         payload = self._build_payload(system=system, user=user, **kwargs)
         payload["response_format"] = schema
 
@@ -343,7 +361,7 @@ class OpenAICompatChatClient:
             raise RuntimeError(f"LLM Server connection failed: {e}")
 
         data = response.json()
-        return self._parse_json_schema_content(data)
+        return self._parse_chat_response(data)
     
     async def json_schema_chat_async(
         self,

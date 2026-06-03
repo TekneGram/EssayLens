@@ -83,6 +83,20 @@ class LlmService:
             **kwargs,
         )
 
+    def json_schema_chat_response(
+        self,
+        system: str,
+        user: str,
+        schema: dict[str, Any],
+        **kwargs: Any,
+    ) -> ChatResponse:
+        return self.client.json_schema_chat_response(
+            system=system,
+            user=user,
+            schema=schema,
+            **kwargs,
+        )
+
     async def json_schema_chat_async(
         self,
         system: str,

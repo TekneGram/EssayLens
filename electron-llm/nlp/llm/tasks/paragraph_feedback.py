@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+import json
 from pathlib import Path
 from typing import Any, Callable, TYPE_CHECKING
 
@@ -19,6 +21,27 @@ RETRY_SCHEMA_NON_TRUNCATION_MARKERS = (
 )
 
 
+@dataclass
+class _ReasoningLeakCollector:
+    parts: list[str] = field(default_factory=list)
+
+    def add(self, text: str | None) -> None:
+        if not isinstance(text, str):
+            return
+        normalized = text.strip()
+        if not normalized:
+            return
+        if normalized in self.parts:
+            return
+        self.parts.append(normalized)
+
+    def detected(self) -> bool:
+        return bool(self.parts)
+
+    def combined(self) -> str:
+        return "\n\n".join(self.parts).strip()
+
+
 def _load_prompt(filename: str) -> str:
     return (PROMPT_DIR / filename).read_text(encoding="utf-8").strip()
 
@@ -29,6 +52,7 @@ def _run_chat(
     app_cfg: "AppConfig",
     system: str,
     user: str,
+    reasoning_collector: _ReasoningLeakCollector | None = None,
 ) -> str:
     _, _, llm_request = app_cfg.require_real_config()
     response = llm_service.chat(
@@ -43,6 +67,8 @@ def _run_chat(
         stop=llm_request.stop,
         response_format=llm_request.response_format,
     )
+    if reasoning_collector is not None:
+        reasoning_collector.add(response.reasoning_content)
     text = response.content.strip() if isinstance(response.content, str) else ""
     if not text:
         raise RuntimeError("Paragraph feedback task returned an empty text response.")
@@ -57,6 +83,7 @@ def _run_json_schema_chat(
     user: str,
     name: str,
     schema: dict[str, Any],
+    reasoning_collector: _ReasoningLeakCollector | None = None,
 ) -> dict[str, Any]:
     _, _, llm_request = app_cfg.require_real_config()
     wrapped_schema = {
@@ -68,7 +95,7 @@ def _run_json_schema_chat(
     }
 
     def _call(*, user_text: str, max_tokens: int) -> dict[str, Any]:
-        obj = llm_service.json_schema_chat(
+        response = llm_service.json_schema_chat_response(
             system=system,
             user=user_text,
             schema=wrapped_schema,
@@ -80,6 +107,14 @@ def _run_json_schema_chat(
             seed=llm_request.seed,
             stop=None,
         )
+        if reasoning_collector is not None:
+            reasoning_collector.add(response.reasoning_content)
+        try:
+            obj = _parse_schema_response_content(response.content)
+        except RuntimeError as exc:
+            raise RuntimeError(
+                f"{exc} (finish_reason={response.finish_reason!r}, content_len={len(response.content)})"
+            ) from exc
         if not isinstance(obj, dict):
             raise RuntimeError("Paragraph feedback task returned a non-object JSON schema response.")
         return _sanitize_schema_object(obj=obj, schema=schema)
@@ -150,6 +185,15 @@ def _sanitize_schema_object(*, obj: dict[str, Any], schema: dict[str, Any]) -> d
     return out
 
 
+def _parse_schema_response_content(content: str) -> Any:
+    normalized = content.strip() if isinstance(content, str) else ""
+    try:
+        return json.loads(normalized)
+    except Exception as exc:
+        tail = normalized[-220:]
+        raise RuntimeError(f"Malformed JSON schema response content: {tail}") from exc
+
+
 def _sanitize_field_value(*, field: str, value: Any, field_schema: Any) -> str:
     if not isinstance(value, str):
         raise RuntimeError(f"Schema field '{field}' must be a string.")
@@ -179,6 +223,7 @@ def _run_topic_sentence_feedback(
     system_prompt: str,
     prefix_context: str,
     on_status: StatusCallback | None = None,
+    reasoning_collector: _ReasoningLeakCollector | None = None,
 ) -> dict[str, str]:
     _emit_status(on_status, "Identifying the topic sentence")
     topic_sentence = _run_chat(
@@ -186,6 +231,7 @@ def _run_topic_sentence_feedback(
         app_cfg=app_cfg,
         system=system_prompt,
         user=f"{prefix_context}\n\n{_load_prompt('topic_sentence_1.md')}",
+        reasoning_collector=reasoning_collector,
     )
     _emit_status(on_status, "Identifying the controlling idea")
     controlling_idea = _run_chat(
@@ -193,6 +239,7 @@ def _run_topic_sentence_feedback(
         app_cfg=app_cfg,
         system=system_prompt,
         user=f"Here is a topic sentence:\n{topic_sentence}\n\n{_load_prompt('topic_sentence_2.md')}",
+        reasoning_collector=reasoning_collector,
     )
     _emit_status(on_status, "Judging the topic sentence")
     judgement = _run_json_schema_chat(
@@ -206,6 +253,7 @@ def _run_topic_sentence_feedback(
             f"{_load_prompt('topic_sentence_3.md')}"
         ),
         name="topic_sentence_judgement",
+        reasoning_collector=reasoning_collector,
         schema={
             "type": "object",
             "properties": {
@@ -231,6 +279,7 @@ def _run_coherence_feedback(
     system_prompt: str,
     prefix_context: str,
     on_status: StatusCallback | None = None,
+    reasoning_collector: _ReasoningLeakCollector | None = None,
 ) -> dict[str, str]:
     _emit_status(on_status, "Judging paragraph coherence")
     initial = _run_json_schema_chat(
@@ -239,6 +288,7 @@ def _run_coherence_feedback(
         system=system_prompt,
         user=f"{prefix_context}\n\n{_load_prompt('coherence_1.md')}",
         name="determine_coherence_level",
+        reasoning_collector=reasoning_collector,
         schema={
             "type": "object",
             "properties": {
@@ -260,6 +310,7 @@ def _run_coherence_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\n{_load_prompt('coherence_3.md')}",
             name="praise_coherence",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -281,6 +332,7 @@ def _run_coherence_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\n{_load_prompt('coherence_2.md')}",
             name="improve_coherence",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -313,6 +365,7 @@ def _run_supporting_sentences_feedback(
     system_prompt: str,
     prefix_context: str,
     on_status: StatusCallback | None = None,
+    reasoning_collector: _ReasoningLeakCollector | None = None,
 ) -> dict[str, Any]:
     _emit_status(on_status, "Finding facts and definitions")
     facts_defs = _run_json_schema_chat(
@@ -321,6 +374,7 @@ def _run_supporting_sentences_feedback(
         system=system_prompt,
         user=f"{prefix_context}\n\n{_load_prompt('supporting_sentences_1.md')}",
         name="identify_types_of_sentences",
+        reasoning_collector=reasoning_collector,
         schema={
             "type": "object",
             "properties": {
@@ -337,6 +391,7 @@ def _run_supporting_sentences_feedback(
         system=system_prompt,
         user=f"{prefix_context}\n\n{_load_prompt('supporting_sentences_2.md')}",
         name="identify_types_of_sentences_more",
+        reasoning_collector=reasoning_collector,
         schema={
             "type": "object",
             "properties": {
@@ -362,6 +417,7 @@ def _run_supporting_sentences_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\nThese are facts identified from the paragraph:\n{facts}\n\n{_load_prompt('supporting_sentences_3.md')}",
             name="fact_judgement",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -386,6 +442,7 @@ def _run_supporting_sentences_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\nThese are definitions identified in the paragraph:\n{definitions}\n\n{_load_prompt('supporting_sentences_4.md')}",
             name="judge_definitions",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -410,6 +467,7 @@ def _run_supporting_sentences_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\nThese are examples used in the paragraph:\n{examples}\n\n{_load_prompt('supporting_sentences_5.md')}",
             name="judge_examples",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -434,6 +492,7 @@ def _run_supporting_sentences_feedback(
             system=system_prompt,
             user=f"{prefix_context}\n\nThese are descriptions used in the paragraph:\n{descriptions}\n\n{_load_prompt('supporting_sentences_6.md')}",
             name="judge_descriptions",
+            reasoning_collector=reasoning_collector,
             schema={
                 "type": "object",
                 "properties": {
@@ -489,6 +548,7 @@ def run_paragraph_feedback_bundle(
 
     system_prompt = _load_prompt("paragraph_knowledge.md")
     prefix_context = _build_prefix_context(paragraph)
+    reasoning_collector = _ReasoningLeakCollector()
 
     topic_sentence = _run_topic_sentence_feedback(
         llm_service=llm_service,
@@ -496,6 +556,7 @@ def run_paragraph_feedback_bundle(
         system_prompt=system_prompt,
         prefix_context=prefix_context,
         on_status=on_status,
+        reasoning_collector=reasoning_collector,
     )
     supporting_sentences = _run_supporting_sentences_feedback(
         llm_service=llm_service,
@@ -503,6 +564,7 @@ def run_paragraph_feedback_bundle(
         system_prompt=system_prompt,
         prefix_context=prefix_context,
         on_status=on_status,
+        reasoning_collector=reasoning_collector,
     )
     coherence = _run_coherence_feedback(
         llm_service=llm_service,
@@ -510,15 +572,26 @@ def run_paragraph_feedback_bundle(
         system_prompt=system_prompt,
         prefix_context=prefix_context,
         on_status=on_status,
+        reasoning_collector=reasoning_collector,
     )
 
-    return {
+    result: dict[str, Any] = {
         "paragraph_feedback": {
             "topic_sentence": topic_sentence,
             "supporting_sentences": supporting_sentences,
             "coherence": coherence,
         }
     }
+    if reasoning_collector.detected():
+        _emit_status(
+            on_status,
+            "Warning: reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode."
+        )
+        result["reasoning_leak"] = {
+            "warning": "Reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode.",
+            "reasoning_content": reasoning_collector.combined(),
+        }
+    return result
 
 
 def _emit_status(on_status: StatusCallback | None, text: str) -> None:

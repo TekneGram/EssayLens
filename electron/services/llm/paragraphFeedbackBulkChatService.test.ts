@@ -312,6 +312,86 @@ describe('ParagraphFeedbackBulkChatService', () => {
     expect(emittedEvents.filter((event) => event.feedbackSection === 'revision_suggestion')).toHaveLength(6);
   });
 
+  it('reports and persists leaked reasoning as a diagnostic reply without blocking feedback', async () => {
+    const structuredReply = JSON.stringify({
+      paragraph_feedback: {
+        topic_sentence: {
+          verdict: 'Topic verdict',
+          reason: 'Topic reason',
+          revision_suggestion: 'Topic revision'
+        },
+        supporting_sentences: {
+          verdict: 'Support verdict',
+          reason: 'Support reason',
+          revision_suggestion: 'Support revision'
+        },
+        coherence: {
+          verdict: 'Coherence verdict',
+          reason: 'Coherence reason',
+          revision_suggestion: 'Coherence revision'
+        }
+      },
+      reasoning_leak: {
+        warning: 'Reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode.',
+        reasoning_content: 'Hidden reasoning content.'
+      }
+    });
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, requestActionStream, appendTurns, addMessage } = await createService(structuredReply);
+    requestActionStream.mockImplementationOnce(async (_action, _payload, onStreamEvent) => {
+      onStreamEvent({
+        requestId: 'llm-request-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: 'bulk-client-1:paragraph:1',
+          channel: 'meta',
+          text: 'Warning: reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode.',
+          done: false,
+          seq: 10
+        }
+      });
+      return {
+        requestId: 'llm-request-1',
+        ok: true,
+        data: { reply: structuredReply },
+        timestamp: '2026-02-24T00:00:00.000Z'
+      };
+    });
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-1'
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    const replies = result.paragraphFeedbackBulk?.replies ?? [];
+    expect(replies).toHaveLength(10);
+    expect(replies.at(-1)).toEqual(
+      expect.objectContaining({
+        diagnosticType: 'reasoning_leak'
+      })
+    );
+    expect(replies.at(-1)?.reply).toContain('### Diagnostic Warning');
+    expect(replies.at(-1)?.reply).toContain('Hidden reasoning content.');
+    expect(appendTurns).toHaveBeenCalledWith(
+      expect.any(String),
+      replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
+      'file-1'
+    );
+    expect(addMessage).toHaveBeenCalledTimes(10);
+    expect(emittedEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'status',
+          text: 'Warning: reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode.'
+        })
+      ])
+    );
+  });
+
   it('keeps one fallback bubble when paragraph feedback is not structured JSON', async () => {
     const { service, appendTurns, addMessage } = await createService('Plain fallback paragraph feedback.');
 

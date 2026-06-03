@@ -25,6 +25,7 @@ interface ParagraphFeedbackBulkReply {
   feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
   supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
+  diagnosticType?: 'reasoning_leak';
   progressMessageId?: string;
 }
 
@@ -66,6 +67,10 @@ interface ParagraphFeedbackBundle {
     topic_sentence?: ParagraphFeedbackTypeResult;
     supporting_sentences?: ParagraphFeedbackTypeResult;
     coherence?: ParagraphFeedbackTypeResult;
+  };
+  reasoning_leak?: {
+    warning?: string;
+    reasoning_content?: string;
   };
 }
 
@@ -480,6 +485,14 @@ Reason: ${reason}`;
 Extracted ${typeLabel.toLowerCase()}: ${extractedText}`;
   }
 
+  private formatReasoningLeakReply(warning: string, reasoningContent: string): string {
+    return `### Diagnostic Warning
+${warning}
+
+Leaked reasoning:
+${reasoningContent}`;
+  }
+
   private supportingSentenceTypeLabel(kind: SupportingSentenceTypeResult['kind']): string {
     return kind
       .split('_')
@@ -599,13 +612,27 @@ Extracted ${typeLabel.toLowerCase()}: ${extractedText}`;
         }));
       });
 
-    const replies = supportingSentenceTypeReplies.length > 0
+    const replies: ParagraphFeedbackBulkReply[] = supportingSentenceTypeReplies.length > 0
       ? [
           ...typedReplies.slice(0, 3),
           ...supportingSentenceTypeReplies,
           ...typedReplies.slice(3)
         ]
       : typedReplies;
+
+    const reasoningLeakWarning = structuredReply?.reasoning_leak?.warning?.trim() ?? '';
+    const reasoningLeakContent = structuredReply?.reasoning_leak?.reasoning_content?.trim() ?? '';
+    if (reasoningLeakWarning && reasoningLeakContent) {
+      replies.push({
+        fileId,
+        sessionId,
+        messageId: randomUUID(),
+        reply: this.formatReasoningLeakReply(reasoningLeakWarning, reasoningLeakContent),
+        clientRequestId: `${baseClientRequestId}:reasoning-leak`,
+        diagnosticType: 'reasoning_leak',
+        progressMessageId
+      });
+    }
 
     if (replies.length > 0) {
       return replies;
