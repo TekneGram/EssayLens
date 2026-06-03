@@ -37,6 +37,18 @@ afterEach(async () => {
 });
 
 describe('LlmSelectionRepository.selectModel', () => {
+  it('applies Gemma reasoning defaults and instruct/think family when Gemma is selected', async () => {
+    const { repository } = await createRepository();
+
+    const selected = await repository.selectModel('gemma4_e4b_it_q4_k_m', '/bin/llama-server', '/assets/gemma.jinja');
+
+    expect(selected?.activeModel.key).toBe('gemma4_e4b_it_q4_k_m');
+    expect(selected?.settings.llm_model_family).toBe('instruct/think');
+    expect(selected?.settings.llm_reasoning_mode).toBe('off');
+    expect(selected?.settings.llm_reasoning_budget).toBe(0);
+    expect(selected?.settings.llm_chat_template_path).toBe('/assets/gemma.jinja');
+  });
+
   it('switches the active model without violating the single-active unique index', async () => {
     const { repository } = await createRepository();
 
@@ -48,6 +60,8 @@ describe('LlmSelectionRepository.selectModel', () => {
     expect(switched?.activeModel.key).toBe('qwen3_4b_q8');
     expect(switched?.settings.llm_gguf_path).toBe('/models/qwen.gguf');
     expect(switched?.settings.llm_model_family).toBe('instruct/think');
+    expect(switched?.settings.llm_reasoning_mode).toBeNull();
+    expect(switched?.settings.llm_reasoning_budget).toBeNull();
     expect(switched?.settings.llm_chat_template_path).toBeNull();
 
     const active = await repository.getActiveModel();

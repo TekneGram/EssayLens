@@ -96,3 +96,17 @@ def test_parse_json_schema_content_reports_finish_reason_and_length() -> None:
     text = str(exc_info.value)
     assert "finish_reason='length'" in text
     assert "content_len=" in text
+
+
+def test_build_payload_sets_no_think_chat_template_kwargs_for_instruct_think() -> None:
+    client = OpenAICompatChatClient(
+        server_url="http://127.0.0.1:8080/v1/chat/completions",
+        model_name="gemma",
+        model_family="instruct/think",
+        request_cfg=_request_cfg(),
+    ).with_reasoning_mode("no_think")
+
+    payload = client._build_payload(system="sys", user="user")  # noqa: SLF001 - deliberate unit coverage
+
+    assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+    assert payload["messages"][1]["content"] == "user /no_think"

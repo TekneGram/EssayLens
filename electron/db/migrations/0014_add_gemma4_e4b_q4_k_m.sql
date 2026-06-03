@@ -38,7 +38,7 @@ INSERT OR IGNORE INTO llm_selection_defaults (
   'gemma-4-E4B-it-Q4_K_M.gguf',
   NULL,
   'server',
-  'gemma4',
+  'instruct/think',
   '__unset_llm_server__',
   NULL,
   NULL,

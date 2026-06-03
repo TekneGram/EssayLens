@@ -18,6 +18,8 @@ const llmRuntimeSettingsPartialSchema = z.object({
   llm_rope_freq_base: z.number().nullable().optional(),
   llm_rope_freq_scale: z.number().nullable().optional(),
   llm_model_family: z.string().optional(),
+  llm_reasoning_mode: z.string().nullable().optional(),
+  llm_reasoning_budget: z.number().int().nullable().optional(),
   llm_chat_template_path: z.string().nullable().optional(),
   llm_use_jinja: z.boolean().optional(),
   llm_cache_prompt: z.boolean().optional(),

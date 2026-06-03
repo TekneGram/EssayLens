@@ -25,6 +25,8 @@ function buildRuntimeSettings(overrides: Partial<LlmRuntimeSettings> = {}): LlmR
     llm_rope_freq_base: null,
     llm_rope_freq_scale: null,
     llm_model_family: 'instruct/think',
+    llm_reasoning_mode: null,
+    llm_reasoning_budget: null,
     llm_chat_template_path: null,
     llm_use_jinja: true,
     llm_cache_prompt: true,
@@ -121,7 +123,7 @@ async function createService(
                 hfFilename: 'model.gguf',
                 mmprojFilename: null,
                 backend: 'server',
-                modelFamily: activeModel.key.startsWith('gemma') ? 'gemma4' : 'instruct/think',
+                modelFamily: 'instruct/think',
                 chatTemplateAsset: activeModel.key.startsWith('gemma') ? 'models/gemma_4_chat_template.jinja' : null
               }
             ]

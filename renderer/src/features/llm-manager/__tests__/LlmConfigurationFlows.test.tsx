@@ -22,6 +22,8 @@ function makeSettings(overrides: Partial<LlmRuntimeSettings> = {}): LlmRuntimeSe
     llm_rope_freq_base: null,
     llm_rope_freq_scale: null,
     llm_model_family: 'instruct/think',
+    llm_reasoning_mode: null,
+    llm_reasoning_budget: null,
     llm_chat_template_path: null,
     llm_use_jinja: true,
     llm_cache_prompt: true,

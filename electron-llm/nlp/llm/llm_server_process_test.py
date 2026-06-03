@@ -17,7 +17,14 @@ class _FakeProc:
         return None
 
 
-def _build_server_cfg(tmp_path: Path, *, llm_use_jinja: bool, llm_chat_template_path: Path | None) -> LlmServerConfig:
+def _build_server_cfg(
+    tmp_path: Path,
+    *,
+    llm_use_jinja: bool,
+    llm_chat_template_path: Path | None,
+    llm_reasoning_mode: str | None = None,
+    llm_reasoning_budget: int | None = None,
+) -> LlmServerConfig:
     server_path = tmp_path / "llama-server"
     server_path.write_text("", encoding="utf-8")
     return LlmServerConfig.from_strings(
@@ -34,6 +41,8 @@ def _build_server_cfg(tmp_path: Path, *, llm_use_jinja: bool, llm_chat_template_
         llm_seed=None,
         llm_rope_freq_base=None,
         llm_rope_freq_scale=None,
+        llm_reasoning_mode=llm_reasoning_mode,
+        llm_reasoning_budget=llm_reasoning_budget,
         llm_chat_template_path=llm_chat_template_path,
         llm_use_jinja=llm_use_jinja,
         llm_cache_prompt=True,
@@ -71,6 +80,39 @@ def test_ensure_running_adds_chat_template_file_when_configured(monkeypatch, tmp
     assert "--jinja" in captured_cmd
     assert "--chat-template-file" in captured_cmd
     assert str(template_path) in captured_cmd
+
+
+def test_ensure_running_adds_reasoning_flags_when_configured(monkeypatch, tmp_path: Path) -> None:
+    template_path = tmp_path / "gemma_4_chat_template.jinja"
+    template_path.write_text("template", encoding="utf-8")
+    captured_cmd: list[str] = []
+
+    def fake_popen(cmd, **kwargs):  # noqa: ANN001, ANN003
+        captured_cmd.extend(cmd)
+        return _FakeProc()
+
+    monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+    process = LlmServerProcess(
+        server_cfg=_build_server_cfg(
+            tmp_path,
+            llm_use_jinja=True,
+            llm_chat_template_path=template_path,
+            llm_reasoning_mode="off",
+            llm_reasoning_budget=0,
+        ),
+        llm_cfg=_build_llm_cfg(tmp_path),
+    )
+    monkeypatch.setattr(process, "_supports_flash_attn_value", lambda: True)
+    monkeypatch.setattr(process, "_is_server_ready", lambda timeout_s=1.0: False)
+    monkeypatch.setattr(process, "_wait_until_ready", lambda wait_s: None)
+
+    process.ensure_running()
+
+    assert "--reasoning" in captured_cmd
+    assert "off" in captured_cmd
+    assert "--reasoning-budget" in captured_cmd
+    assert "0" in captured_cmd
 
 
 def test_ensure_running_keeps_default_jinja_behavior_without_template(monkeypatch, tmp_path: Path) -> None:

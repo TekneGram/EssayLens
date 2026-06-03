@@ -130,6 +130,10 @@ class LlmServerProcess:
             cmd.extend(["--rope-freq-base", str(self.server_cfg.llm_rope_freq_base)])
         if self.server_cfg.llm_rope_freq_scale is not None:
             cmd.extend(["--rope-freq-scale", str(self.server_cfg.llm_rope_freq_scale)])
+        if self.server_cfg.llm_reasoning_mode is not None:
+            cmd.extend(["--reasoning", self.server_cfg.llm_reasoning_mode])
+        if self.server_cfg.llm_reasoning_budget is not None:
+            cmd.extend(["--reasoning-budget", str(self.server_cfg.llm_reasoning_budget)])
         if self.server_cfg.llm_use_jinja:
             cmd.append("--jinja")
             if self.server_cfg.llm_chat_template_path is not None:

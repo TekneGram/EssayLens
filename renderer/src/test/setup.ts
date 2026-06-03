@@ -125,6 +125,8 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
           llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
@@ -139,6 +141,8 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
           llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
@@ -153,6 +157,8 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
           llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,

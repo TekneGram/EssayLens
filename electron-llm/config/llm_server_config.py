@@ -19,6 +19,8 @@ class LlmServerConfig:
     llm_seed: int | None
     llm_rope_freq_base: float | None
     llm_rope_freq_scale: float | None
+    llm_reasoning_mode: str | None
+    llm_reasoning_budget: int | None
     llm_chat_template_path: Path | None
     llm_use_jinja: bool
     llm_cache_prompt: bool
@@ -39,6 +41,8 @@ class LlmServerConfig:
         llm_seed: int | None,
         llm_rope_freq_base: float | None,
         llm_rope_freq_scale: float | None,
+        llm_reasoning_mode: str | None,
+        llm_reasoning_budget: int | None,
         llm_chat_template_path: str | Path | None,
         llm_use_jinja: bool,
         llm_cache_prompt: bool,
@@ -58,6 +62,8 @@ class LlmServerConfig:
             llm_seed=llm_seed,
             llm_rope_freq_base=llm_rope_freq_base,
             llm_rope_freq_scale=llm_rope_freq_scale,
+            llm_reasoning_mode=llm_reasoning_mode.strip() if isinstance(llm_reasoning_mode, str) and llm_reasoning_mode.strip() else None,
+            llm_reasoning_budget=llm_reasoning_budget,
             llm_chat_template_path=LlmServerConfig._norm(llm_chat_template_path) if llm_chat_template_path else None,
             llm_use_jinja=llm_use_jinja,
             llm_cache_prompt=llm_cache_prompt,
@@ -101,6 +107,8 @@ class LlmServerConfig:
             raise ValueError("llm_n_batch must be > 0 when provided")
         if self.llm_n_parallel is not None and self.llm_n_parallel <= 0:
             raise ValueError("llm_n_parallel must be > 0 when provided")
+        if self.llm_reasoning_budget is not None and self.llm_reasoning_budget < 0:
+            raise ValueError("llm_reasoning_budget must be >= 0 when provided")
         if self.llm_rope_freq_base is not None and self.llm_rope_freq_base <= 0:
             raise ValueError("llm_rope_freq_base must be > 0 when provided")
         if self.llm_rope_freq_scale is not None and self.llm_rope_freq_scale <= 0:

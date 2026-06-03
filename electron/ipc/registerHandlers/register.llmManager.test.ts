@@ -37,7 +37,7 @@ describe('registerLlmManagerHandlers', () => {
             hfFilename: 'gemma.gguf',
             mmprojFilename: null,
             backend: 'server',
-            modelFamily: 'gemma4',
+            modelFamily: 'instruct/think',
             chatTemplateAsset: 'models/gemma_4_chat_template.jinja'
           }
         ]),
