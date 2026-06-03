@@ -172,7 +172,8 @@ export class LlmSelectionRepository {
         return null;
       }
 
-      await this.db.run('UPDATE llm_selection SET is_active = CASE WHEN model_key = ? THEN 1 ELSE 0 END;', [modelKey]);
+      await this.db.run('UPDATE llm_selection SET is_active = 0 WHERE is_active = 1;');
+      await this.db.run('UPDATE llm_selection SET is_active = 1 WHERE model_key = ?;', [modelKey]);
       await this.applyDefaultsToRuntimeSettings(
         modelKey,
         modelRow.local_gguf_path,
