@@ -125,7 +125,6 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
-          llm_message_format: 'openai',
           llm_reasoning_mode: null,
           llm_reasoning_budget: null,
           llm_chat_template_path: null,
@@ -133,7 +132,8 @@ beforeEach(() => {
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),
@@ -142,7 +142,6 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
-          llm_message_format: 'openai',
           llm_reasoning_mode: null,
           llm_reasoning_budget: null,
           llm_chat_template_path: null,
@@ -150,7 +149,8 @@ beforeEach(() => {
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),
@@ -159,7 +159,6 @@ beforeEach(() => {
       data: {
         settings: {
           llm_model_family: 'instruct/think',
-          llm_message_format: 'openai',
           llm_reasoning_mode: null,
           llm_reasoning_budget: null,
           llm_chat_template_path: null,
@@ -167,7 +166,8 @@ beforeEach(() => {
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),

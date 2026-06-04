@@ -4,7 +4,7 @@ export type SettingKey = keyof LlmSettings;
 export type EditableValue = string | number | boolean | null;
 export type EnumSettingOption = { value: string; label: string };
 
-const BOOLEAN_KEYS: ReadonlySet<SettingKey> = new Set(['llm_use_jinja', 'llm_cache_prompt', 'llm_flash_attn', 'use_fake_reply']);
+const BOOLEAN_KEYS: ReadonlySet<SettingKey> = new Set(['llm_use_jinja', 'llm_cache_prompt', 'llm_flash_attn', 'use_fake_reply', 'llm_log_outbound_payload']);
 
 const NUMBER_KEYS: ReadonlySet<SettingKey> = new Set(['llm_port', 'llm_n_ctx', 'max_tokens', 'temperature']);
 
@@ -43,7 +43,8 @@ const EDITABLE_KEYS: ReadonlySet<SettingKey> = new Set([
   'temperature',
   'top_k',
   'top_p',
-  'use_fake_reply'
+  'use_fake_reply',
+  'llm_log_outbound_payload'
 ]);
 
 export function isBooleanSettingKey(key: SettingKey): boolean {

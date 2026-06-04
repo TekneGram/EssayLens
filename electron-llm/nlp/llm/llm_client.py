@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 import asyncio
 import json
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, AsyncIterator, Iterable, Iterator, Literal, Sequence
 import httpx
 import requests
@@ -9,6 +11,11 @@ import requests
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from config.llm_request_config import LlmRequestConfig
+
+try:
+    from jinja2 import Template
+except Exception:  # pragma: no cover - runtime dependency check
+    Template = None
 
 from nlp.llm.llm_types import (
     ChatRequest,
@@ -18,6 +25,7 @@ from nlp.llm.llm_types import (
 )
 
 JSONDict = dict[str, Any]
+DEFAULT_PAYLOAD_LOG_PATH = Path("/tmp/essaylens-llm-payloads.log")
 
 
 # ----- Accumulator class for streaming -----
@@ -64,7 +72,9 @@ class OpenAICompatChatClient:
     model_name: str
     model_family: str
     request_cfg: LlmRequestConfig
-    message_format: Literal["openai", "gemma"] = "openai"
+    log_outbound_payload: bool = False
+    chat_template_path: Path | None = None
+    payload_log_path: Path = DEFAULT_PAYLOAD_LOG_PATH
     timeout_s: float = 120.0
     reasoning_mode: Literal["default", "think", "no_think"] = "default"
 
@@ -79,8 +89,10 @@ class OpenAICompatChatClient:
             server_url=self.server_url,
             model_name=self.model_name,
             model_family=self.model_family,
-            message_format=self.message_format,
             request_cfg=self.request_cfg,
+            log_outbound_payload=self.log_outbound_payload,
+            chat_template_path=self.chat_template_path,
+            payload_log_path=self.payload_log_path,
             timeout_s=self.timeout_s,
             reasoning_mode=mode,
         )
@@ -92,8 +104,10 @@ class OpenAICompatChatClient:
             server_url=self.server_url,
             model_name=self.model_name,
             model_family=self.model_family,
-            message_format=self.message_format,
             request_cfg=self.request_cfg,
+            log_outbound_payload=self.log_outbound_payload,
+            chat_template_path=self.chat_template_path,
+            payload_log_path=self.payload_log_path,
             timeout_s=timeout_s,
             reasoning_mode=self.reasoning_mode,
         )
@@ -112,29 +126,11 @@ class OpenAICompatChatClient:
             "reasoning_mode must be 'think' or 'no_think' for model_family='instruct/think'."
         )
 
-    def _build_openai_messages(self, *, system: str, user: str) -> list[JSONDict]:
+    def _build_messages(self, *, system: str, user: str) -> list[JSONDict]:
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
-
-    def _build_gemma_messages(self, *, system: str, user: str) -> list[JSONDict]:
-        return [
-            {
-                "role": "user",
-                "content": (
-                    "Instructions:\n"
-                    f"{system}\n\n"
-                    "User request:\n"
-                    f"{user}"
-                ),
-            }
-        ]
-
-    def _build_messages(self, *, system: str, user: str) -> list[JSONDict]:
-        if self.message_format == "gemma":
-            return self._build_gemma_messages(system=system, user=user)
-        return self._build_openai_messages(system=system, user=user)
 
     def _build_payload(
             self,
@@ -167,6 +163,50 @@ class OpenAICompatChatClient:
         if self.model_family.strip().lower() == "instruct/think" and self.reasoning_mode == "no_think":
             payload["chat_template_kwargs"] = {"enable_thinking": False}
         return payload
+
+    def _log_payload(self, payload: JSONDict, *, request_kind: str) -> None:
+        if not self.log_outbound_payload:
+            return
+        timestamp = datetime.now(timezone.utc).isoformat()
+        prompt_preview = self._render_prompt_preview(payload)
+        entry = (
+            "===== essaylens llm payload =====\n"
+            f"timestamp: {timestamp}\n"
+            f"request_kind: {request_kind}\n"
+            f"model_family: {self.model_family}\n"
+            f"reasoning_mode: {self.reasoning_mode}\n"
+            "payload:\n"
+            f"{json.dumps(payload, ensure_ascii=False, indent=2)}\n"
+        )
+        if prompt_preview is not None:
+            entry += f"rendered_prompt_preview:\n{prompt_preview}\n"
+        entry += "\n"
+        self.payload_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.payload_log_path.open("a", encoding="utf-8") as handle:
+            handle.write(entry)
+            handle.flush()
+
+    def _render_prompt_preview(self, payload: JSONDict) -> str | None:
+        if self.chat_template_path is None or Template is None:
+            return None
+
+        try:
+            template_text = self.chat_template_path.read_text(encoding="utf-8")
+            template = Template(template_text)
+            chat_template_kwargs = payload.get("chat_template_kwargs")
+            enable_thinking = None
+            if isinstance(chat_template_kwargs, dict):
+                enable_thinking = chat_template_kwargs.get("enable_thinking")
+            rendered = template.render(
+                messages=payload.get("messages", []),
+                tools=payload.get("tools"),
+                bos_token="",
+                add_generation_prompt=True,
+                enable_thinking=enable_thinking,
+            )
+            return rendered
+        except Exception as exc:
+            return f"[render-error] {exc.__class__.__name__}: {exc}"
 
     @staticmethod
     def _extract_str(value: Any) -> str | None:
@@ -290,6 +330,7 @@ class OpenAICompatChatClient:
 
     def chat(self, system: str, user: str, **kwargs) -> ChatResponse:
         payload = self._build_payload(system=system, user=user, **kwargs)
+        self._log_payload(payload, request_kind="chat")
 
         try:
             response = requests.post(self.server_url, json=payload, timeout=self.timeout_s)
@@ -302,6 +343,7 @@ class OpenAICompatChatClient:
     
     async def chat_async(self, system: str, user: str, **kwargs) -> ChatResponse:
         payload = self._build_payload(system=system, user=user, **kwargs)
+        self._log_payload(payload, request_kind="chat_async")
 
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:
             try:
@@ -377,6 +419,7 @@ class OpenAICompatChatClient:
     def json_schema_chat_response(self, system: str, user: str, schema: dict[str, Any], **kwargs) -> ChatResponse:
         payload = self._build_payload(system=system, user=user, **kwargs)
         payload["response_format"] = schema
+        self._log_payload(payload, request_kind="json_schema_chat")
 
         try:
             response = requests.post(self.server_url, json=payload, timeout=self.timeout_s)
@@ -396,6 +439,7 @@ class OpenAICompatChatClient:
     ) -> Any:
         payload = self._build_payload(system=system, user=user, **kwargs)
         payload["response_format"] = schema
+        self._log_payload(payload, request_kind="json_schema_chat_async")
 
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:
             try:
@@ -451,6 +495,7 @@ class OpenAICompatChatClient:
     def chat_stream(self, system: str, user: str, **kwargs) -> Iterator[ChatStreamEvent]:
         payload = self._build_payload(system=system, user=user, **kwargs)
         payload["stream"] = True
+        self._log_payload(payload, request_kind="chat_stream")
         state = ChatStreamAccumulator.create()
 
         try:
@@ -485,6 +530,7 @@ class OpenAICompatChatClient:
     ) -> AsyncIterator[ChatStreamEvent]:
         payload = self._build_payload(system=system, user=user, **kwargs)
         payload["stream"] = True
+        self._log_payload(payload, request_kind="chat_stream_async")
         state = ChatStreamAccumulator.create()
 
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:

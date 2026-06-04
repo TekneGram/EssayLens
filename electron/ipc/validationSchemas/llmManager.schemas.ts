@@ -18,7 +18,6 @@ const llmRuntimeSettingsPartialSchema = z.object({
   llm_rope_freq_base: z.number().nullable().optional(),
   llm_rope_freq_scale: z.number().nullable().optional(),
   llm_model_family: z.string().optional(),
-  llm_message_format: z.enum(['openai', 'gemma']).optional(),
   llm_reasoning_mode: z.string().nullable().optional(),
   llm_reasoning_budget: z.number().int().nullable().optional(),
   llm_chat_template_path: z.string().nullable().optional(),
@@ -33,6 +32,7 @@ const llmRuntimeSettingsPartialSchema = z.object({
   request_seed: z.number().int().nullable().optional(),
   use_fake_reply: z.boolean().optional(),
   fake_reply_text: z.string().nullable().optional(),
+  llm_log_outbound_payload: z.boolean().optional(),
   bulk_llm_recycle_policy: z.enum(['never', 'after_each_file']).optional()
 });
 

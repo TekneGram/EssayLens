@@ -7,14 +7,12 @@ from config.llm_request_config import LlmRequestConfig
 from config.llm_server_config import LlmServerConfig
 from config.llm_config import LlmConfig
 
-_ALLOWED_MESSAGE_FORMATS = {"openai", "gemma"}
-
 @dataclass(frozen=True, slots=True)
 class AppConfig:
     use_fake_reply: bool
     fake_reply_text: str
+    llm_log_outbound_payload: bool
     llm_model_family: str
-    llm_message_format: str
     llm_config: LlmConfig | None
     llm_server: LlmServerConfig | None
     llm_request: LlmRequestConfig | None
@@ -32,8 +30,8 @@ class AppConfig:
         llm_config, llm_server, llm_request = self.require_real_config()
         return (
             "real",
+            self.llm_log_outbound_payload,
             self.llm_model_family,
-            self.llm_message_format,
             str(llm_server.llm_server_path),
             str(llm_config.llm_gguf_path),
             str(llm_config.llm_mmproj_path) if llm_config.llm_mmproj_path is not None else None,
@@ -138,16 +136,19 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
 
     use_fake_reply = _optional_bool(settings, "use_fake_reply")
     fake_reply_text = _optional_str(settings, "fake_reply_text")
+    llm_log_outbound_payload = _optional_bool(settings, "llm_log_outbound_payload")
     normalized_fake_reply = (
         fake_reply_text.strip() if isinstance(fake_reply_text, str) and fake_reply_text.strip() else "LLM is not configured yet."
     )
+    if llm_log_outbound_payload is None:
+        llm_log_outbound_payload = False
 
     if use_fake_reply is True:
         return AppConfig(
             use_fake_reply=True,
             fake_reply_text=normalized_fake_reply,
+            llm_log_outbound_payload=False,
             llm_model_family="instruct/think",
-            llm_message_format="openai",
             llm_config=None,
             llm_server=None,
             llm_request=None,
@@ -156,15 +157,6 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
     llm_model_family = _optional_str(settings, "llm_model_family")
     if llm_model_family is None or not llm_model_family.strip():
         llm_model_family = "instruct/think"
-    llm_message_format = _optional_str(settings, "llm_message_format")
-    if llm_message_format is None or not llm_message_format.strip():
-        llm_message_format = "openai"
-    llm_message_format = llm_message_format.strip().lower()
-    if llm_message_format not in _ALLOWED_MESSAGE_FORMATS:
-        raise ValueError(
-            "llm_message_format must be one of: "
-            + ", ".join(sorted(_ALLOWED_MESSAGE_FORMATS))
-        )
 
     llm_host = _required_str(settings, "llm_host")
     llm_port = _required_int(settings, "llm_port")
@@ -218,8 +210,8 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
     return AppConfig(
         use_fake_reply=False,
         fake_reply_text=normalized_fake_reply,
+        llm_log_outbound_payload=llm_log_outbound_payload,
         llm_model_family=llm_model_family.strip(),
-        llm_message_format=llm_message_format,
         llm_config=llm_config,
         llm_server=llm_server,
         llm_request=llm_request

@@ -15,6 +15,8 @@ import requests
 # Run one benchmark judgement by myself against a chosen LLM
 # Compare the benchmark judgement with gemini in NotebookLM and run a diagnostic
 # Use NotebookLM to judge all the selected LLMs.
+# Remove the debug flag llm_log_outbound_payload and remove that debug functionality, including the logging of errors.
+# Remove the thinking leak diagnostic in the chat window
 
 def topic_sentence_identifier(
         model,

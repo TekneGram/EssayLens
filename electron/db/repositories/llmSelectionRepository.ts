@@ -261,7 +261,6 @@ export class LlmSelectionRepository {
          llm_rope_freq_base,
          llm_rope_freq_scale,
          llm_model_family,
-         llm_message_format,
          llm_reasoning_mode,
          llm_reasoning_budget,
          llm_chat_template_path,
@@ -276,6 +275,7 @@ export class LlmSelectionRepository {
          request_seed,
          use_fake_reply,
          fake_reply_text,
+         llm_log_outbound_payload,
          bulk_llm_recycle_policy
        )
        SELECT
@@ -295,7 +295,6 @@ export class LlmSelectionRepository {
          d.llm_rope_freq_base,
          d.llm_rope_freq_scale,
          d.model_family,
-         d.llm_message_format,
          d.llm_reasoning_mode,
          d.llm_reasoning_budget,
          ?,
@@ -310,6 +309,7 @@ export class LlmSelectionRepository {
          d.request_seed,
          d.use_fake_reply,
          d.fake_reply_text,
+         d.llm_log_outbound_payload,
          d.bulk_llm_recycle_policy
        FROM llm_selection_defaults d
        WHERE d.model_key = ?
@@ -329,7 +329,6 @@ export class LlmSelectionRepository {
          llm_rope_freq_base = excluded.llm_rope_freq_base,
          llm_rope_freq_scale = excluded.llm_rope_freq_scale,
          llm_model_family = excluded.llm_model_family,
-         llm_message_format = excluded.llm_message_format,
          llm_reasoning_mode = excluded.llm_reasoning_mode,
          llm_reasoning_budget = excluded.llm_reasoning_budget,
          llm_chat_template_path = excluded.llm_chat_template_path,
@@ -344,6 +343,7 @@ export class LlmSelectionRepository {
          request_seed = excluded.request_seed,
          use_fake_reply = excluded.use_fake_reply,
          fake_reply_text = excluded.fake_reply_text,
+         llm_log_outbound_payload = excluded.llm_log_outbound_payload,
          bulk_llm_recycle_policy = excluded.bulk_llm_recycle_policy;`,
       [llmChatTemplatePath ?? null, modelKey]
     );
