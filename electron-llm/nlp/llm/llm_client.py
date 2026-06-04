@@ -64,6 +64,7 @@ class OpenAICompatChatClient:
     model_name: str
     model_family: str
     request_cfg: LlmRequestConfig
+    message_format: Literal["openai", "gemma"] = "openai"
     timeout_s: float = 120.0
     reasoning_mode: Literal["default", "think", "no_think"] = "default"
 
@@ -78,6 +79,7 @@ class OpenAICompatChatClient:
             server_url=self.server_url,
             model_name=self.model_name,
             model_family=self.model_family,
+            message_format=self.message_format,
             request_cfg=self.request_cfg,
             timeout_s=self.timeout_s,
             reasoning_mode=mode,
@@ -90,6 +92,7 @@ class OpenAICompatChatClient:
             server_url=self.server_url,
             model_name=self.model_name,
             model_family=self.model_family,
+            message_format=self.message_format,
             request_cfg=self.request_cfg,
             timeout_s=timeout_s,
             reasoning_mode=self.reasoning_mode,
@@ -109,6 +112,30 @@ class OpenAICompatChatClient:
             "reasoning_mode must be 'think' or 'no_think' for model_family='instruct/think'."
         )
 
+    def _build_openai_messages(self, *, system: str, user: str) -> list[JSONDict]:
+        return [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+
+    def _build_gemma_messages(self, *, system: str, user: str) -> list[JSONDict]:
+        return [
+            {
+                "role": "user",
+                "content": (
+                    "Instructions:\n"
+                    f"{system}\n\n"
+                    "User request:\n"
+                    f"{user}"
+                ),
+            }
+        ]
+
+    def _build_messages(self, *, system: str, user: str) -> list[JSONDict]:
+        if self.message_format == "gemma":
+            return self._build_gemma_messages(system=system, user=user)
+        return self._build_openai_messages(system=system, user=user)
+
     def _build_payload(
             self,
             system: str,
@@ -120,10 +147,7 @@ class OpenAICompatChatClient:
         # Start with the core required fields
         payload: JSONDict = {
             "model": self.model_name,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": prompt_user}
-            ],
+            "messages": self._build_messages(system=system, user=prompt_user),
         }
 
         # List the keys to process

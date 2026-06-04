@@ -104,9 +104,66 @@ def test_build_payload_sets_no_think_chat_template_kwargs_for_instruct_think() -
         model_name="gemma",
         model_family="instruct/think",
         request_cfg=_request_cfg(),
+        message_format="openai",
     ).with_reasoning_mode("no_think")
 
     payload = client._build_payload(system="sys", user="user")  # noqa: SLF001 - deliberate unit coverage
 
     assert payload["chat_template_kwargs"] == {"enable_thinking": False}
     assert payload["messages"][1]["content"] == "user /no_think"
+
+
+def test_build_payload_uses_openai_message_format_by_default() -> None:
+    client = OpenAICompatChatClient(
+        server_url="http://127.0.0.1:8080/v1/chat/completions",
+        model_name="qwen",
+        model_family="instruct/think",
+        request_cfg=_request_cfg(),
+        message_format="openai",
+    )
+
+    payload = client._build_payload(system="sys", user="user")  # noqa: SLF001 - deliberate unit coverage
+
+    assert payload["messages"] == [
+        {"role": "system", "content": "sys"},
+        {"role": "user", "content": "user"},
+    ]
+
+
+def test_build_payload_uses_gemma_message_format() -> None:
+    client = OpenAICompatChatClient(
+        server_url="http://127.0.0.1:8080/v1/chat/completions",
+        model_name="gemma",
+        model_family="instruct/think",
+        request_cfg=_request_cfg(),
+        message_format="gemma",
+    )
+
+    payload = client._build_payload(system="system prompt", user="user prompt")  # noqa: SLF001 - deliberate unit coverage
+
+    assert payload["messages"] == [
+        {
+            "role": "user",
+            "content": "Instructions:\nsystem prompt\n\nUser request:\nuser prompt",
+        }
+    ]
+
+
+def test_build_payload_uses_gemma_message_format_with_no_think() -> None:
+    client = OpenAICompatChatClient(
+        server_url="http://127.0.0.1:8080/v1/chat/completions",
+        model_name="gemma",
+        model_family="instruct/think",
+        request_cfg=_request_cfg(),
+        message_format="gemma",
+    ).with_reasoning_mode("no_think")
+
+    payload = client._build_payload(system="sys", user="user")  # noqa: SLF001 - deliberate unit coverage
+
+    assert payload["chat_template_kwargs"] == {"enable_thinking": False}
+    assert payload["messages"] == [
+        {
+            "role": "user",
+            "content": "Instructions:\nsys\n\nUser request:\nuser /no_think",
+        }
+    ]

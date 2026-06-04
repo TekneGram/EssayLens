@@ -32,6 +32,7 @@ def build_container(app_cfg: AppConfig):
         server_url=llm_server.llm_server_url,
         model_name="",
         model_family=app_cfg.llm_model_family,
+        message_format=app_cfg.llm_message_format,
         request_cfg=llm_request
     )
 

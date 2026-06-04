@@ -276,30 +276,32 @@ def main() -> None:
             "summary_feedback": ""
         }
 
-        praise = inline_praise("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/phrase_praise.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(praise, indent=2))
+        # praise = inline_praise("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/phrase_praise.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(praise, indent=2))
 
-        changes = inline_changes("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/phrase_change.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(changes, indent=2))
+        # changes = inline_changes("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/phrase_change.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(changes, indent=2))
         
-        # # Topic sentence analysis
-        # data = topic_sentence_identifier("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
-        # print(json.dumps(data, indent=2))
-        # topic_sentence = data["choices"][0]["message"]["content"]
-        # feedback_data["topic_sentence"]["sentence"] = topic_sentence
+        # Topic sentence analysis
+        data = topic_sentence_identifier(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(data, indent=2))
+        topic_sentence = data["choices"][0]["message"]["content"]
+        feedback_data["topic_sentence"]["sentence"] = topic_sentence
 
-        # data_2 = topic_sentence_controlling_idea("experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
-        # print(json.dumps(data_2, indent=2))
-        # controlling_idea = data_2["choices"][0]["message"]["content"]
-        # feedback_data["topic_sentence"]["controlling_idea"] = controlling_idea
+        data_2 = topic_sentence_controlling_idea(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(data_2, indent=2))
+        controlling_idea = data_2["choices"][0]["message"]["content"]
+        feedback_data["topic_sentence"]["controlling_idea"] = controlling_idea
 
-        # data_3 = topic_sentence_judgement("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
-        # print(json.dumps(data_3, indent=2))
-        # ts_judgement = data_3["choices"][0]["message"]["content"]
-        # ts_judgement_content = json.loads(ts_judgement)
-        # feedback_data["topic_sentence"]["verdict"] = ts_judgement_content["verdict"]
-        # feedback_data["topic_sentence"]["reason"] = ts_judgement_content["reason"]
-        # feedback_data["topic_sentence"]["revision_suggestion"] = ts_judgement_content["revision_suggestion"]
+        data_3 = topic_sentence_judgement(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
+        print(json.dumps(data_3, indent=2))
+        ts_judgement = data_3["choices"][0]["message"]["content"]
+        ts_judgement_content = json.loads(ts_judgement)
+        feedback_data["topic_sentence"]["verdict"] = ts_judgement_content["verdict"]
+        feedback_data["topic_sentence"]["reason"] = ts_judgement_content["reason"]
+        feedback_data["topic_sentence"]["revision_suggestion"] = ts_judgement_content["revision_suggestion"]
+
+        print(feedback_data)
 
 
         # # Coherence analysis

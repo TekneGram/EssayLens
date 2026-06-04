@@ -35,6 +35,7 @@ def _base_settings() -> dict[str, object]:
         "llm_rope_freq_base": None,
         "llm_rope_freq_scale": None,
         "llm_model_family": "instruct/think",
+        "llm_message_format": "openai",
         "llm_reasoning_mode": None,
         "llm_reasoning_budget": None,
         "llm_chat_template_path": None,

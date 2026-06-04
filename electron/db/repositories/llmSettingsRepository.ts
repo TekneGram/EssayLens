@@ -20,6 +20,7 @@ interface LlmSettingsRow {
   llm_rope_freq_base: number | null;
   llm_rope_freq_scale: number | null;
   llm_model_family: string;
+  llm_message_format: LlmRuntimeSettings['llm_message_format'];
   llm_reasoning_mode: string | null;
   llm_reasoning_budget: number | null;
   llm_chat_template_path: string | null;
@@ -51,7 +52,7 @@ export class LlmSettingsRepository {
          llm_server_url, llm_host, llm_port, llm_n_ctx,
          llm_n_threads, llm_n_gpu_layers, llm_n_batch, llm_n_parallel,
          llm_seed, llm_rope_freq_base, llm_rope_freq_scale,
-         llm_model_family, llm_reasoning_mode, llm_reasoning_budget, llm_chat_template_path,
+         llm_model_family, llm_message_format, llm_reasoning_mode, llm_reasoning_budget, llm_chat_template_path,
          llm_use_jinja, llm_cache_prompt, llm_flash_attn,
          max_tokens, temperature, top_p, top_k, repeat_penalty, request_seed,
          use_fake_reply, fake_reply_text, bulk_llm_recycle_policy
@@ -80,6 +81,7 @@ export class LlmSettingsRepository {
       llm_rope_freq_base: row.llm_rope_freq_base,
       llm_rope_freq_scale: row.llm_rope_freq_scale,
       llm_model_family: row.llm_model_family,
+      llm_message_format: row.llm_message_format,
       llm_reasoning_mode: row.llm_reasoning_mode,
       llm_reasoning_budget: row.llm_reasoning_budget,
       llm_chat_template_path: row.llm_chat_template_path,
