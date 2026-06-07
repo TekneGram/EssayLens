@@ -646,6 +646,11 @@
   align-items: flex-start;
 }
 
+.comment-tools--editing {
+  display: block;
+  width: 100%;
+}
+
 .comment-tools button,
 .comment-tools select,
 .comment-edit-input {
@@ -724,12 +729,13 @@
 .comment-edit-controls {
   display: grid;
   gap: 6px;
-  min-width: min(260px, 100%);
+  width: 100%;
+  min-width: 0;
 }
 
 .comment-edit-input {
-  min-height: 56px;
-  width: min(340px, 100%);
+  min-height: 144px;
+  width: 100%;
   padding: 8px 10px;
   resize: vertical;
 }

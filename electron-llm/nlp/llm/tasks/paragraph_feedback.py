@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-import json
 from pathlib import Path
-import sys
 from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -13,7 +10,6 @@ if TYPE_CHECKING:
 
 
 PROMPT_DIR = Path(__file__).resolve().parents[3] / "prompts" / "paragraph_feedback"
-DEBUG_LOG_PATH = Path("/private/tmp/essaylens-vocabulary-feedback-debug.txt")
 StatusCallback = Callable[[str], None]
 MAX_SCHEMA_ATTEMPTS = 4
 RETRY_SCHEMA_MAX_TOKENS_CAP = 3072
@@ -410,12 +406,6 @@ def run_paragraph_feedback_bundle(
     paragraph = paragraph_text.strip()
     if not paragraph:
         raise ValueError("paragraph_text must be non-empty")
-    _append_debug_log(
-        "[paragraph_feedback] bundle start",
-        {
-            "paragraph_length": len(paragraph),
-        },
-    )
 
     system_prompt = _load_prompt("paragraph_knowledge.md")
     prefix_context = _build_prefix_context(paragraph)
@@ -439,26 +429,12 @@ def run_paragraph_feedback_bundle(
     )
     from nlp.llm.tasks.vocabulary_feedback import run_vocabulary_feedback
 
-    _append_debug_log(
-        "[paragraph_feedback] before vocabulary feedback",
-        {
-            "paragraph_length": len(paragraph),
-        },
-    )
     vocabulary_feedback = run_vocabulary_feedback(
         llm_service=llm_service,
         app_cfg=app_cfg,
         paragraph_text=paragraph,
         on_status=on_status,
         reasoning_collector=reasoning_collector,
-    )
-    _append_debug_log(
-        "[paragraph_feedback] after vocabulary feedback",
-        {
-            "items_count": len(vocabulary_feedback.get("items", []))
-            if isinstance(vocabulary_feedback.get("items"), list)
-            else None,
-        },
     )
 
     result: dict[str, Any] = {
@@ -468,23 +444,6 @@ def run_paragraph_feedback_bundle(
         },
         "vocabulary_feedback": vocabulary_feedback,
     }
-    debug_summary = {
-        "topic_sentence_present": bool(topic_sentence),
-        "coherence_present": bool(coherence),
-        "vocabulary_items_count": len(vocabulary_feedback.get("items", []))
-        if isinstance(vocabulary_feedback.get("items"), list)
-        else None,
-        "vocabulary_items_preview": vocabulary_feedback.get("items", [])[:3]
-        if isinstance(vocabulary_feedback.get("items"), list)
-        else None,
-    }
-    print(
-        "[paragraph_feedback] bundle summary",
-        json.dumps(debug_summary, ensure_ascii=False),
-        file=sys.stderr,
-        flush=True,
-    )
-    _append_debug_log("[paragraph_feedback] bundle summary", debug_summary)
     if reasoning_collector.detected():
         _emit_status(
             on_status,
@@ -500,15 +459,3 @@ def run_paragraph_feedback_bundle(
 def _emit_status(on_status: StatusCallback | None, text: str) -> None:
     if on_status is not None:
         on_status(text)
-
-
-def _append_debug_log(label: str, payload: dict[str, Any]) -> None:
-    timestamp = datetime.now(timezone.utc).isoformat()
-    line = f"{timestamp} {label} {json.dumps(payload, ensure_ascii=False)}\n"
-    try:
-        DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with DEBUG_LOG_PATH.open("a", encoding="utf-8") as handle:
-            handle.write(line)
-    except Exception:
-        # Temporary debug logging must never break the feedback flow.
-        pass

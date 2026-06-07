@@ -1,20 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { initializeDatabase } from './db/initializeDatabase';
 import { bootstrapStorage } from './runtime/bootstrapStorage';
 import { reconcileDevLlmServerPath } from './runtime/llmServerPathReconciler';
 import { registerIpcHandlers, shutdownSharedLlmRuntime } from './ipc/registerHandlers';
-
-const DEBUG_LOG_PATH = '/private/tmp/essaylens-vocabulary-feedback-debug.txt';
-
-function appendStartupDebugLog(label: string, payload: Record<string, unknown>): void {
-  try {
-    appendFileSync(DEBUG_LOG_PATH, `${new Date().toISOString()} ${label} ${JSON.stringify(payload)}\n`, 'utf8');
-  } catch {
-    // Temporary debug logging must never break app startup.
-  }
-}
 
 export function createMainApp() {
   let mainWindow: BrowserWindow | null = null;
@@ -93,14 +82,6 @@ export function createMainApp() {
     });
 
     await app.whenReady();
-    const startupSummary = {
-      pid: process.pid,
-      isDevMode: isDevMode(),
-      userDataPath: app.getPath('userData'),
-      cwd: process.cwd()
-    };
-    console.log('[essaylens] electron startup marker', startupSummary);
-    appendStartupDebugLog('[essaylens] electron startup marker', startupSummary);
     await initializeDatabase();
     await bootstrapStorage();
     await reconcileDevLlmServerPath();

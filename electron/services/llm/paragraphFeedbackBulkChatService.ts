@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import { appendFileSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AppException } from '../../core/appException';
@@ -16,8 +15,6 @@ import type {
   EmitChatEvent,
   ParagraphFeedbackBulkRequest
 } from './chatService.shared';
-
-const DEBUG_LOG_PATH = '/private/tmp/essaylens-vocabulary-feedback-debug.txt';
 
 interface ParagraphFeedbackBulkReply {
   fileId: string;
@@ -131,13 +128,6 @@ export class ParagraphFeedbackBulkChatService {
       const progressMessageId = randomUUID();
       const sessionId = `paragraph-feedback:${fileId}:${Date.now()}:${index + 1}`;
       const perFileClientRequestId = `${baseClientRequestId}:paragraph:${index + 1}`;
-      this.appendDebugLog('[paragraph-feedback-bulk] per-file start', {
-        fileId,
-        sessionId,
-        perFileClientRequestId,
-        index: index + 1,
-        totalFiles: fileIds.length
-      });
 
       emitToRenderer({
         requestId: `${perFileClientRequestId}:start`,
@@ -211,12 +201,6 @@ export class ParagraphFeedbackBulkChatService {
       try {
         const buffer = await fs.readFile(sourceFile.path);
         essayText = (await extractDocxTextFromBuffer(buffer)).trim();
-        this.appendDebugLog('[paragraph-feedback-bulk] extracted essay text', {
-          fileId,
-          sessionId,
-          sourcePath: sourceFile.path,
-          essayLength: essayText.length
-        });
       } catch (error) {
         this.emitBulkError({
           emitToRenderer,
@@ -251,12 +235,6 @@ export class ParagraphFeedbackBulkChatService {
         settings,
         clientRequestId: perFileClientRequestId
       });
-      this.appendDebugLog('[paragraph-feedback-bulk] before worker request', {
-        fileId,
-        sessionId,
-        clientRequestId: perFileClientRequestId,
-        essayLength: essayText.length
-      });
 
       const llmResult = await this.deps.llmOrchestrator.requestActionStream<typeof llmPayload, SendChatMessageResponse>(
         'llm.paragraph.feedback.bulk',
@@ -278,14 +256,6 @@ export class ParagraphFeedbackBulkChatService {
           });
         }
       );
-      this.appendDebugLog('[paragraph-feedback-bulk] after worker request', {
-        fileId,
-        sessionId,
-        clientRequestId: perFileClientRequestId,
-        ok: llmResult.ok,
-        errorCode: llmResult.ok ? null : llmResult.error.code,
-        errorMessage: llmResult.ok ? null : llmResult.error.message
-      });
 
       if (!llmResult.ok) {
         this.emitBulkError({
@@ -326,20 +296,6 @@ export class ParagraphFeedbackBulkChatService {
       }
 
       const structuredReply = this.tryParseParagraphFeedbackBundle(reply);
-      const parsedReplySummary = {
-        fileId,
-        sessionId,
-        parsed: Boolean(structuredReply),
-        rawReplyPreview: reply.slice(0, 1000),
-        vocabularyItemsCount: Array.isArray(structuredReply?.vocabulary_feedback?.items)
-          ? structuredReply?.vocabulary_feedback?.items.length
-          : null,
-        vocabularyItemsPreview: Array.isArray(structuredReply?.vocabulary_feedback?.items)
-          ? structuredReply?.vocabulary_feedback?.items.slice(0, 3)
-          : null
-      };
-      console.log('[paragraph-feedback-bulk] parsed worker reply', parsedReplySummary);
-      this.appendDebugLog('[paragraph-feedback-bulk] parsed worker reply', parsedReplySummary);
       const feedbackReplies = this.buildFeedbackReplies({
         fileId,
         sessionId,
@@ -349,27 +305,7 @@ export class ParagraphFeedbackBulkChatService {
         structuredReply,
         fallbackReply: reply
       });
-      const builtRepliesSummary = {
-        fileId,
-        sessionId,
-        replyCount: feedbackReplies.length,
-        vocabularyReplyCount: feedbackReplies.filter((item) => item.feedbackType === 'vocabulary').length,
-        replyPreview: feedbackReplies.slice(0, 5).map((item) => ({
-          feedbackType: item.feedbackType,
-          feedbackSection: item.feedbackSection,
-          commentActionType: item.commentActionType,
-          reply: item.reply
-        }))
-      };
-      console.log('[paragraph-feedback-bulk] built chat replies', builtRepliesSummary);
-      this.appendDebugLog('[paragraph-feedback-bulk] built chat replies', builtRepliesSummary);
-
       try {
-        this.appendDebugLog('[paragraph-feedback-bulk] before persistence', {
-          fileId,
-          sessionId,
-          replyCount: feedbackReplies.length
-        });
         await this.deps.llmChatSessionRepository.createSession(sessionId, fileId);
         await this.deps.llmChatSessionRepository.appendTurns(
           sessionId,
@@ -385,11 +321,6 @@ export class ParagraphFeedbackBulkChatService {
             createdAt: new Date().toISOString()
           });
         }
-        this.appendDebugLog('[paragraph-feedback-bulk] after persistence', {
-          fileId,
-          sessionId,
-          replyCount: feedbackReplies.length
-        });
       } catch (error) {
         this.emitBulkError({
           emitToRenderer,
@@ -671,13 +602,5 @@ ${reasoningContent}`;
 
   private buildFailure(args: ParagraphFeedbackBulkFailure): ParagraphFeedbackBulkFailure {
     return args;
-  }
-
-  private appendDebugLog(label: string, payload: unknown): void {
-    try {
-      appendFileSync(DEBUG_LOG_PATH, `${new Date().toISOString()} ${label} ${JSON.stringify(payload)}\n`, 'utf8');
-    } catch {
-      // Temporary debug logging must never break the feedback flow.
-    }
   }
 }

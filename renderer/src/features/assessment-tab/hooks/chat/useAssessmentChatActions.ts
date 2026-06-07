@@ -153,15 +153,6 @@ export function useAssessmentChatActions({
     const message = draftText.trim();
     const isRubricFeedbackCommand = activeCommand?.id === 'evaluate-with-rubric';
     const isParagraphBulkCommand = activeCommand?.id === 'paragraph-feedback-bulk';
-    console.log('[assessment-chat] submit invoked', {
-      activeCommandId: activeCommand?.id ?? null,
-      chatMode,
-      messageLength: message.length,
-      selectedFileId,
-      workspaceDocxFileIdsCount: workspaceDocxFileIds.length,
-      isRubricFeedbackCommand,
-      isParagraphBulkCommand
-    });
 
     if (chatMode === 'comment') {
       if (!message) {
@@ -184,7 +175,6 @@ export function useAssessmentChatActions({
     }
 
     if (!isRubricFeedbackCommand && !isParagraphBulkCommand && !message) {
-      console.log('[assessment-chat] submit returned early because no active bulk/rubric command and no message');
       return;
     }
 
@@ -207,9 +197,6 @@ export function useAssessmentChatActions({
         return;
       }
       if (isParagraphBulkCommand) {
-        console.log('[assessment-chat] entering paragraph-feedback-bulk preflight', {
-          workspaceDocxFileIds
-        });
         if (workspaceDocxFileIds.length === 0) {
           const errorMessage = 'No DOCX files are available for paragraph feedback.';
           appDispatch(setChatError(errorMessage));
@@ -218,7 +205,6 @@ export function useAssessmentChatActions({
         }
 
         const completionCheck = await chatApi.checkParagraphFeedbackCompletions({ fileIds: workspaceDocxFileIds });
-        console.log('[assessment-chat] paragraph-feedback-bulk completion check result', completionCheck);
         if (!completionCheck.ok) {
           throw new Error(completionCheck.error.message || 'Unable to check existing paragraph feedback.');
         }

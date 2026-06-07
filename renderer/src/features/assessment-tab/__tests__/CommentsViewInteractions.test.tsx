@@ -79,7 +79,7 @@ describe('CommentsView interactions', () => {
     const onApplyAllComments = vi.fn();
     const onGenerateFeedbackDocument = vi.fn();
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <CommentsView
         comments={[inlineComment]}
         activeCommentId={null}
@@ -105,6 +105,9 @@ describe('CommentsView interactions', () => {
     expect(onSelectComment).toHaveBeenCalledWith('feedback-inline-1');
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.queryByText('Quote:')).toBeNull();
+    expect(container.querySelector('.comment-body')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Send to LLM' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
@@ -117,6 +120,8 @@ describe('CommentsView interactions', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(onEditComment).toHaveBeenCalledWith('feedback-inline-1', 'Updated comment text from tools.');
+    expect(screen.getByText('Quote:')).toBeTruthy();
+    expect(container.querySelector('.comment-body')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Delete' })[0]).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Send to LLM' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy();

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 
 from nlp.llm.tasks.paragraph_feedback import (
     _ReasoningLeakCollector,
-    _append_debug_log,
     _build_prefix_context,
     _emit_status,
     _load_prompt as _load_paragraph_prompt,
@@ -36,12 +35,6 @@ def run_vocabulary_feedback(
     paragraph = paragraph_text.strip()
     if not paragraph:
         raise ValueError("paragraph_text must be non-empty")
-    _append_debug_log(
-        "[vocabulary_feedback] start",
-        {
-            "paragraph_length": len(paragraph),
-        },
-    )
 
     system_prompt = _load_paragraph_prompt("paragraph_knowledge.md")
     prefix_context = _build_prefix_context(paragraph)
@@ -98,14 +91,6 @@ def run_vocabulary_feedback(
                 "simple_vocabulary": simple_vocabulary,
                 "text_context": text_context,
                 "precise_vocabulary": precise_vocabulary,
-            }
-        )
-
-    _append_debug_log(
-        "[vocabulary_feedback] end",
-        {
-            "items_count": len(items),
-            "items_preview": items[:3],
-        },
+        }
     )
     return {"items": items}

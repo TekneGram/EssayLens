@@ -34,7 +34,6 @@ import type { AppAction } from '@/app/providers/state/actions';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
-const CHAT_INLINE_SELECTION_ID = '__chat-inline-selection__';
 
 interface UseAssessmentCommentsActionsParams {
   appDispatch: Dispatch<AppAction>;
@@ -229,9 +228,6 @@ export function useAssessmentCommentsActions({
 
           if (selection) {
             localDispatch({ type: 'assessmentTab/setPendingSelection', payload: null });
-            localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: selection });
-            localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: CHAT_INLINE_SELECTION_ID });
-
             const createdInlineComment = await addFeedback({
               kind: 'inline',
               source: 'llm',
