@@ -22,7 +22,7 @@ interface ParagraphFeedbackBulkReply {
   messageId: string;
   reply: string;
   clientRequestId: string;
-  feedbackType?: 'topic_sentence' | 'coherence';
+  feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   diagnosticType?: 'reasoning_leak';
   progressMessageId?: string;
@@ -53,10 +53,17 @@ interface ParagraphFeedbackTypeResult {
   revision_suggestion: string;
 }
 
+interface ParagraphFeedbackVocabularyItem {
+  simple_vocabulary: string;
+  text_context: string;
+  precise_vocabulary: string;
+}
+
 interface ParagraphFeedbackBundle {
   paragraph_feedback?: {
     topic_sentence?: ParagraphFeedbackTypeResult;
     coherence?: ParagraphFeedbackTypeResult;
+    vocabulary?: ParagraphFeedbackVocabularyItem[];
   };
   reasoning_leak?: {
     warning?: string;
@@ -462,6 +469,10 @@ export class ParagraphFeedbackBulkChatService {
 ${sectionLabel}: ${text}`;
   }
 
+  private formatVocabularyReply(item: ParagraphFeedbackVocabularyItem): string {
+    return `You used '${item.simple_vocabulary}' when you wrote '${item.text_context}'. You can improve this with: '${item.precise_vocabulary}'.`;
+  }
+
   private formatReasoningLeakReply(warning: string, reasoningContent: string): string {
     return `### Diagnostic Warning
 ${warning}
@@ -522,7 +533,31 @@ ${reasoningContent}`;
         }));
       });
 
-    const replies: ParagraphFeedbackBulkReply[] = typedReplies;
+    const vocabularyItems = paragraphFeedback?.vocabulary;
+    const vocabularyReplies: ParagraphFeedbackBulkReply[] = Array.isArray(vocabularyItems)
+      ? vocabularyItems
+          .filter(
+            (item): item is ParagraphFeedbackVocabularyItem =>
+              !!item &&
+              typeof item.simple_vocabulary === 'string' &&
+              typeof item.text_context === 'string' &&
+              typeof item.precise_vocabulary === 'string' &&
+              item.simple_vocabulary.trim().length > 0 &&
+              item.text_context.trim().length > 0 &&
+              item.precise_vocabulary.trim().length > 0
+          )
+          .map((item, index) => ({
+            fileId,
+            sessionId,
+            messageId: randomUUID(),
+            reply: this.formatVocabularyReply(item),
+            clientRequestId: `${baseClientRequestId}:vocabulary:${index + 1}`,
+            feedbackType: 'vocabulary' as const,
+            progressMessageId
+          }))
+      : [];
+
+    const replies: ParagraphFeedbackBulkReply[] = [...typedReplies, ...vocabularyReplies];
 
     const reasoningLeakWarning = structuredReply?.reasoning_leak?.warning?.trim() ?? '';
     const reasoningLeakContent = structuredReply?.reasoning_leak?.reasoning_content?.trim() ?? '';

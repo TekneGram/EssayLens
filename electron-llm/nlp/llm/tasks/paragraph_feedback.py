@@ -84,8 +84,10 @@ def _run_json_schema_chat(
     name: str,
     schema: dict[str, Any],
     reasoning_collector: _ReasoningLeakCollector | None = None,
+    sanitizer: Callable[..., dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     _, _, llm_request = app_cfg.require_real_config()
+    sanitize = sanitizer if sanitizer is not None else _sanitize_schema_object
     wrapped_schema = {
         "type": "json_schema",
         "json_schema": {
@@ -117,7 +119,7 @@ def _run_json_schema_chat(
             ) from exc
         if not isinstance(obj, dict):
             raise RuntimeError("Paragraph feedback task returned a non-object JSON schema response.")
-        return _sanitize_schema_object(obj=obj, schema=schema)
+        return sanitize(obj=obj, schema=schema)
 
     base_max_tokens = llm_request.max_tokens
     attempt_max_tokens = (
@@ -183,6 +185,35 @@ def _sanitize_schema_object(*, obj: dict[str, Any], schema: dict[str, Any]) -> d
         field_schema = properties.get(field) if isinstance(properties, dict) else None
         out[field] = _sanitize_field_value(field=field, value=obj[field], field_schema=field_schema)
     return out
+
+
+def _sanitize_vocabulary_items(*, obj: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
+    raw_items = obj.get("items")
+    if not isinstance(raw_items, list):
+        raise RuntimeError("Vocabulary feedback response missing 'items' array.")
+
+    items: list[dict[str, str]] = []
+    for raw in raw_items:
+        if not isinstance(raw, dict):
+            continue
+        simple = raw.get("simple_vocabulary")
+        context = raw.get("text_context")
+        precise = raw.get("precise_vocabulary")
+        if not all(isinstance(value, str) for value in (simple, context, precise)):
+            continue
+        simple_text = simple.strip()
+        context_text = context.strip()
+        precise_text = precise.strip()
+        if not (simple_text and context_text and precise_text):
+            continue
+        items.append(
+            {
+                "simple_vocabulary": simple_text,
+                "text_context": context_text,
+                "precise_vocabulary": precise_text,
+            }
+        )
+    return {"items": items}
 
 
 def _parse_schema_response_content(content: str) -> Any:
@@ -358,6 +389,56 @@ def _run_coherence_feedback(
     }
 
 
+def _run_vocabulary_feedback(
+    *,
+    llm_service: "LlmService",
+    app_cfg: "AppConfig",
+    system_prompt: str,
+    prefix_context: str,
+    on_status: StatusCallback | None = None,
+    reasoning_collector: _ReasoningLeakCollector | None = None,
+) -> list[dict[str, str]]:
+    _emit_status(on_status, "Reviewing word choice")
+    try:
+        result = _run_json_schema_chat(
+            llm_service=llm_service,
+            app_cfg=app_cfg,
+            system=system_prompt,
+            user=f"{prefix_context}\n\n{_load_prompt('vocabulary_simple.md')}",
+            name="improve_simple_vocabulary",
+            reasoning_collector=reasoning_collector,
+            schema={
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "simple_vocabulary": {"type": "string"},
+                                "text_context": {"type": "string"},
+                                "precise_vocabulary": {"type": "string"},
+                            },
+                            "required": ["simple_vocabulary", "text_context", "precise_vocabulary"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["items"],
+                "additionalProperties": False,
+            },
+            sanitizer=_sanitize_vocabulary_items,
+        )
+    except Exception as exc:
+        # Vocabulary feedback is supplementary: degrade gracefully so a failure here
+        # does not abort the topic sentence and coherence feedback for this file.
+        _emit_status(on_status, f"Skipping vocabulary feedback: {exc}")
+        return []
+
+    items = result.get("items")
+    return items if isinstance(items, list) else []
+
+
 def run_paragraph_feedback_bundle(
     *,
     llm_service: "LlmService",
@@ -389,11 +470,20 @@ def run_paragraph_feedback_bundle(
         on_status=on_status,
         reasoning_collector=reasoning_collector,
     )
+    vocabulary = _run_vocabulary_feedback(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        system_prompt=system_prompt,
+        prefix_context=prefix_context,
+        on_status=on_status,
+        reasoning_collector=reasoning_collector,
+    )
 
     result: dict[str, Any] = {
         "paragraph_feedback": {
             "topic_sentence": topic_sentence,
             "coherence": coherence,
+            "vocabulary": vocabulary,
         }
     }
     if reasoning_collector.detected():
