@@ -11,6 +11,7 @@ interface SessionApiMocks {
   getTurns: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
   deleteSession: ReturnType<typeof vi.fn>;
+  checkParagraphFeedbackCompletions: ReturnType<typeof vi.fn>;
   sendMessage: ReturnType<typeof vi.fn>;
   onStreamChunk: ReturnType<typeof vi.fn>;
 }
@@ -20,7 +21,27 @@ interface AssessmentApiMocks {
   addFeedback: ReturnType<typeof vi.fn>;
 }
 
-function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, assessmentApiMocks?: Partial<AssessmentApiMocks>) {
+interface WorkspaceFileMock {
+  id: string;
+  folderId: string;
+  name: string;
+  path: string;
+  kind: 'docx';
+}
+
+function installWindowApiMocks(
+  sessionApiMocks?: Partial<SessionApiMocks>,
+  assessmentApiMocks?: Partial<AssessmentApiMocks>,
+  workspaceFiles: WorkspaceFileMock[] = [
+    {
+      id: 'file-1',
+      folderId: 'folder-1',
+      name: 'essay-a.docx',
+      path: '/tmp/folder-1/essay-a.docx',
+      kind: 'docx'
+    }
+  ]
+) {
   const listByFile =
     sessionApiMocks?.listByFile ??
     vi.fn().mockResolvedValue({
@@ -56,6 +77,15 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, asses
       data: {
         sessionId: 'session-a',
         deleted: true
+      }
+    });
+  const checkParagraphFeedbackCompletions =
+    sessionApiMocks?.checkParagraphFeedbackCompletions ??
+    vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
       }
     });
   const sendMessage =
@@ -109,15 +139,7 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, asses
           ({
             ok: true,
             data: {
-              files: [
-                {
-                  id: 'file-1',
-                  folderId: 'folder-1',
-                  name: 'essay-a.docx',
-                  path: '/tmp/folder-1/essay-a.docx',
-                  kind: 'docx'
-                }
-              ]
+              files: workspaceFiles
             }
           }),
         getCurrentFolder: async () => ({ ok: true, data: { folder: null } })
@@ -148,6 +170,7 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, asses
         deleteRubric: async () => ({ ok: true, data: { deleted: true } })
       },
       chat: {
+        checkParagraphFeedbackCompletions,
         sendMessage,
         onStreamChunk
       },
@@ -191,7 +214,17 @@ function installWindowApiMocks(sessionApiMocks?: Partial<SessionApiMocks>, asses
     configurable: true
   });
 
-  return { listByFile, getTurns, create, deleteSession, sendMessage, onStreamChunk, listFeedback, addFeedback };
+  return {
+    listByFile,
+    getTurns,
+    create,
+    deleteSession,
+    checkParagraphFeedbackCompletions,
+    sendMessage,
+    onStreamChunk,
+    listFeedback,
+    addFeedback
+  };
 }
 
 function renderApp() {
@@ -252,6 +285,359 @@ describe('ChatView session orchestration', () => {
     });
     expect(screen.getByRole('button', { name: 'Open Chat 1' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Open Chat 2' })).toBeTruthy();
+  });
+
+  it('auto-switches to the next file and keeps bulk chat bubbles visible', async () => {
+    let streamListener: ((event: unknown) => void) | undefined;
+    let resolveSend: ((value: unknown) => void) | undefined;
+    const listByFile = vi
+      .fn()
+      .mockImplementation(async ({ fileEntityUuid }: { fileEntityUuid: string }) => ({
+        ok: true,
+        data: {
+          fileEntityUuid,
+          sessions: [
+            {
+              sessionId: fileEntityUuid === 'file-1' ? 'session-a' : 'session-b',
+              fileEntityUuid,
+              createdAt: '2026-02-01T00:00:00.000Z',
+              updatedAt: '2026-02-01T00:00:00.000Z',
+              lastUsedAt: '2026-02-03T00:00:00.000Z'
+            }
+          ]
+        }
+      }));
+    const getTurns = vi.fn().mockImplementation(async ({ sessionId, fileEntityUuid }: { sessionId: string; fileEntityUuid: string }) => ({
+      ok: true,
+      data: {
+        sessionId,
+        fileEntityUuid,
+        turns: fileEntityUuid === 'file-1' ? [{ role: 'assistant', content: 'Session A turn' }] : []
+      }
+    }));
+    const sendMessage = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    const onStreamChunk = vi.fn().mockImplementation((listener: (event: unknown) => void) => {
+      streamListener = listener;
+      return () => {
+        streamListener = undefined;
+      };
+    });
+    installWindowApiMocks(
+      { listByFile, getTurns, sendMessage, onStreamChunk },
+      undefined,
+      [
+        {
+          id: 'file-1',
+          folderId: 'folder-1',
+          name: 'essay-a.docx',
+          path: '/tmp/folder-1/essay-a.docx',
+          kind: 'docx'
+        },
+        {
+          id: 'file-2',
+          folderId: 'folder-1',
+          name: 'essay-b.docx',
+          path: '/tmp/folder-1/essay-b.docx',
+          kind: 'docx'
+        }
+      ]
+    );
+    renderApp();
+
+    await selectFileFromWorkspace();
+    expect(screen.getByRole('button', { name: 'essay-a.docx' }).getAttribute('aria-current')).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Paragraph feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'paragraph-feedback-bulk',
+          fileIds: ['file-1', 'file-2']
+        })
+      );
+    });
+
+    streamListener?.({
+      requestId: 'bulk-file-2-start',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2',
+      fileId: 'file-2',
+      sessionId: 'session-b',
+      messageId: 'bulk-progress-2',
+      workflow: 'paragraph-feedback-bulk',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-topic',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:topic_sentence:reason:1',
+      fileId: 'file-2',
+      sessionId: 'session-b',
+      messageId: 'bulk-topic-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'topic_sentence',
+      feedbackSection: 'reason',
+      commentActionType: 'global',
+      type: 'chunk',
+      seq: 2,
+      channel: 'content',
+      text: '### Topic Sentence\nReason: File two paragraph feedback.',
+      done: false
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-topic-done',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:topic_sentence:reason:1',
+      fileId: 'file-2',
+      sessionId: 'session-b',
+      messageId: 'bulk-topic-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'topic_sentence',
+      feedbackSection: 'reason',
+      commentActionType: 'global',
+      type: 'done',
+      seq: 3,
+      channel: 'meta',
+      text: '',
+      done: true
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-vocab',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:vocabulary:item:1',
+      fileId: 'file-2',
+      sessionId: 'session-b',
+      messageId: 'bulk-vocab-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'vocabulary',
+      feedbackSection: 'item',
+      commentActionType: 'inline',
+      vocabularyItem: {
+        simple_vocabulary: 'good',
+        text_context: 'a good plan',
+        precise_vocabulary: 'effective'
+      },
+      type: 'chunk',
+      seq: 2,
+      channel: 'content',
+      text: 'You used good when you wrote a good plan. You can improve this with the following: effective',
+      done: false
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-vocab-done',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:vocabulary:item:1',
+      fileId: 'file-2',
+      sessionId: 'session-b',
+      messageId: 'bulk-vocab-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'vocabulary',
+      feedbackSection: 'item',
+      commentActionType: 'inline',
+      vocabularyItem: {
+        simple_vocabulary: 'good',
+        text_context: 'a good plan',
+        precise_vocabulary: 'effective'
+      },
+      type: 'done',
+      seq: 3,
+      channel: 'meta',
+      text: '',
+      done: true
+    });
+
+    await waitFor(() => {
+      expect(listByFile).toHaveBeenCalledWith({ fileEntityUuid: 'file-2' });
+      expect(screen.getByRole('button', { name: 'essay-b.docx' }).getAttribute('aria-current')).toBe('true');
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId('chat-list-screen')).toBeNull();
+      expect(screen.getByText('Reason: File two paragraph feedback.')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Add to comments' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Add inline comment' })).toBeTruthy();
+    });
+
+    resolveSend?.({
+      ok: true,
+      data: {
+        reply: '',
+        paragraphFeedbackBulk: {
+          replies: [],
+          failures: [],
+          failedFileIds: [],
+          skippedFileIds: []
+        }
+      }
+    });
+  });
+
+  it('keeps the optimistic bulk session active when older persisted sessions already exist for the file', async () => {
+    let streamListener: ((event: unknown) => void) | undefined;
+    let resolveSend: ((value: unknown) => void) | undefined;
+    const listByFile = vi.fn().mockImplementation(async ({ fileEntityUuid }: { fileEntityUuid: string }) => ({
+      ok: true,
+      data: {
+        fileEntityUuid,
+        sessions:
+          fileEntityUuid === 'file-1'
+            ? [
+                {
+                  sessionId: 'session-a',
+                  fileEntityUuid,
+                  createdAt: '2026-02-01T00:00:00.000Z',
+                  updatedAt: '2026-02-01T00:00:00.000Z',
+                  lastUsedAt: '2026-02-03T00:00:00.000Z'
+                }
+              ]
+            : [
+                {
+                  sessionId: 'older-session-b',
+                  fileEntityUuid,
+                  createdAt: '2026-02-01T00:00:00.000Z',
+                  updatedAt: '2026-02-01T00:00:00.000Z',
+                  lastUsedAt: '2026-02-03T00:00:00.000Z'
+                }
+              ]
+      }
+    }));
+    const getTurns = vi.fn().mockImplementation(async ({ sessionId, fileEntityUuid }: { sessionId: string; fileEntityUuid: string }) => ({
+      ok: true,
+      data: {
+        sessionId,
+        fileEntityUuid,
+        turns: sessionId === 'older-session-b' ? [{ role: 'assistant', content: 'Older persisted session' }] : []
+      }
+    }));
+    const sendMessage = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    const onStreamChunk = vi.fn().mockImplementation((listener: (event: unknown) => void) => {
+      streamListener = listener;
+      return () => {
+        streamListener = undefined;
+      };
+    });
+    installWindowApiMocks(
+      { listByFile, getTurns, sendMessage, onStreamChunk },
+      undefined,
+      [
+        {
+          id: 'file-1',
+          folderId: 'folder-1',
+          name: 'essay-a.docx',
+          path: '/tmp/folder-1/essay-a.docx',
+          kind: 'docx'
+        },
+        {
+          id: 'file-2',
+          folderId: 'folder-1',
+          name: 'essay-b.docx',
+          path: '/tmp/folder-1/essay-b.docx',
+          kind: 'docx'
+        }
+      ]
+    );
+    renderApp();
+
+    await selectFileFromWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Paragraph feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: 'paragraph-feedback-bulk',
+          fileIds: ['file-1', 'file-2']
+        })
+      );
+    });
+
+    streamListener?.({
+      requestId: 'bulk-file-2-start',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2',
+      fileId: 'file-2',
+      sessionId: 'new-bulk-session-b',
+      messageId: 'bulk-progress-2',
+      workflow: 'paragraph-feedback-bulk',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-vocab',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:vocabulary:item:1',
+      fileId: 'file-2',
+      sessionId: 'new-bulk-session-b',
+      messageId: 'bulk-vocab-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'vocabulary',
+      feedbackSection: 'item',
+      commentActionType: 'inline',
+      vocabularyItem: {
+        simple_vocabulary: 'good',
+        text_context: 'a good plan',
+        precise_vocabulary: 'effective'
+      },
+      type: 'chunk',
+      seq: 2,
+      channel: 'content',
+      text: 'You used good when you wrote a good plan. You can improve this with the following: effective',
+      done: false
+    });
+    streamListener?.({
+      requestId: 'bulk-file-2-vocab-done',
+      clientRequestId: 'paragraphbulkreq-1:paragraph:2:vocabulary:item:1',
+      fileId: 'file-2',
+      sessionId: 'new-bulk-session-b',
+      messageId: 'bulk-vocab-2',
+      workflow: 'paragraph-feedback-bulk',
+      feedbackType: 'vocabulary',
+      feedbackSection: 'item',
+      commentActionType: 'inline',
+      vocabularyItem: {
+        simple_vocabulary: 'good',
+        text_context: 'a good plan',
+        precise_vocabulary: 'effective'
+      },
+      type: 'done',
+      seq: 3,
+      channel: 'meta',
+      text: '',
+      done: true
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'essay-b.docx' }).getAttribute('aria-current')).toBe('true');
+      expect(screen.queryByText('Older persisted session')).toBeNull();
+      expect(screen.getByText('You used good when you wrote a good plan. You can improve this with the following: effective')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Add inline comment' })).toBeTruthy();
+    });
+
+    resolveSend?.({
+      ok: true,
+      data: {
+        reply: '',
+        paragraphFeedbackBulk: {
+          replies: [],
+          failures: [],
+          failedFileIds: [],
+          skippedFileIds: []
+        }
+      }
+    });
   });
 
   it('opens selected session in chat screen and loads its turns', async () => {

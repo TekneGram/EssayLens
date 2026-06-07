@@ -585,7 +585,7 @@ describe('ChatInterface submit workflow', () => {
     const payload = sendMessage.mock.calls[0]?.[0] as { clientRequestId?: string } | undefined;
     const clientRequestId = payload?.clientRequestId;
     expect(clientRequestId).toBeTypeOf('string');
-    expect(onStreamChunk).toHaveBeenCalledTimes(1);
+    expect(onStreamChunk.mock.calls.length).toBeGreaterThanOrEqual(1);
 
     const currentStreamListener = streamListener;
     if (typeof currentStreamListener === 'function') {

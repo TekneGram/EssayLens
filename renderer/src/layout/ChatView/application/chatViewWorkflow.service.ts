@@ -25,6 +25,7 @@ interface SessionTurnsUiActions {
 interface LoadTurnsInput extends ChatViewWorkflowDependencies, SessionTurnsUiActions {
   sessionId: string;
   fileEntityUuid: string;
+  preserveExistingWhenEmpty?: boolean;
 }
 
 export async function loadTurnsForSession({
@@ -32,6 +33,7 @@ export async function loadTurnsForSession({
   llmSession,
   sessionId,
   fileEntityUuid,
+  preserveExistingWhenEmpty = false,
   setIsSessionTurnsLoading,
   setSessionTurnsError
 }: LoadTurnsInput): Promise<void> {
@@ -47,7 +49,8 @@ export async function loadTurnsForSession({
     appDispatch(
       setSessionTranscript({
         sessionId,
-        messages: toSessionChatMessages(sessionId, fileEntityUuid, turnsResult.data.turns)
+        messages: toSessionChatMessages(sessionId, fileEntityUuid, turnsResult.data.turns),
+        preserveExistingWhenEmpty
       })
     );
   } catch (error) {
@@ -61,6 +64,7 @@ export async function loadTurnsForSession({
 interface LoadSessionsInput extends ChatViewWorkflowDependencies, SessionTurnsUiActions {
   fileEntityUuid: string;
   preferredSessionId?: string;
+  preserveExistingWhenEmpty?: boolean;
 }
 
 export async function loadSessionsForFile({
@@ -68,6 +72,7 @@ export async function loadSessionsForFile({
   llmSession,
   fileEntityUuid,
   preferredSessionId,
+  preserveExistingWhenEmpty = false,
   setIsSessionTurnsLoading,
   setSessionTurnsError
 }: LoadSessionsInput): Promise<string | undefined> {
@@ -102,6 +107,7 @@ export async function loadSessionsForFile({
       llmSession,
       sessionId: preferredSession.sessionId,
       fileEntityUuid,
+      preserveExistingWhenEmpty,
       setIsSessionTurnsLoading,
       setSessionTurnsError
     });

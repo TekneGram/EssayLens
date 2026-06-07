@@ -15,9 +15,12 @@ import { submitCommentFeedbackWorkflow } from '@/features/comments-view';
 import {
   addChatMessage,
   bumpSessionSyncForFile,
+  finishBulkParagraphRun,
+  startBulkParagraphRun,
   selectActiveSessionIdForFile,
   setActiveSessionForFile,
-  setChatError
+  setChatError,
+  updateBulkParagraphRunTarget
 } from '@/layout/ChatInterface/state';
 import { createRubricFeedbackSessionId, resolveSessionIdForSend } from '@/layout/ChatInterface/domain';
 import { selectIsModeLockedToChat } from '../../state';
@@ -230,6 +233,7 @@ export function useAssessmentChatActions({
           }
         }
 
+        appDispatch(startBulkParagraphRun({ originFileId: selectedFileId }));
         await submitChatMessageWorkflow({
           chatApi,
           dispatch: appDispatch,
@@ -242,6 +246,7 @@ export function useAssessmentChatActions({
           streamSeqByClientRequestId: streamSeqByClientRequestId.current,
           streamSessionByClientRequestId: streamSessionByClientRequestId.current
         });
+        appDispatch(finishBulkParagraphRun());
       } else if (isRubricFeedbackCommand) {
         if (!selectedFileId) {
           const errorMessage = 'Select a file before sending rubric feedback.';
@@ -347,6 +352,9 @@ export function useAssessmentChatActions({
         appDispatch(bumpSessionSyncForFile({ fileId: selectedFileId }));
       }
     } catch (error) {
+      if (isParagraphBulkCommand) {
+        appDispatch(finishBulkParagraphRun());
+      }
       const errorMessage = toChatErrorMessage(
         error,
         isRubricFeedbackCommand
@@ -381,13 +389,15 @@ export function useAssessmentChatActions({
     }
 
     const unsubscribe = chatApi.onStreamChunk((event) => {
-      if (event.workflow === 'paragraph-feedback-bulk' && event.type === 'start' && event.fileId) {
+      if (event.workflow === 'paragraph-feedback-bulk' && event.fileId && event.type === 'start') {
+        appDispatch(updateBulkParagraphRunTarget({ fileId: event.fileId, sessionId: event.sessionId }));
         appDispatch({
           type: 'workspace/setSelectedFile',
           payload: { fileId: event.fileId, status: 'ready' }
         });
       }
       if (event.workflow === 'paragraph-feedback-bulk' && event.fileId && event.sessionId) {
+        appDispatch(updateBulkParagraphRunTarget({ fileId: event.fileId, sessionId: event.sessionId }));
         appDispatch(setActiveSessionForFile({ fileId: event.fileId, sessionId: event.sessionId }));
       }
       handleChatStreamChunkWorkflow({

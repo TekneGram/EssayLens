@@ -8,5 +8,10 @@ export const initialChatState: ChatState = {
   sessionsStatusByFileId: {},
   sessionsErrorByFileId: {},
   sessionSyncNonceByFileId: {},
-  sessionSendPhaseBySessionId: {}
+  sessionSendPhaseBySessionId: {},
+  bulkParagraphRun: {
+    isActive: false,
+    originFileId: null,
+    currentFileId: null
+  }
 };

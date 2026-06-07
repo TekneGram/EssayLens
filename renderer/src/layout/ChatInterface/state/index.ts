@@ -2,6 +2,7 @@ export {
   addChatMessage,
   bumpSessionSyncForFile,
   clearTransientSessionDrafts,
+  finishBulkParagraphRun,
   removeChatMessage,
   setActiveSessionForFile,
   setChatError,
@@ -13,6 +14,8 @@ export {
   setSessionsForFile,
   setSessionSendPhase,
   setChatStatus,
+  startBulkParagraphRun,
+  updateBulkParagraphRunTarget,
   updateChatMessageContent
 } from './chatInterface.actions';
 export type { ChatInterfaceAction } from './chatInterface.actions';
@@ -20,6 +23,7 @@ export { initialChatState } from './chatInterface.initialState';
 export { chatReducer } from './chatInterface.reducer';
 export {
   selectActiveSessionIdForFile,
+  selectBulkParagraphRun,
   selectChatError,
   selectChatStatus,
   selectSessionListErrorForFile,

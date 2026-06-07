@@ -20,6 +20,7 @@ export function useChatViewController() {
     chatStatus,
     selectedFile,
     activeSessionId,
+    bulkParagraphRun,
     sessions,
     sessionsStatus,
     sessionsError,
@@ -50,12 +51,13 @@ export function useChatViewController() {
   );
 
   const handleLoadSessionsForFile = useCallback(
-    async (nextFileEntityUuid: string, preferredSessionId?: string) => {
+    async (nextFileEntityUuid: string, preferredSessionId?: string, preserveExistingWhenEmpty = false) => {
       const errorMessage = await loadSessionsForFile({
         appDispatch,
         llmSession,
         fileEntityUuid: nextFileEntityUuid,
         preferredSessionId,
+        preserveExistingWhenEmpty,
         setIsSessionTurnsLoading,
         setSessionTurnsError
       });
@@ -73,11 +75,33 @@ export function useChatViewController() {
       return;
     }
 
+    if (bulkParagraphRun.isActive) {
+      setActiveScreen('chat');
+      void handleLoadSessionsForFile(fileEntityUuid, bulkParagraphRun.currentSessionId, true);
+      return;
+    }
+
     void handleLoadSessionsForFile(fileEntityUuid, activeSessionId ?? undefined);
     setActiveScreen('list');
-    // Only reload full session index when selected file changes.
-    // TODO: fix exhaustive-deps
-  }, [fileEntityUuid, handleLoadSessionsForFile]);
+  }, [bulkParagraphRun.isActive, fileEntityUuid, handleLoadSessionsForFile]);
+
+  useEffect(() => {
+    if (!bulkParagraphRun.isActive || !fileEntityUuid) {
+      return;
+    }
+    if (bulkParagraphRun.currentFileId && bulkParagraphRun.currentFileId !== fileEntityUuid) {
+      return;
+    }
+
+    setActiveScreen('chat');
+    void handleLoadSessionsForFile(fileEntityUuid, bulkParagraphRun.currentSessionId, true);
+  }, [
+    bulkParagraphRun.currentFileId,
+    bulkParagraphRun.currentSessionId,
+    bulkParagraphRun.isActive,
+    fileEntityUuid,
+    handleLoadSessionsForFile
+  ]);
 
   useEffect(() => {
     if (!fileEntityUuid || !activeSessionId || activeScreen !== 'chat') {

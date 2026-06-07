@@ -4,6 +4,13 @@ import type { LlmSessionListItemDto } from '@/app/ports/llmSession.port';
 export type SessionListStatus = 'idle' | 'loading' | 'error';
 export type SessionSendPhase = 'warming' | 'thinking';
 
+export interface BulkParagraphRunState {
+  isActive: boolean;
+  originFileId: string | null;
+  currentFileId: string | null;
+  currentSessionId?: string;
+}
+
 export interface ChatState {
   messages: ChatDataArray;
   status: 'idle' | 'sending' | 'error';
@@ -14,4 +21,5 @@ export interface ChatState {
   sessionsErrorByFileId: Record<string, string | undefined>;
   sessionSyncNonceByFileId: Record<string, number | undefined>;
   sessionSendPhaseBySessionId: Record<string, SessionSendPhase | undefined>;
+  bulkParagraphRun: BulkParagraphRunState;
 }

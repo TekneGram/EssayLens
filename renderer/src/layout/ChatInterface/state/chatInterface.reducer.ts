@@ -20,6 +20,10 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
         messages: state.messages.filter((message) => message.id !== action.payload.messageId)
       };
     case 'chat/setSessionTranscript': {
+      const existingForSession = state.messages.filter((message) => message.sessionId === action.payload.sessionId);
+      if (action.payload.preserveExistingWhenEmpty && action.payload.messages.length === 0 && existingForSession.length > 0) {
+        return state;
+      }
       const retained = state.messages.filter((message) => message.sessionId !== action.payload.sessionId);
       return {
         ...state,
@@ -136,6 +140,37 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
           (message) =>
             !(message.sessionId === action.payload.sessionId && message.role === 'assistant' && message.content.trim().length === 0)
         )
+      };
+    case 'chat/startBulkParagraphRun':
+      return {
+        ...state,
+        bulkParagraphRun: {
+          isActive: true,
+          originFileId: action.payload.originFileId,
+          currentFileId: action.payload.originFileId,
+          currentSessionId: action.payload.originFileId
+            ? state.activeSessionIdByFileId[action.payload.originFileId]
+            : undefined
+        }
+      };
+    case 'chat/updateBulkParagraphRunTarget':
+      return {
+        ...state,
+        bulkParagraphRun: {
+          ...state.bulkParagraphRun,
+          isActive: true,
+          currentFileId: action.payload.fileId,
+          currentSessionId: action.payload.sessionId
+        }
+      };
+    case 'chat/finishBulkParagraphRun':
+      return {
+        ...state,
+        bulkParagraphRun: {
+          ...state.bulkParagraphRun,
+          isActive: false,
+          originFileId: null
+        }
       };
     default:
       return state;

@@ -34,5 +34,9 @@ export function resolvePreferredSession(
     return null;
   }
 
-  return sessions.find((session) => session.sessionId === preferredSessionId) ?? sessions[0];
+  if (preferredSessionId) {
+    return sessions.find((session) => session.sessionId === preferredSessionId) ?? null;
+  }
+
+  return sessions[0];
 }

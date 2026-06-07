@@ -5,6 +5,9 @@ import argparse
 import time
 from pathlib import Path
 
+from topic_sentences_benchmarks import identify_topic_sentence
+
+
 
 import requests
 
@@ -23,14 +26,15 @@ def wait_for_server(base_url: str, timeout_s: float = 60.0) -> None:
 
 
 def select_server_for_model(model: str) -> Path:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
+    print(repo_root)
     if model == "gemma":
         return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
     if model == "bonsai":
         return repo_root / "third_party_prismml" / "llama-cpp" / "build" / "bin" / "llama-server"
     
 def select_jinja(model: str) -> Path:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     if model =="gemma":
         return repo_root / "assets" / "models" / "gemma_4_chat_template.jinja"
 
@@ -83,7 +87,41 @@ def main() -> None:
 
     try:
         wait_for_server(base_url)
-        writing_path = "experiments/writing_examples/w2.md"
+        repo_root = Path(__file__).resolve().parents[1]
+        writing_dir = repo_root / "benchmarking/questions/A1"
+
+        # Topic sentence benchmarking: iterate files in the directory
+        for writing_file in sorted(writing_dir.iterdir()):
+            if not writing_file.is_file():
+                continue
+            
+            identify_topic_sentences_with_knowledge = identify_topic_sentence(
+                "benchmarking/system_prompts/paragraph_knowledge.md",
+                writing_file,
+                "benchmarking/system_prompts/A1_ts.md",
+                base_url,
+                args.max_tokens,
+                args.temp,
+            )
+
+            print(f"--- {writing_file.name} ---")
+            print(json.dumps(identify_topic_sentences_with_knowledge, indent=2))
+
+            identify_topic_sentences_without_knowledge = identify_topic_sentence(
+                "benchmarking/system_prompts/paragraph_no_knowledge.md",
+                writing_file,
+                "benchmarking/system_prompts/A1_ts.md",
+                base_url,
+                args.max_tokens,
+                args.temp,
+            )
+
+            print(f"--- {writing_file.name} ---")
+            print(json.dumps(identify_topic_sentences_without_knowledge, indent=2))
+
+            # TO DO
+            # Write the results to a CSV file as follows
+            # Paragraph --- Enhanced Knowledge --- LLM --- Task --- Answer --- Judgement
 
         # # Formatting
         # formatting = determine_paragraph_breaks("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/formatting_line_break.md", base_url, args.max_tokens, args.temp)
@@ -107,5 +145,6 @@ if __name__ == "__main__":
 
 # With Gemma 4
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-12b-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
 # python experiments/benchmarking/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3

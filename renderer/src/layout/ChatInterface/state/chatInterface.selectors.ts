@@ -50,6 +50,10 @@ export function selectSessionSendPhase(state: AppState, sessionId?: string) {
   return state.chat.sessionSendPhaseBySessionId[sessionId];
 }
 
+export function selectBulkParagraphRun(state: AppState) {
+  return state.chat.bulkParagraphRun;
+}
+
 export function selectSessionMessagesForFile(state: AppState, fileId: string | null, sessionId?: string) {
   if (!fileId || !sessionId) {
     return [];

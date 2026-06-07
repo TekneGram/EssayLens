@@ -6,7 +6,7 @@ type AddMessageAction = { type: 'chat/addMessage'; payload: ChatMessage };
 type RemoveMessageAction = { type: 'chat/removeMessage'; payload: { messageId: string } };
 type SetSessionTranscriptAction = {
   type: 'chat/setSessionTranscript';
-  payload: { sessionId: string; messages: ChatMessage[] };
+  payload: { sessionId: string; messages: ChatMessage[]; preserveExistingWhenEmpty?: boolean };
 };
 type UpdateMessageContentAction = {
   type: 'chat/updateMessageContent';
@@ -50,6 +50,17 @@ type SetSessionSendPhaseAction = {
 type ClearTransientSessionDraftsAction = {
   type: 'chat/clearTransientSessionDrafts';
   payload: { sessionId: string };
+};
+type StartBulkParagraphRunAction = {
+  type: 'chat/startBulkParagraphRun';
+  payload: { originFileId: string | null };
+};
+type UpdateBulkParagraphRunTargetAction = {
+  type: 'chat/updateBulkParagraphRunTarget';
+  payload: { fileId: string; sessionId?: string };
+};
+type FinishBulkParagraphRunAction = {
+  type: 'chat/finishBulkParagraphRun';
 };
 
 export function setChatMessages(payload: ChatMessage[]): SetMessagesAction {
@@ -118,6 +129,22 @@ export function clearTransientSessionDrafts(
   return { type: 'chat/clearTransientSessionDrafts', payload };
 }
 
+export function startBulkParagraphRun(
+  payload: StartBulkParagraphRunAction['payload']
+): StartBulkParagraphRunAction {
+  return { type: 'chat/startBulkParagraphRun', payload };
+}
+
+export function updateBulkParagraphRunTarget(
+  payload: UpdateBulkParagraphRunTargetAction['payload']
+): UpdateBulkParagraphRunTargetAction {
+  return { type: 'chat/updateBulkParagraphRunTarget', payload };
+}
+
+export function finishBulkParagraphRun(): FinishBulkParagraphRunAction {
+  return { type: 'chat/finishBulkParagraphRun' };
+}
+
 export type ChatInterfaceAction =
   | SetMessagesAction
   | AddMessageAction
@@ -133,4 +160,7 @@ export type ChatInterfaceAction =
   | SetSessionListErrorForFileAction
   | BumpSessionSyncForFileAction
   | SetSessionSendPhaseAction
-  | ClearTransientSessionDraftsAction;
+  | ClearTransientSessionDraftsAction
+  | StartBulkParagraphRunAction
+  | UpdateBulkParagraphRunTargetAction
+  | FinishBulkParagraphRunAction;

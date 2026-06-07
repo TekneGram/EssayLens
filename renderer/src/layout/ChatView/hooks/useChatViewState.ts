@@ -1,6 +1,7 @@
 import { useAppState } from '@/app/providers/state';
 import {
   selectActiveSessionIdForFile,
+  selectBulkParagraphRun,
   selectChatStatus,
   selectSessionListErrorForFile,
   selectSessionListStatusForFile,
@@ -19,6 +20,7 @@ export function useChatViewState() {
     chatStatus: selectChatStatus(state),
     selectedFile: state.workspace.files.find((file) => file.id === selectedFileId) ?? null,
     activeSessionId: selectActiveSessionIdForFile(state, selectedFileId),
+    bulkParagraphRun: selectBulkParagraphRun(state),
     sessions: selectSessionsForFile(state, selectedFileId),
     sessionsStatus: selectSessionListStatusForFile(state, selectedFileId),
     sessionsError: selectSessionListErrorForFile(state, selectedFileId),
