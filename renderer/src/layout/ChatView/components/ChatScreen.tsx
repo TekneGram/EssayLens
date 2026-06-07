@@ -1,6 +1,7 @@
 import type { ChatViewMessageItem } from '../application/chatView.service';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import type { ChatMessageCommentAction } from '@/layout/ChatInterface/domain';
 
 interface ChatScreenProps {
   items: ChatViewMessageItem[];
@@ -8,7 +9,7 @@ interface ChatScreenProps {
   error?: string;
   showLlmLoading?: boolean;
   showThinking?: boolean;
-  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
+  onCreateCommentFromChatMessage?: (action: ChatMessageCommentAction) => void | Promise<void>;
 }
 
 export function ChatScreen({
@@ -51,9 +52,15 @@ export function ChatScreen({
                     <button
                       type="button"
                       className="msg-action-button"
-                      onClick={() => void onCreateCommentFromChatMessage(item.content)}
+                      onClick={() =>
+                        void onCreateCommentFromChatMessage({
+                          type: item.commentActionType,
+                          text: item.content,
+                          vocabularyItem: item.vocabularyItem
+                        })
+                      }
                     >
-                      Add to comments
+                      {item.commentActionType === 'inline' ? 'Add inline comment' : 'Add to comments'}
                     </button>
                   </div>
                 ) : null}

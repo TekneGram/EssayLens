@@ -1,4 +1,5 @@
 import type { FeedbackAnchor } from '@/features/feedback/domain';
+import type { ChatMessageCommentAction } from './chatMessage.types';
 
 export type ChatMode = 'comment' | 'chat';
 export type CommandId = string;
@@ -28,5 +29,5 @@ export interface ChatInterfaceBindings {
   onSubmit: () => void;
   onModeChange: (mode: ChatMode) => void;
   onCommandSelected: (command: ActiveCommand | null) => void;
-  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
+  onCreateCommentFromChatMessage?: (action: ChatMessageCommentAction) => void | Promise<void>;
 }

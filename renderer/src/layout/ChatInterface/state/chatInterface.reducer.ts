@@ -51,7 +51,9 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
           }
           return {
             ...message,
-            canCreateComment: action.payload.canCreateComment
+            canCreateComment: action.payload.canCreateComment,
+            commentActionType: action.payload.commentActionType ?? message.commentActionType,
+            vocabularyItem: action.payload.vocabularyItem ?? message.vocabularyItem
           };
         })
       };

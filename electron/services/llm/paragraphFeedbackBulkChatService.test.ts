@@ -172,6 +172,15 @@ describe('ParagraphFeedbackBulkChatService', () => {
           reason: 'Coherence reason',
           revision_suggestion: 'Coherence revision'
         }
+      },
+      vocabulary_feedback: {
+        items: [
+          {
+            simple_vocabulary: 'good',
+            text_context: 'a good plan',
+            precise_vocabulary: 'effective'
+          }
+        ]
       }
     });
     const emittedEvents: Array<Record<string, unknown>> = [];
@@ -187,14 +196,15 @@ describe('ParagraphFeedbackBulkChatService', () => {
     );
 
     const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(6);
+    expect(replies).toHaveLength(7);
     expect(replies.map((reply) => reply.reply)).toEqual([
       '### Topic Sentence\nVerdict: Topic verdict',
       '### Topic Sentence\nReason: Topic reason',
       '### Topic Sentence\nRevision suggestion: Topic revision',
       '### Coherence\nVerdict: Coherence verdict',
       '### Coherence\nReason: Coherence reason',
-      '### Coherence\nRevision suggestion: Coherence revision'
+      '### Coherence\nRevision suggestion: Coherence revision',
+      'You used good when you wrote a good plan. You can improve this with the following: effective'
     ]);
     expect(replies.map((reply) => reply.feedbackSection)).toEqual([
       'verdict',
@@ -202,7 +212,8 @@ describe('ParagraphFeedbackBulkChatService', () => {
       'revision_suggestion',
       'verdict',
       'reason',
-      'revision_suggestion'
+      'revision_suggestion',
+      'item'
     ]);
     expect(replies.map((reply) => reply.feedbackType)).toEqual([
       'topic_sentence',
@@ -210,16 +221,31 @@ describe('ParagraphFeedbackBulkChatService', () => {
       'topic_sentence',
       'coherence',
       'coherence',
-      'coherence'
+      'coherence',
+      'vocabulary'
     ]);
-    expect(new Set(replies.map((reply) => reply.clientRequestId)).size).toBe(6);
+    expect(replies.map((reply) => reply.commentActionType)).toEqual([
+      'global',
+      'global',
+      'global',
+      'global',
+      'global',
+      'global',
+      'inline'
+    ]);
+    expect(replies[6]?.vocabularyItem).toEqual({
+      simple_vocabulary: 'good',
+      text_context: 'a good plan',
+      precise_vocabulary: 'effective'
+    });
+    expect(new Set(replies.map((reply) => reply.clientRequestId)).size).toBe(7);
     expect(appendTurns).toHaveBeenCalledWith(
       expect.any(String),
       replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(6);
-    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(6);
+    expect(addMessage).toHaveBeenCalledTimes(7);
+    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(7);
     expect(
       emittedEvents.filter(
         (event) => event.type === 'chunk' && event.feedbackSection === 'revision_suggestion'
@@ -240,6 +266,15 @@ describe('ParagraphFeedbackBulkChatService', () => {
           reason: 'Coherence reason',
           revision_suggestion: 'Coherence revision'
         }
+      },
+      vocabulary_feedback: {
+        items: [
+          {
+            simple_vocabulary: 'good',
+            text_context: 'a good plan',
+            precise_vocabulary: 'effective'
+          }
+        ]
       },
       reasoning_leak: {
         warning: 'Reasoning output was detected unexpectedly during paragraph feedback. Gemma appears to have entered thinking mode.',
@@ -278,7 +313,7 @@ describe('ParagraphFeedbackBulkChatService', () => {
     );
 
     const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(7);
+    expect(replies).toHaveLength(8);
     expect(replies.at(-1)).toEqual(
       expect.objectContaining({
         diagnosticType: 'reasoning_leak'
@@ -291,7 +326,7 @@ describe('ParagraphFeedbackBulkChatService', () => {
       replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(7);
+    expect(addMessage).toHaveBeenCalledTimes(8);
     expect(emittedEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

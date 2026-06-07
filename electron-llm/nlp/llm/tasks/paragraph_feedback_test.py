@@ -188,6 +188,44 @@ def test_sanitize_field_value_uses_doubled_schema_limit() -> None:
     assert result == "x" * 560
 
 
+def test_sanitize_field_value_supports_array_of_objects() -> None:
+    result = _sanitize_field_value(
+        field="items",
+        value=[
+            {
+                "simple_vocabulary": " good ",
+                "text_context": " a good plan ",
+                "precise_vocabulary": " effective ",
+            }
+        ],
+        field_schema={
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "simple_vocabulary": {"type": "string", "maxLength": 160},
+                    "text_context": {"type": "string", "maxLength": 360},
+                    "precise_vocabulary": {"type": "string", "maxLength": 220},
+                },
+                "required": [
+                    "simple_vocabulary",
+                    "text_context",
+                    "precise_vocabulary",
+                ],
+                "additionalProperties": False,
+            },
+        },
+    )
+
+    assert result == [
+        {
+            "simple_vocabulary": "good",
+            "text_context": "a good plan",
+            "precise_vocabulary": "effective",
+        }
+    ]
+
+
 def test_all_paragraph_feedback_prompts_include_be_concise() -> None:
     prompt_files = sorted(PROMPT_DIR.glob("*.md"))
 
@@ -204,6 +242,13 @@ def test_run_paragraph_feedback_bundle_reports_reasoning_leak_and_status() -> No
             ChatResponse(content='{"verdict":"perfect","reason":"ok","revision_suggestion":"ok"}', reasoning_content="Thought 2", finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"verdict":"strong","reason":"Coherence reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"praise_1":"Praise 1","praise_2":"Praise 2"}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
+            ChatResponse(
+                content='{"items":[{"simple_vocabulary":"good","text_context":"a good plan","precise_vocabulary":"effective"}]}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            ),
         ]
     )
     app_cfg = _DummyAppConfig(max_tokens=128)
@@ -218,4 +263,11 @@ def test_run_paragraph_feedback_bundle_reports_reasoning_leak_and_status() -> No
 
     assert result["reasoning_leak"]["warning"].startswith("Reasoning output was detected unexpectedly")
     assert result["reasoning_leak"]["reasoning_content"] == "Thought 1\n\nThought 2"
+    assert result["vocabulary_feedback"]["items"] == [
+        {
+            "simple_vocabulary": "good",
+            "text_context": "a good plan",
+            "precise_vocabulary": "effective",
+        }
+    ]
     assert any("entered thinking mode" in status for status in statuses)

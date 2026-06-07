@@ -1,6 +1,7 @@
 import { ChatControl } from '@/layout/ChatView/components/ChatControl';
 import { ChatListScreen } from '@/layout/ChatView/components/ChatListScreen';
 import { ChatScreen } from '@/layout/ChatView/components/ChatScreen';
+import type { ChatMessageCommentAction } from '@/layout/ChatInterface/domain';
 import { useChatViewController } from '@/layout/ChatView/hooks/useChatViewController';
 
 export { ChatCollapsedRail } from '@/layout/ChatView/components/ChatCollapsedRail';
@@ -8,7 +9,7 @@ export { collapseChatPanel, expandChatPanel, selectIsChatCollapsed } from '@/lay
 
 interface ChatViewProps {
   onCollapse: () => void;
-  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
+  onCreateCommentFromChatMessage?: (action: ChatMessageCommentAction) => void | Promise<void>;
 }
 
 export function ChatView({ onCollapse, onCreateCommentFromChatMessage }: ChatViewProps) {

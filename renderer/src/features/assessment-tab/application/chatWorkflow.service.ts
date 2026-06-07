@@ -203,7 +203,9 @@ export async function submitChatMessageWorkflow({
               relatedFileId: reply.fileId,
               sessionId: responseSessionId,
               createdAt,
-              canCreateComment: !reply.diagnosticType
+              canCreateComment: !reply.diagnosticType,
+              commentActionType: reply.commentActionType,
+              vocabularyItem: reply.vocabularyItem
             })
           );
         } else {
@@ -214,7 +216,14 @@ export async function submitChatMessageWorkflow({
               mode: 'replace'
             })
           );
-          dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: !reply.diagnosticType }));
+          dispatch(
+            setChatMessageCommentable({
+              messageId: responseMessageId,
+              canCreateComment: !reply.diagnosticType,
+              commentActionType: reply.commentActionType,
+              vocabularyItem: reply.vocabularyItem
+            })
+          );
         }
 
         streamMessageByClientRequestId.delete(reply.clientRequestId);

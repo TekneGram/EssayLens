@@ -5,7 +5,6 @@ import requests
 # Test new line detection and feedback
 # Add inline feedback style
 # Alter max_tokens per individual prompt to account for the goal of the prompt
-# Update supporting sentences
 # Review feedback and make decisions about cutting or adding extra feedback
 # Test time to give feedback on one, two, ten etc.
 # Build extra paragraphs to test

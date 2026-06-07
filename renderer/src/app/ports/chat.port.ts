@@ -36,6 +36,14 @@ export interface RubricFeedbackCategoryReplyDto {
   clientRequestId: string;
 }
 
+export interface VocabularyFeedbackItemDto {
+  simple_vocabulary: string;
+  text_context: string;
+  precise_vocabulary: string;
+}
+
+export type ChatCommentActionType = 'global' | 'inline';
+
 export interface SendChatMessageResponse {
   reply: string;
   rubricFeedback?: {
@@ -48,8 +56,10 @@ export interface SendChatMessageResponse {
       messageId: string;
       reply: string;
       clientRequestId: string;
-      feedbackType?: 'topic_sentence' | 'coherence';
-      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+      feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
+      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'item';
+      commentActionType?: ChatCommentActionType;
+      vocabularyItem?: VocabularyFeedbackItemDto;
       diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
@@ -96,8 +106,10 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
-  feedbackType?: 'topic_sentence' | 'coherence';
-  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'item';
+  commentActionType?: ChatCommentActionType;
+  vocabularyItem?: VocabularyFeedbackItemDto;
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;

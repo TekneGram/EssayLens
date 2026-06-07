@@ -8,6 +8,7 @@ import type { SelectedFileType } from '@/app/types';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { Dispatch } from 'react';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
+import type { ChatMessageCommentAction } from '@/layout/ChatInterface/domain';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type {
   AddBlockFeedbackRequest,
@@ -48,7 +49,7 @@ interface UseAssessmentCommentsControllerResult {
   onSendToLlm: (commentId: string, commandId?: string) => Promise<void>;
   onGenerateFeedbackDocument: () => Promise<void>;
   onCommentsTabChange: (tab: import('@/app/providers/state').CommentsTab) => void;
-  onCreateCommentFromChatMessage: (text: string) => Promise<void>;
+  onCreateCommentFromChatMessage: (action: ChatMessageCommentAction) => Promise<void>;
 }
 
 export function useAssessmentCommentsController({

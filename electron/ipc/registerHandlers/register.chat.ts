@@ -1,6 +1,7 @@
 import { safeHandle } from '../safeHandle';
 import { validateOrThrow } from '../validate';
 import { appErr, appOk } from '../../core/appResult';
+import { appendFileSync } from 'node:fs';
 import {
   CheckParagraphFeedbackCompletionsSchema,
   ListMessagesSchema,
@@ -27,6 +28,16 @@ export const CHAT_CHANNELS = {
 export const CHAT_EVENTS = {
   streamChunk: 'chat/streamChunk'
 } as const;
+
+const DEBUG_LOG_PATH = '/private/tmp/essaylens-vocabulary-feedback-debug.txt';
+
+function appendChatDebugLog(label: string, payload: Record<string, unknown>): void {
+  try {
+    appendFileSync(DEBUG_LOG_PATH, `${new Date().toISOString()} ${label} ${JSON.stringify(payload)}\n`, 'utf8');
+  } catch {
+    // Temporary debug logging must never break IPC handling.
+  }
+}
 
 interface ChatHandlerDeps {
   repository: Pick<ChatRepository, 'listMessages'>;
@@ -77,8 +88,13 @@ export function registerChatHandlers(ipcMain: IpcMainLike, deps: Partial<ChatHan
 
   safeHandle(ipcMain, CHAT_CHANNELS.checkParagraphFeedbackCompletions, async (payload, _ctx) => {
     const request = validateOrThrow(CheckParagraphFeedbackCompletionsSchema, payload);
+    appendChatDebugLog('[chat ipc] checkParagraphFeedbackCompletions received', {
+      fileIdsCount: request.fileIds.length,
+      fileIdsPreview: request.fileIds.slice(0, 5)
+    });
     const activeModel = await resolvedDeps.llmSelectionRepository.getActiveModel();
     if (!activeModel) {
+      appendChatDebugLog('[chat ipc] checkParagraphFeedbackCompletions no active model', {});
       return {
         activeModel: null,
         completions: []
@@ -109,6 +125,17 @@ export function registerChatHandlers(ipcMain: IpcMainLike, deps: Partial<ChatHan
   ipcMain.handle(CHAT_CHANNELS.sendMessage, async (event: any, payload: any) => {
     try {
       const request = validateOrThrow(SendChatMessageSchema, payload);
+      appendChatDebugLog('[chat ipc] sendMessage received', {
+        kind: request.kind ?? 'chat',
+        fileId: request.fileId ?? null,
+        fileIdsCount: Array.isArray(request.fileIds) ? request.fileIds.length : null,
+        redoCompletedFileIdsCount: Array.isArray(request.redoCompletedFileIds)
+          ? request.redoCompletedFileIds.length
+          : null,
+        clientRequestId: request.clientRequestId ?? null,
+        sessionId: request.sessionId ?? null,
+        messageLength: typeof request.message === 'string' ? request.message.length : null
+      });
       
       const emitToRenderer = (chunkPayload: ChatStreamChunkEvent) => {
         if (!isEventWithSender(event)) return;
@@ -116,8 +143,19 @@ export function registerChatHandlers(ipcMain: IpcMainLike, deps: Partial<ChatHan
       };
 
       const response = await chatService.sendMessage(request, emitToRenderer);
+      appendChatDebugLog('[chat ipc] sendMessage completed', {
+        kind: request.kind ?? 'chat',
+        clientRequestId: request.clientRequestId ?? null,
+        hasParagraphFeedbackBulk: Boolean(response.paragraphFeedbackBulk),
+        paragraphFeedbackReplyCount: response.paragraphFeedbackBulk?.replies?.length ?? null,
+        paragraphFeedbackFailureCount: response.paragraphFeedbackBulk?.failures?.length ?? null
+      });
       return appOk(response);
     } catch (error: any) {
+      appendChatDebugLog('[chat ipc] sendMessage failed', {
+        message: error?.message ?? 'unknown',
+        code: error?.appError?.code ?? null
+      });
       if (error && typeof error === 'object' && 'appError' in error) {
         const appException = error as { appError: { code: string; userMessage: string; details?: unknown } };
         return appErr({ code: appException.appError.code, userMessage: appException.appError.userMessage, details: appException.appError.details });

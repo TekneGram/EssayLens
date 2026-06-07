@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import json
 from pathlib import Path
+import sys
 from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -11,6 +13,7 @@ if TYPE_CHECKING:
 
 
 PROMPT_DIR = Path(__file__).resolve().parents[3] / "prompts" / "paragraph_feedback"
+DEBUG_LOG_PATH = Path("/private/tmp/essaylens-vocabulary-feedback-debug.txt")
 StatusCallback = Callable[[str], None]
 MAX_SCHEMA_ATTEMPTS = 4
 RETRY_SCHEMA_MAX_TOKENS_CAP = 3072
@@ -194,19 +197,58 @@ def _parse_schema_response_content(content: str) -> Any:
         raise RuntimeError(f"Malformed JSON schema response content: {tail}") from exc
 
 
-def _sanitize_field_value(*, field: str, value: Any, field_schema: Any) -> str:
+def _sanitize_field_value(*, field: str, value: Any, field_schema: Any) -> Any:
+    if not isinstance(field_schema, dict):
+        if not isinstance(value, str):
+            raise RuntimeError(f"Schema field '{field}' must be a string.")
+        return value.strip()
+
+    field_type = field_schema.get("type")
+
+    if field_type == "array":
+        if not isinstance(value, list):
+            raise RuntimeError(f"Schema field '{field}' must be an array.")
+        item_schema = field_schema.get("items")
+        return [
+            _sanitize_field_value(
+                field=f"{field}[{index}]",
+                value=item,
+                field_schema=item_schema,
+            )
+            for index, item in enumerate(value)
+        ]
+
+    if field_type == "object":
+        if not isinstance(value, dict):
+            raise RuntimeError(f"Schema field '{field}' must be an object.")
+        properties = field_schema.get("properties")
+        required = field_schema.get("required")
+        if not isinstance(properties, dict) or not isinstance(required, list):
+            return value
+        out: dict[str, Any] = {}
+        for nested_field in required:
+            if not isinstance(nested_field, str):
+                continue
+            if nested_field not in value:
+                raise RuntimeError(f"Schema field '{field}' is missing required field: {nested_field}")
+            out[nested_field] = _sanitize_field_value(
+                field=f"{field}.{nested_field}",
+                value=value[nested_field],
+                field_schema=properties.get(nested_field),
+            )
+        return out
+
     if not isinstance(value, str):
         raise RuntimeError(f"Schema field '{field}' must be a string.")
     result = value.strip()
 
-    if isinstance(field_schema, dict):
-        enum_values = field_schema.get("enum")
-        if isinstance(enum_values, list) and enum_values:
-            if result not in enum_values:
-                raise RuntimeError(f"Schema field '{field}' has invalid enum value: {result!r}")
-        max_length = field_schema.get("maxLength")
-        if isinstance(max_length, int) and max_length > 0 and len(result) > max_length:
-            result = result[:max_length].rstrip()
+    enum_values = field_schema.get("enum")
+    if isinstance(enum_values, list) and enum_values:
+        if result not in enum_values:
+            raise RuntimeError(f"Schema field '{field}' has invalid enum value: {result!r}")
+    max_length = field_schema.get("maxLength")
+    if isinstance(max_length, int) and max_length > 0 and len(result) > max_length:
+        result = result[:max_length].rstrip()
     return result
 
 
@@ -368,6 +410,12 @@ def run_paragraph_feedback_bundle(
     paragraph = paragraph_text.strip()
     if not paragraph:
         raise ValueError("paragraph_text must be non-empty")
+    _append_debug_log(
+        "[paragraph_feedback] bundle start",
+        {
+            "paragraph_length": len(paragraph),
+        },
+    )
 
     system_prompt = _load_prompt("paragraph_knowledge.md")
     prefix_context = _build_prefix_context(paragraph)
@@ -389,13 +437,54 @@ def run_paragraph_feedback_bundle(
         on_status=on_status,
         reasoning_collector=reasoning_collector,
     )
+    from nlp.llm.tasks.vocabulary_feedback import run_vocabulary_feedback
+
+    _append_debug_log(
+        "[paragraph_feedback] before vocabulary feedback",
+        {
+            "paragraph_length": len(paragraph),
+        },
+    )
+    vocabulary_feedback = run_vocabulary_feedback(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        paragraph_text=paragraph,
+        on_status=on_status,
+        reasoning_collector=reasoning_collector,
+    )
+    _append_debug_log(
+        "[paragraph_feedback] after vocabulary feedback",
+        {
+            "items_count": len(vocabulary_feedback.get("items", []))
+            if isinstance(vocabulary_feedback.get("items"), list)
+            else None,
+        },
+    )
 
     result: dict[str, Any] = {
         "paragraph_feedback": {
             "topic_sentence": topic_sentence,
             "coherence": coherence,
-        }
+        },
+        "vocabulary_feedback": vocabulary_feedback,
     }
+    debug_summary = {
+        "topic_sentence_present": bool(topic_sentence),
+        "coherence_present": bool(coherence),
+        "vocabulary_items_count": len(vocabulary_feedback.get("items", []))
+        if isinstance(vocabulary_feedback.get("items"), list)
+        else None,
+        "vocabulary_items_preview": vocabulary_feedback.get("items", [])[:3]
+        if isinstance(vocabulary_feedback.get("items"), list)
+        else None,
+    }
+    print(
+        "[paragraph_feedback] bundle summary",
+        json.dumps(debug_summary, ensure_ascii=False),
+        file=sys.stderr,
+        flush=True,
+    )
+    _append_debug_log("[paragraph_feedback] bundle summary", debug_summary)
     if reasoning_collector.detected():
         _emit_status(
             on_status,
@@ -411,3 +500,15 @@ def run_paragraph_feedback_bundle(
 def _emit_status(on_status: StatusCallback | None, text: str) -> None:
     if on_status is not None:
         on_status(text)
+
+
+def _append_debug_log(label: str, payload: dict[str, Any]) -> None:
+    timestamp = datetime.now(timezone.utc).isoformat()
+    line = f"{timestamp} {label} {json.dumps(payload, ensure_ascii=False)}\n"
+    try:
+        DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with DEBUG_LOG_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(line)
+    except Exception:
+        # Temporary debug logging must never break the feedback flow.
+        pass

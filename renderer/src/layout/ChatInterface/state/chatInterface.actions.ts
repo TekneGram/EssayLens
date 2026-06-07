@@ -14,7 +14,12 @@ type UpdateMessageContentAction = {
 };
 type SetMessageCommentableAction = {
   type: 'chat/setMessageCommentable';
-  payload: { messageId: string; canCreateComment: boolean };
+  payload: {
+    messageId: string;
+    canCreateComment: boolean;
+    commentActionType?: ChatMessage['commentActionType'];
+    vocabularyItem?: ChatMessage['vocabularyItem'];
+  };
 };
 type SetStatusAction = { type: 'chat/setStatus'; payload: ChatState['status'] };
 type SetErrorAction = { type: 'chat/setError'; payload?: string };

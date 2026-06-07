@@ -8,6 +8,7 @@ import type {
 } from '@/app/ports/assessment.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
+import type { ChatMessageCommentAction } from '@/layout/ChatInterface/domain';
 import {
   applyAssessmentFeedback,
   deleteAssessmentFeedback,
@@ -25,6 +26,7 @@ import {
   toSendToLlmActiveCommand,
   generateFeedbackDocumentWorkflow
 } from '@/features/comments-view';
+import { loadTextViewDocument, toPendingSelectionFromTextContext } from '@/features/text-view-window';
 import type { AssessmentTabAction } from '../../state';
 import type { AssessmentTabChatBindings } from '../../types';
 import { selectActiveCommentsTab } from '@/app/providers/state';
@@ -32,6 +34,7 @@ import type { AppAction } from '@/app/providers/state/actions';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
+const CHAT_INLINE_SELECTION_ID = '__chat-inline-selection__';
 
 interface UseAssessmentCommentsActionsParams {
   appDispatch: Dispatch<AppAction>;
@@ -193,12 +196,16 @@ export function useAssessmentCommentsActions({
   );
 
   const onCreateCommentFromChatMessage = useCallback(
-    async (text: string) => {
-      if (!text) {
+    async (action: ChatMessageCommentAction) => {
+      const commentText =
+        action.type === 'inline' && action.vocabularyItem
+          ? `Here you used ${action.vocabularyItem.simple_vocabulary}. You can improve this with: ${action.vocabularyItem.precise_vocabulary}`
+          : action.text.trim();
+      if (!commentText) {
         return;
       }
 
-      const existingComment = comments.find((comment) => comment.commentText === text);
+      const existingComment = comments.find((comment) => comment.commentText === commentText);
       if (existingComment) {
         appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
         appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
@@ -211,10 +218,42 @@ export function useAssessmentCommentsActions({
       }
 
       try {
+        if (action.type === 'inline' && action.vocabularyItem && selectedFileId) {
+          const document = await loadTextViewDocument(selectedFileId, assessment);
+          const selection = document.document
+            ? toPendingSelectionFromTextContext({
+                textContext: action.vocabularyItem.text_context,
+                textMap: document.document.textMap
+              })
+            : null;
+
+          if (selection) {
+            localDispatch({ type: 'assessmentTab/setPendingSelection', payload: null });
+            localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: selection });
+            localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: CHAT_INLINE_SELECTION_ID });
+
+            const createdInlineComment = await addFeedback({
+              kind: 'inline',
+              source: 'llm',
+              commentText,
+              exactQuote: selection.exactQuote,
+              prefixText: selection.prefixText,
+              suffixText: selection.suffixText,
+              startAnchor: selection.startAnchor,
+              endAnchor: selection.endAnchor
+            });
+            appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
+            appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
+            localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: createdInlineComment.id });
+            localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: selection });
+            return;
+          }
+        }
+
         const createdComment = await addFeedback({
           kind: 'block',
           source: 'llm',
-          commentText: text
+          commentText
         });
         appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
         appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
@@ -224,7 +263,7 @@ export function useAssessmentCommentsActions({
         // Mutation hook owns the user-facing error toast.
       }
     },
-    [addFeedback, appDispatch, comments, localDispatch]
+    [addFeedback, appDispatch, assessment, comments, localDispatch, selectedFileId]
   );
 
   return {

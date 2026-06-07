@@ -20,8 +20,22 @@ describe('chat-view application service', () => {
     ]);
 
     expect(items).toEqual([
-      { id: 'm1', roleClassName: 'teacher', roleLabel: 'Teacher', content: 'How is this?', canCreateComment: false },
-      { id: 'm2', roleClassName: 'assistant', roleLabel: 'Assistant', content: 'Looks good.', canCreateComment: false }
+      {
+        id: 'm1',
+        roleClassName: 'teacher',
+        roleLabel: 'Teacher',
+        content: 'How is this?',
+        canCreateComment: false,
+        commentActionType: 'global'
+      },
+      {
+        id: 'm2',
+        roleClassName: 'assistant',
+        roleLabel: 'Assistant',
+        content: 'Looks good.',
+        canCreateComment: false,
+        commentActionType: 'global'
+      }
     ]);
   });
 
@@ -36,5 +50,33 @@ describe('chat-view application service', () => {
     ]);
 
     expect(items[0].canCreateComment).toBe(true);
+    expect(items[0].commentActionType).toBe('global');
+  });
+
+  it('infers inline vocabulary comment actions from persisted assistant message content', () => {
+    const items = toChatViewMessageItems([
+      {
+        id: 'm1',
+        role: 'assistant',
+        content:
+          'You used good when you wrote a good plan. You can improve this with the following: effective',
+        createdAt: '2026-02-24T00:00:00.000Z'
+      }
+    ]);
+
+    expect(items[0]).toEqual({
+      id: 'm1',
+      roleClassName: 'assistant',
+      roleLabel: 'Assistant',
+      content:
+        'You used good when you wrote a good plan. You can improve this with the following: effective',
+      canCreateComment: true,
+      commentActionType: 'inline',
+      vocabularyItem: {
+        simple_vocabulary: 'good',
+        text_context: 'a good plan',
+        precise_vocabulary: 'effective'
+      }
+    });
   });
 });
