@@ -22,9 +22,8 @@ interface ParagraphFeedbackBulkReply {
   messageId: string;
   reply: string;
   clientRequestId: string;
-  feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
-  supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
+  feedbackType?: 'topic_sentence' | 'coherence';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   diagnosticType?: 'reasoning_leak';
   progressMessageId?: string;
 }
@@ -52,20 +51,11 @@ interface ParagraphFeedbackTypeResult {
   verdict: string;
   reason: string;
   revision_suggestion: string;
-  supporting_sentence_types?: SupportingSentenceTypeResult[];
-}
-
-interface SupportingSentenceTypeResult {
-  kind: 'facts' | 'definitions' | 'examples' | 'descriptions';
-  extracted_text?: string;
-  verdict: string;
-  reason: string;
 }
 
 interface ParagraphFeedbackBundle {
   paragraph_feedback?: {
     topic_sentence?: ParagraphFeedbackTypeResult;
-    supporting_sentences?: ParagraphFeedbackTypeResult;
     coherence?: ParagraphFeedbackTypeResult;
   };
   reasoning_leak?: {
@@ -358,7 +348,6 @@ export class ParagraphFeedbackBulkChatService {
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
-          supportingSentenceType: item.supportingSentenceType,
           type: 'chunk',
           seq: 2,
           channel: 'content',
@@ -374,7 +363,6 @@ export class ParagraphFeedbackBulkChatService {
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
-          supportingSentenceType: item.supportingSentenceType,
           type: 'done',
           seq: 3,
           channel: 'meta',
@@ -474,41 +462,12 @@ export class ParagraphFeedbackBulkChatService {
 ${sectionLabel}: ${text}`;
   }
 
-  private formatSupportingSentenceTypeReply(typeLabel: string, verdict: string, reason: string): string {
-    return `### Supporting Sentences: ${typeLabel}
-Verdict: ${verdict}
-Reason: ${reason}`;
-  }
-
-  private formatSupportingSentenceExtractionReply(typeLabel: string, extractedText: string): string {
-    return `### Supporting Sentences: ${typeLabel}
-Extracted ${typeLabel.toLowerCase()}: ${extractedText}`;
-  }
-
   private formatReasoningLeakReply(warning: string, reasoningContent: string): string {
     return `### Diagnostic Warning
 ${warning}
 
 Leaked reasoning:
 ${reasoningContent}`;
-  }
-
-  private supportingSentenceTypeLabel(kind: SupportingSentenceTypeResult['kind']): string {
-    return kind
-      .split('_')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  }
-
-  private isSupportingSentenceTypeResult(value: unknown): value is SupportingSentenceTypeResult {
-    if (typeof value !== 'object' || value === null) return false;
-    const item = value as Partial<SupportingSentenceTypeResult>;
-    return (
-      (item.kind === 'facts' || item.kind === 'definitions' || item.kind === 'examples' || item.kind === 'descriptions') &&
-      (item.extracted_text === undefined || typeof item.extracted_text === 'string') &&
-      typeof item.verdict === 'string' &&
-      typeof item.reason === 'string'
-    );
   }
 
   private buildFeedbackReplies(args: {
@@ -523,59 +482,12 @@ ${reasoningContent}`;
     const { fileId, sessionId, baseClientRequestId, fallbackMessageId, progressMessageId, structuredReply, fallbackReply } = args;
     const paragraphFeedback = structuredReply?.paragraph_feedback;
 
-    const supportingSentenceTypeResults =
-      paragraphFeedback?.supporting_sentences?.supporting_sentence_types
-        ?.filter((item): item is SupportingSentenceTypeResult => this.isSupportingSentenceTypeResult(item)) ?? [];
-
-    const supportingSentenceTypeReplies = supportingSentenceTypeResults.flatMap((item) => {
-      const typeLabel = this.supportingSentenceTypeLabel(item.kind);
-      const extractedText = item.extracted_text?.trim() ?? '';
-      const extractedReply = extractedText
-        ? [{
-          fileId,
-          sessionId,
-          messageId: randomUUID(),
-          reply: this.formatSupportingSentenceExtractionReply(typeLabel, extractedText),
-          clientRequestId: `${baseClientRequestId}:supporting_sentences:${item.kind}:extracted_text`,
-          feedbackType: 'supporting_sentences' as const,
-          feedbackSection: 'extracted_text' as const,
-          supportingSentenceType: item.kind,
-          progressMessageId
-        }]
-        : [];
-      return [
-        ...extractedReply,
-        {
-          fileId,
-          sessionId,
-          messageId: randomUUID(),
-          reply: this.formatSupportingSentenceTypeReply(typeLabel, item.verdict, item.reason),
-          clientRequestId: `${baseClientRequestId}:supporting_sentences:${item.kind}`,
-          feedbackType: 'supporting_sentences' as const,
-          supportingSentenceType: item.kind,
-          progressMessageId
-        }
-      ];
-    });
-
     const entries: Array<{
-      key: 'topic_sentence' | 'supporting_sentences' | 'coherence';
+      key: 'topic_sentence' | 'coherence';
       label: string;
       value: ParagraphFeedbackTypeResult | undefined;
     }> = [
       { key: 'topic_sentence', label: 'Topic Sentence', value: paragraphFeedback?.topic_sentence },
-      {
-        key: 'supporting_sentences',
-        label: 'Supporting Sentences',
-        value:
-          supportingSentenceTypeReplies.length > 0 && paragraphFeedback?.supporting_sentences
-            ? {
-                verdict: '',
-                reason: '',
-                revision_suggestion: paragraphFeedback.supporting_sentences.revision_suggestion
-              }
-            : paragraphFeedback?.supporting_sentences
-      },
       { key: 'coherence', label: 'Coherence', value: paragraphFeedback?.coherence }
     ];
 
@@ -592,9 +504,7 @@ ${reasoningContent}`;
           key: 'verdict' | 'reason' | 'revision_suggestion';
           label: string;
           text: string;
-        }> = entry.key === 'supporting_sentences' && supportingSentenceTypeReplies.length > 0
-          ? [{ key: 'revision_suggestion', label: 'Revision suggestion', text: entry.value.revision_suggestion }]
-          : [
+        }> = [
           { key: 'verdict', label: 'Verdict', text: entry.value.verdict },
           { key: 'reason', label: 'Reason', text: entry.value.reason },
           { key: 'revision_suggestion', label: 'Revision suggestion', text: entry.value.revision_suggestion }
@@ -612,13 +522,7 @@ ${reasoningContent}`;
         }));
       });
 
-    const replies: ParagraphFeedbackBulkReply[] = supportingSentenceTypeReplies.length > 0
-      ? [
-          ...typedReplies.slice(0, 3),
-          ...supportingSentenceTypeReplies,
-          ...typedReplies.slice(3)
-        ]
-      : typedReplies;
+    const replies: ParagraphFeedbackBulkReply[] = typedReplies;
 
     const reasoningLeakWarning = structuredReply?.reasoning_leak?.warning?.trim() ?? '';
     const reasoningLeakContent = structuredReply?.reasoning_leak?.reasoning_content?.trim() ?? '';

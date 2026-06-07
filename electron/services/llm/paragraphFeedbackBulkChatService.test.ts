@@ -159,93 +159,6 @@ async function createService(
 }
 
 describe('ParagraphFeedbackBulkChatService', () => {
-  it('splits supporting sentence feedback into type-specific bubbles when category judgments are present', async () => {
-    const structuredReply = JSON.stringify({
-      paragraph_feedback: {
-        topic_sentence: {
-          verdict: 'Topic verdict',
-          reason: 'Topic reason',
-          revision_suggestion: 'Topic revision'
-        },
-        supporting_sentences: {
-          verdict: 'Support verdict',
-          reason: 'Support reason',
-          revision_suggestion: 'Support revision',
-          supporting_sentence_types: [
-            { kind: 'facts', extracted_text: 'Fact sentence.', verdict: 'Facts verdict', reason: 'Facts reason' },
-            { kind: 'definitions', extracted_text: 'Definition sentence.', verdict: 'Definitions verdict', reason: 'Definitions reason' },
-            { kind: 'examples', extracted_text: 'Example sentence.', verdict: 'Examples verdict', reason: 'Examples reason' },
-            { kind: 'descriptions', extracted_text: 'Description sentence.', verdict: 'Descriptions verdict', reason: 'Descriptions reason' }
-          ]
-        },
-        coherence: {
-          verdict: 'Coherence verdict',
-          reason: 'Coherence reason',
-          revision_suggestion: 'Coherence revision'
-        }
-      }
-    });
-    const emittedEvents: Array<Record<string, unknown>> = [];
-    const { service, appendTurns, addMessage } = await createService(structuredReply);
-
-    const result = await service.sendMessage(
-      {
-        kind: 'paragraph-feedback-bulk',
-        fileIds: ['file-1'],
-        clientRequestId: 'bulk-client-1'
-      },
-      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
-    );
-
-    const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(15);
-    expect(replies.map((reply) => reply.reply)).toEqual([
-      '### Topic Sentence\nVerdict: Topic verdict',
-      '### Topic Sentence\nReason: Topic reason',
-      '### Topic Sentence\nRevision suggestion: Topic revision',
-      '### Supporting Sentences: Facts\nExtracted facts: Fact sentence.',
-      '### Supporting Sentences: Facts\nVerdict: Facts verdict\nReason: Facts reason',
-      '### Supporting Sentences: Definitions\nExtracted definitions: Definition sentence.',
-      '### Supporting Sentences: Definitions\nVerdict: Definitions verdict\nReason: Definitions reason',
-      '### Supporting Sentences: Examples\nExtracted examples: Example sentence.',
-      '### Supporting Sentences: Examples\nVerdict: Examples verdict\nReason: Examples reason',
-      '### Supporting Sentences: Descriptions\nExtracted descriptions: Description sentence.',
-      '### Supporting Sentences: Descriptions\nVerdict: Descriptions verdict\nReason: Descriptions reason',
-      '### Supporting Sentences\nRevision suggestion: Support revision',
-      '### Coherence\nVerdict: Coherence verdict',
-      '### Coherence\nReason: Coherence reason',
-      '### Coherence\nRevision suggestion: Coherence revision'
-    ]);
-    expect(replies.map((reply) => reply.supportingSentenceType)).toEqual([
-      undefined,
-      undefined,
-      undefined,
-      'facts',
-      'facts',
-      'definitions',
-      'definitions',
-      'examples',
-      'examples',
-      'descriptions',
-      'descriptions',
-      undefined,
-      undefined,
-      undefined,
-      undefined
-    ]);
-    expect(replies.filter((reply) => reply.feedbackType === 'supporting_sentences')).toHaveLength(9);
-    expect(replies.filter((reply) => reply.feedbackSection === 'extracted_text')).toHaveLength(4);
-    expect(replies.filter((reply) => reply.feedbackSection === 'revision_suggestion')).toHaveLength(3);
-    expect(appendTurns).toHaveBeenCalledWith(
-      expect.any(String),
-      replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
-      'file-1'
-    );
-    expect(addMessage).toHaveBeenCalledTimes(15);
-    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(15);
-    expect(emittedEvents.filter((event) => event.supportingSentenceType === 'definitions')).toHaveLength(4);
-  });
-
   it('splits structured paragraph feedback into separate verdict, reason, and revision bubbles', async () => {
     const structuredReply = JSON.stringify({
       paragraph_feedback: {
@@ -254,11 +167,6 @@ describe('ParagraphFeedbackBulkChatService', () => {
           reason: 'Topic reason',
           revision_suggestion: 'Topic revision'
         },
-        supporting_sentences: {
-          verdict: 'Support verdict',
-          reason: 'Support reason',
-          revision_suggestion: 'Support revision'
-        },
         coherence: {
           verdict: 'Coherence verdict',
           reason: 'Coherence reason',
@@ -279,14 +187,11 @@ describe('ParagraphFeedbackBulkChatService', () => {
     );
 
     const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(9);
+    expect(replies).toHaveLength(6);
     expect(replies.map((reply) => reply.reply)).toEqual([
       '### Topic Sentence\nVerdict: Topic verdict',
       '### Topic Sentence\nReason: Topic reason',
       '### Topic Sentence\nRevision suggestion: Topic revision',
-      '### Supporting Sentences\nVerdict: Support verdict',
-      '### Supporting Sentences\nReason: Support reason',
-      '### Supporting Sentences\nRevision suggestion: Support revision',
       '### Coherence\nVerdict: Coherence verdict',
       '### Coherence\nReason: Coherence reason',
       '### Coherence\nRevision suggestion: Coherence revision'
@@ -297,20 +202,29 @@ describe('ParagraphFeedbackBulkChatService', () => {
       'revision_suggestion',
       'verdict',
       'reason',
-      'revision_suggestion',
-      'verdict',
-      'reason',
       'revision_suggestion'
     ]);
-    expect(new Set(replies.map((reply) => reply.clientRequestId)).size).toBe(9);
+    expect(replies.map((reply) => reply.feedbackType)).toEqual([
+      'topic_sentence',
+      'topic_sentence',
+      'topic_sentence',
+      'coherence',
+      'coherence',
+      'coherence'
+    ]);
+    expect(new Set(replies.map((reply) => reply.clientRequestId)).size).toBe(6);
     expect(appendTurns).toHaveBeenCalledWith(
       expect.any(String),
       replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(9);
-    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(9);
-    expect(emittedEvents.filter((event) => event.feedbackSection === 'revision_suggestion')).toHaveLength(6);
+    expect(addMessage).toHaveBeenCalledTimes(6);
+    expect(emittedEvents.filter((event) => event.type === 'chunk')).toHaveLength(6);
+    expect(
+      emittedEvents.filter(
+        (event) => event.type === 'chunk' && event.feedbackSection === 'revision_suggestion'
+      )
+    ).toHaveLength(2);
   });
 
   it('reports and persists leaked reasoning as a diagnostic reply without blocking feedback', async () => {
@@ -320,11 +234,6 @@ describe('ParagraphFeedbackBulkChatService', () => {
           verdict: 'Topic verdict',
           reason: 'Topic reason',
           revision_suggestion: 'Topic revision'
-        },
-        supporting_sentences: {
-          verdict: 'Support verdict',
-          reason: 'Support reason',
-          revision_suggestion: 'Support revision'
         },
         coherence: {
           verdict: 'Coherence verdict',
@@ -369,7 +278,7 @@ describe('ParagraphFeedbackBulkChatService', () => {
     );
 
     const replies = result.paragraphFeedbackBulk?.replies ?? [];
-    expect(replies).toHaveLength(10);
+    expect(replies).toHaveLength(7);
     expect(replies.at(-1)).toEqual(
       expect.objectContaining({
         diagnosticType: 'reasoning_leak'
@@ -382,7 +291,7 @@ describe('ParagraphFeedbackBulkChatService', () => {
       replies.map((reply) => ({ role: 'assistant', content: reply.reply })),
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(10);
+    expect(addMessage).toHaveBeenCalledTimes(7);
     expect(emittedEvents).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

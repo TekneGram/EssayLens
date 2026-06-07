@@ -48,9 +48,8 @@ export interface SendChatMessageResponse {
       messageId: string;
       reply: string;
       clientRequestId: string;
-      feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
-      supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
+      feedbackType?: 'topic_sentence' | 'coherence';
+      feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
       diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
@@ -97,9 +96,8 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
-  feedbackType?: 'topic_sentence' | 'supporting_sentences' | 'coherence';
-  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion' | 'extracted_text';
-  supportingSentenceType?: 'facts' | 'definitions' | 'examples' | 'descriptions';
+  feedbackType?: 'topic_sentence' | 'coherence';
+  feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;

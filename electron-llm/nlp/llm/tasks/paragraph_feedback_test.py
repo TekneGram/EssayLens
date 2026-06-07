@@ -7,7 +7,6 @@ import pytest
 from nlp.llm.tasks.paragraph_feedback import (
     _ReasoningLeakCollector,
     _run_json_schema_chat,
-    _run_supporting_sentences_feedback,
     _sanitize_field_value,
     run_paragraph_feedback_bundle,
 )
@@ -189,54 +188,6 @@ def test_sanitize_field_value_uses_doubled_schema_limit() -> None:
     assert result == "x" * 560
 
 
-def test_supporting_sentence_feedback_returns_extracted_text_with_each_judgement() -> None:
-    service = _FakeLlmService(
-        responses=[
-            ChatResponse(content='{"facts":"Fact sentence.","definitions":"Definition sentence."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"examples":"Example sentence.","descriptions":"Description sentence."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"supports the controlling idea well","reason":"Fact reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful definition","reason":"Definition reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful example","reason":"Example reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful description","reason":"Description reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-        ]
-    )
-    app_cfg = _DummyAppConfig(max_tokens=128)
-
-    result = _run_supporting_sentences_feedback(
-        llm_service=service,
-        app_cfg=app_cfg,
-        system_prompt="sys",
-        prefix_context="Here is a paragraph:\nA paragraph.",
-    )
-
-    assert result["supporting_sentence_types"] == [
-        {
-            "kind": "facts",
-            "extracted_text": "Fact sentence.",
-            "verdict": "supports the controlling idea well",
-            "reason": "Fact reason.",
-        },
-        {
-            "kind": "definitions",
-            "extracted_text": "Definition sentence.",
-            "verdict": "useful definition",
-            "reason": "Definition reason.",
-        },
-        {
-            "kind": "examples",
-            "extracted_text": "Example sentence.",
-            "verdict": "useful example",
-            "reason": "Example reason.",
-        },
-        {
-            "kind": "descriptions",
-            "extracted_text": "Description sentence.",
-            "verdict": "useful description",
-            "reason": "Description reason.",
-        },
-    ]
-
-
 def test_all_paragraph_feedback_prompts_include_be_concise() -> None:
     prompt_files = sorted(PROMPT_DIR.glob("*.md"))
 
@@ -251,12 +202,6 @@ def test_run_paragraph_feedback_bundle_reports_reasoning_leak_and_status() -> No
             ChatResponse(content="Topic sentence.", reasoning_content="Thought 1", finish_reason="stop", model="m", usage=None),
             ChatResponse(content="Controlling idea.", reasoning_content=None, finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"verdict":"perfect","reason":"ok","revision_suggestion":"ok"}', reasoning_content="Thought 2", finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"facts":"Fact sentence.","definitions":"Definition sentence."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"examples":"Example sentence.","descriptions":"Description sentence."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"supports the controlling idea well","reason":"Fact reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful definition","reason":"Definition reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful example","reason":"Example reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
-            ChatResponse(content='{"verdict":"useful description","reason":"Description reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"verdict":"strong","reason":"Coherence reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"praise_1":"Praise 1","praise_2":"Praise 2"}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
         ]

@@ -358,183 +358,6 @@ def _run_coherence_feedback(
     }
 
 
-def _run_supporting_sentences_feedback(
-    *,
-    llm_service: "LlmService",
-    app_cfg: "AppConfig",
-    system_prompt: str,
-    prefix_context: str,
-    on_status: StatusCallback | None = None,
-    reasoning_collector: _ReasoningLeakCollector | None = None,
-) -> dict[str, Any]:
-    _emit_status(on_status, "Finding facts and definitions")
-    facts_defs = _run_json_schema_chat(
-        llm_service=llm_service,
-        app_cfg=app_cfg,
-        system=system_prompt,
-        user=f"{prefix_context}\n\n{_load_prompt('supporting_sentences_1.md')}",
-        name="identify_types_of_sentences",
-        reasoning_collector=reasoning_collector,
-        schema={
-            "type": "object",
-            "properties": {
-                    "facts": {"type": "string", "maxLength": 640},
-                    "definitions": {"type": "string", "maxLength": 640},
-            },
-            "additionalProperties": False,
-        },
-    )
-    _emit_status(on_status, "Finding examples and descriptions")
-    ex_desc = _run_json_schema_chat(
-        llm_service=llm_service,
-        app_cfg=app_cfg,
-        system=system_prompt,
-        user=f"{prefix_context}\n\n{_load_prompt('supporting_sentences_2.md')}",
-        name="identify_types_of_sentences_more",
-        reasoning_collector=reasoning_collector,
-        schema={
-            "type": "object",
-            "properties": {
-                    "examples": {"type": "string", "maxLength": 640},
-                    "descriptions": {"type": "string", "maxLength": 640},
-            },
-            "additionalProperties": False,
-        },
-    )
-
-    facts = str(facts_defs.get("facts", "")).strip()
-    definitions = str(facts_defs.get("definitions", "")).strip()
-    examples = str(ex_desc.get("examples", "")).strip()
-    descriptions = str(ex_desc.get("descriptions", "")).strip()
-
-    judgments: list[dict[str, str]] = []
-
-    if facts:
-        _emit_status(on_status, "Judging factual support")
-        fact_judgement = _run_json_schema_chat(
-            llm_service=llm_service,
-            app_cfg=app_cfg,
-            system=system_prompt,
-            user=f"{prefix_context}\n\nThese are facts identified from the paragraph:\n{facts}\n\n{_load_prompt('supporting_sentences_3.md')}",
-            name="fact_judgement",
-            reasoning_collector=reasoning_collector,
-            schema={
-                "type": "object",
-                "properties": {
-                    "verdict": {"type": "string", "enum": ["supports the controlling idea well", "does not support the controlling idea well"]},
-                    "reason": {"type": "string", "maxLength": 520},
-                },
-                "required": ["verdict", "reason"],
-                "additionalProperties": False,
-            },
-        )
-        judgments.append({
-            "kind": "facts",
-            "extracted_text": facts,
-            "verdict": str(fact_judgement.get("verdict", "")).strip(),
-            "reason": str(fact_judgement.get("reason", "")).strip(),
-        })
-    if definitions:
-        _emit_status(on_status, "Judging definition support")
-        definition_judgement = _run_json_schema_chat(
-            llm_service=llm_service,
-            app_cfg=app_cfg,
-            system=system_prompt,
-            user=f"{prefix_context}\n\nThese are definitions identified in the paragraph:\n{definitions}\n\n{_load_prompt('supporting_sentences_4.md')}",
-            name="judge_definitions",
-            reasoning_collector=reasoning_collector,
-            schema={
-                "type": "object",
-                "properties": {
-                    "verdict": {"type": "string", "enum": ["useful definition", "not a useful definition"]},
-                    "reason": {"type": "string", "maxLength": 520},
-                },
-                "required": ["verdict", "reason"],
-                "additionalProperties": False,
-            },
-        )
-        judgments.append({
-            "kind": "definitions",
-            "extracted_text": definitions,
-            "verdict": str(definition_judgement.get("verdict", "")).strip(),
-            "reason": str(definition_judgement.get("reason", "")).strip(),
-        })
-    if examples:
-        _emit_status(on_status, "Judging example support")
-        example_judgement = _run_json_schema_chat(
-            llm_service=llm_service,
-            app_cfg=app_cfg,
-            system=system_prompt,
-            user=f"{prefix_context}\n\nThese are examples used in the paragraph:\n{examples}\n\n{_load_prompt('supporting_sentences_5.md')}",
-            name="judge_examples",
-            reasoning_collector=reasoning_collector,
-            schema={
-                "type": "object",
-                "properties": {
-                    "verdict": {"type": "string", "enum": ["useful example", "not a useful example"]},
-                    "reason": {"type": "string", "maxLength": 520},
-                },
-                "required": ["verdict", "reason"],
-                "additionalProperties": False,
-            },
-        )
-        judgments.append({
-            "kind": "examples",
-            "extracted_text": examples,
-            "verdict": str(example_judgement.get("verdict", "")).strip(),
-            "reason": str(example_judgement.get("reason", "")).strip(),
-        })
-    if descriptions:
-        _emit_status(on_status, "Judging descriptive support")
-        description_judgement = _run_json_schema_chat(
-            llm_service=llm_service,
-            app_cfg=app_cfg,
-            system=system_prompt,
-            user=f"{prefix_context}\n\nThese are descriptions used in the paragraph:\n{descriptions}\n\n{_load_prompt('supporting_sentences_6.md')}",
-            name="judge_descriptions",
-            reasoning_collector=reasoning_collector,
-            schema={
-                "type": "object",
-                "properties": {
-                    "verdict": {"type": "string", "enum": ["useful description", "not a useful description"]},
-                    "reason": {"type": "string", "maxLength": 520},
-                },
-                "required": ["verdict", "reason"],
-                "additionalProperties": False,
-            },
-        )
-        judgments.append({
-            "kind": "descriptions",
-            "extracted_text": descriptions,
-            "verdict": str(description_judgement.get("verdict", "")).strip(),
-            "reason": str(description_judgement.get("reason", "")).strip(),
-        })
-
-    has_negative = any("not" in item["verdict"].lower() or "does not" in item["verdict"].lower() for item in judgments)
-    has_positive = any("useful" in item["verdict"].lower() or "supports" in item["verdict"].lower() for item in judgments)
-
-    if has_negative:
-        verdict = "needs improvement"
-    elif has_positive:
-        verdict = "effective"
-    else:
-        verdict = "limited evidence"
-
-    reason = " ".join(item["reason"] for item in judgments if item["reason"]).strip()
-    revision_suggestion = (
-        "Make each supporting sentence directly develop your controlling idea with specific and relevant details."
-        if has_negative or not has_positive
-        else "Keep using specific supporting details that clearly connect to your controlling idea."
-    )
-
-    return {
-        "verdict": verdict,
-        "reason": reason or "The paragraph has limited supporting-sentence evidence to evaluate.",
-        "revision_suggestion": revision_suggestion,
-        "supporting_sentence_types": judgments,
-    }
-
-
 def run_paragraph_feedback_bundle(
     *,
     llm_service: "LlmService",
@@ -558,14 +381,6 @@ def run_paragraph_feedback_bundle(
         on_status=on_status,
         reasoning_collector=reasoning_collector,
     )
-    supporting_sentences = _run_supporting_sentences_feedback(
-        llm_service=llm_service,
-        app_cfg=app_cfg,
-        system_prompt=system_prompt,
-        prefix_context=prefix_context,
-        on_status=on_status,
-        reasoning_collector=reasoning_collector,
-    )
     coherence = _run_coherence_feedback(
         llm_service=llm_service,
         app_cfg=app_cfg,
@@ -578,7 +393,6 @@ def run_paragraph_feedback_bundle(
     result: dict[str, Any] = {
         "paragraph_feedback": {
             "topic_sentence": topic_sentence,
-            "supporting_sentences": supporting_sentences,
             "coherence": coherence,
         }
     }
