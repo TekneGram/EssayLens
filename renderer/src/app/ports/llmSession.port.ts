@@ -1,4 +1,5 @@
 import type { AppResult } from '@/app/result';
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 
 // --- LLM Session contract types ---
 
@@ -38,6 +39,8 @@ export interface GetLlmSessionTurnsRequest {
 export interface LlmSessionTurnDto {
   role: 'teacher' | 'assistant' | 'system';
   content: string;
+  feedbackType?: 'vocabulary';
+  vocabulary?: ChatVocabularyFeedback;
 }
 
 export interface GetLlmSessionTurnsResponse {

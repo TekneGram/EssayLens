@@ -8,7 +8,8 @@ export function OriginalTextView({
   activeCommentSelection,
   activeCommentId,
   onSelectionCaptured,
-  onDocumentTextChange
+  onDocumentTextChange,
+  onDocumentTextMapChange
 }: OriginalTextViewProps) {
   return (
     <section className="original-text-view subpane" data-testid="original-text-view">
@@ -21,6 +22,7 @@ export function OriginalTextView({
         activeCommentId={activeCommentId}
         onSelectionCaptured={onSelectionCaptured}
         onDocumentTextChange={onDocumentTextChange}
+        onDocumentTextMapChange={onDocumentTextMapChange}
       />
     </section>
   );

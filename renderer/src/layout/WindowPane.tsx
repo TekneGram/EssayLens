@@ -36,6 +36,7 @@ export default function WindowPane() {
         <ChatView
           onCollapse={collapseChat}
           onCreateCommentFromChatMessage={assessmentChatBindings?.onCreateCommentFromChatMessage}
+          onCreateInlineCommentFromVocabulary={assessmentChatBindings?.onCreateInlineCommentFromVocabulary}
         />
       )}
       <ChatInterface onChatIntent={expandChat} {...(assessmentChatBindings ?? {})} />

@@ -7,6 +7,7 @@ import type {
 } from '@/layout/ChatInterface/domain';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { EntityId } from '@/app/types/primitives';
+import type { WordTextMap } from '@/features/text-view-window';
 
 export interface OriginalTextViewProps {
   selectedFileId: EntityId | null;
@@ -16,6 +17,7 @@ export interface OriginalTextViewProps {
   activeCommentId: string | null;
   onSelectionCaptured: (selection: PendingSelection | null) => void;
   onDocumentTextChange?: (text: string | null) => void;
+  onDocumentTextMapChange?: (textMap: WordTextMap | null) => void;
 }
 
 export interface CommentsViewProps {

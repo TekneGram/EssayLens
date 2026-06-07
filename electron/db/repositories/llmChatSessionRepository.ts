@@ -2,9 +2,21 @@ import { randomUUID } from 'node:crypto';
 import { getSharedDatabaseClient } from '../appDatabase';
 import type { SQLiteClient } from '../sqlite';
 
+export interface LlmSessionTurnVocabularyMetadata {
+  feedbackType: 'vocabulary';
+  vocabulary: {
+    simpleVocabulary: string;
+    textContext: string;
+    preciseVocabulary: string;
+  };
+}
+
+export type LlmSessionTurnMetadata = LlmSessionTurnVocabularyMetadata;
+
 export interface LlmSessionTurn {
   role: 'teacher' | 'assistant' | 'system';
   content: string;
+  metadata?: LlmSessionTurnMetadata;
 }
 
 export interface LlmSessionListItem {
@@ -24,6 +36,7 @@ interface LlmChatSessionRepositoryOptions {
 interface TurnRow {
   role: 'teacher' | 'assistant' | 'system';
   content: string;
+  metadata: string | null;
   seq: number;
 }
 
@@ -105,7 +118,7 @@ export class LlmChatSessionRepository {
     const rows =
       typeof fileEntityUuid === 'string' && fileEntityUuid.trim()
         ? await this.db.all<TurnRow>(
-            `SELECT t.role, t.content, t.seq
+            `SELECT t.role, t.content, t.metadata, t.seq
              FROM llm_chat_session_turns t
              INNER JOIN llm_chat_sessions s ON s.session_id = t.session_id
              WHERE t.session_id = ? AND s.file_entity_uuid = ?
@@ -114,7 +127,7 @@ export class LlmChatSessionRepository {
             [normalizedSessionId, this.normalizeFileEntityUuid(fileEntityUuid), maxEntries]
           )
         : await this.db.all<TurnRow>(
-            `SELECT role, content, seq
+            `SELECT role, content, metadata, seq
              FROM llm_chat_session_turns
              WHERE session_id = ?
              ORDER BY seq DESC
@@ -125,8 +138,37 @@ export class LlmChatSessionRepository {
       .reverse()
       .map((row) => ({
         role: row.role,
-        content: row.content
+        content: row.content,
+        metadata: this.parseTurnMetadata(row.metadata)
       }));
+  }
+
+  private parseTurnMetadata(raw: string | null): LlmSessionTurnMetadata | undefined {
+    if (typeof raw !== 'string' || raw.trim().length === 0) {
+      return undefined;
+    }
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        (parsed as { feedbackType?: unknown }).feedbackType === 'vocabulary'
+      ) {
+        const vocabulary = (parsed as { vocabulary?: unknown }).vocabulary;
+        if (
+          typeof vocabulary === 'object' &&
+          vocabulary !== null &&
+          typeof (vocabulary as { simpleVocabulary?: unknown }).simpleVocabulary === 'string' &&
+          typeof (vocabulary as { textContext?: unknown }).textContext === 'string' &&
+          typeof (vocabulary as { preciseVocabulary?: unknown }).preciseVocabulary === 'string'
+        ) {
+          return parsed as LlmSessionTurnMetadata;
+        }
+      }
+    } catch {
+      return undefined;
+    }
+    return undefined;
   }
 
   async appendTurnPair(sessionId: string, teacherMessage: string, assistantReply: string, fileId?: string): Promise<void> {
@@ -145,7 +187,8 @@ export class LlmChatSessionRepository {
     const normalizedTurns = turns
       .map((turn) => ({
         role: turn.role,
-        content: typeof turn.content === 'string' ? turn.content.trim() : ''
+        content: typeof turn.content === 'string' ? turn.content.trim() : '',
+        metadata: turn.metadata
       }))
       .filter((turn) => turn.content.length > 0);
 
@@ -174,9 +217,17 @@ export class LlmChatSessionRepository {
       let nextSeq = (current?.max_seq ?? 0) + 1;
       for (const turn of normalizedTurns) {
         await this.db.run(
-          `INSERT INTO llm_chat_session_turns (uuid, session_id, seq, role, content, created_at)
-           VALUES (?, ?, ?, ?, ?, ?);`,
-          [randomUUID(), normalizedSessionId, nextSeq, turn.role, turn.content, nowIso]
+          `INSERT INTO llm_chat_session_turns (uuid, session_id, seq, role, content, metadata, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?);`,
+          [
+            randomUUID(),
+            normalizedSessionId,
+            nextSeq,
+            turn.role,
+            turn.content,
+            turn.metadata ? JSON.stringify(turn.metadata) : null,
+            nowIso
+          ]
         );
         nextSeq += 1;
       }
