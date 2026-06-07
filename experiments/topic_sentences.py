@@ -2,7 +2,6 @@ from pathlib import Path
 import requests
 
 # To do:
-# Add gemma style messages to app - do the retries also get switched appropriately so that gemma models do not have system appended to the extra information?
 # Test new line detection and feedback
 # Add inline feedback style
 # Alter max_tokens per individual prompt to account for the goal of the prompt

@@ -8,6 +8,8 @@ from topic_sentences import topic_sentence_identifier, topic_sentence_controllin
 from coherence import determine_coherence_level, recommend_coherence_improvement, praise_coherence
 from supporting_sentences import find_supporting_sentences, find_supporting_sentences_more, judge_fact, judge_definition, judge_example, judge_description
 from inline_comments import inline_praise, inline_changes
+from formatting import determine_paragraph_breaks, detect_title
+from vocabulary import improve_simple_vocabulary
 
 import requests
 
@@ -237,7 +239,7 @@ def main() -> None:
     # multiple_decision_maker returns multiple decisions so extract them and loop through and call each function.
     try:
         wait_for_server(base_url)
-        writing_path = "experiments/writing_examples/w4.md"
+        writing_path = "experiments/writing_examples/w2.md"
         feedback_data = {
             "writing": writing_path,
             "topic_sentence": {
@@ -276,6 +278,18 @@ def main() -> None:
             "summary_feedback": ""
         }
 
+        # Simple vocabulary
+        vocabulary = improve_simple_vocabulary("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/vocabulary_simple.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(vocabulary, indent=2))
+
+        # # Formatting
+        # formatting = determine_paragraph_breaks("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/formatting_line_break.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(formatting, indent=2))
+
+        # title = detect_title("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/formatting_title.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(title, indent=2))
+
+        # Praise and Changes
         # praise = inline_praise("experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/phrase_praise.md", base_url, args.max_tokens, args.temp)
         # print(json.dumps(praise, indent=2))
 
@@ -283,25 +297,25 @@ def main() -> None:
         # print(json.dumps(changes, indent=2))
         
         # Topic sentence analysis
-        data = topic_sentence_identifier(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(data, indent=2))
-        topic_sentence = data["choices"][0]["message"]["content"]
-        feedback_data["topic_sentence"]["sentence"] = topic_sentence
+        # data = topic_sentence_identifier(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_1.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data, indent=2))
+        # topic_sentence = data["choices"][0]["message"]["content"]
+        # feedback_data["topic_sentence"]["sentence"] = topic_sentence
 
-        data_2 = topic_sentence_controlling_idea(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(data_2, indent=2))
-        controlling_idea = data_2["choices"][0]["message"]["content"]
-        feedback_data["topic_sentence"]["controlling_idea"] = controlling_idea
+        # data_2 = topic_sentence_controlling_idea(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", topic_sentence, "experiments/system_prompts_v2/topic_sentence_2.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data_2, indent=2))
+        # controlling_idea = data_2["choices"][0]["message"]["content"]
+        # feedback_data["topic_sentence"]["controlling_idea"] = controlling_idea
 
-        data_3 = topic_sentence_judgement(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
-        print(json.dumps(data_3, indent=2))
-        ts_judgement = data_3["choices"][0]["message"]["content"]
-        ts_judgement_content = json.loads(ts_judgement)
-        feedback_data["topic_sentence"]["verdict"] = ts_judgement_content["verdict"]
-        feedback_data["topic_sentence"]["reason"] = ts_judgement_content["reason"]
-        feedback_data["topic_sentence"]["revision_suggestion"] = ts_judgement_content["revision_suggestion"]
+        # data_3 = topic_sentence_judgement(args.model, "experiments/system_prompts_v2/paragraph_knowledge.md", writing_path, "experiments/system_prompts_v2/topic_sentence_3.md", topic_sentence, controlling_idea, base_url, args.max_tokens, args.temp)
+        # print(json.dumps(data_3, indent=2))
+        # ts_judgement = data_3["choices"][0]["message"]["content"]
+        # ts_judgement_content = json.loads(ts_judgement)
+        # feedback_data["topic_sentence"]["verdict"] = ts_judgement_content["verdict"]
+        # feedback_data["topic_sentence"]["reason"] = ts_judgement_content["reason"]
+        # feedback_data["topic_sentence"]["revision_suggestion"] = ts_judgement_content["revision_suggestion"]
 
-        print(feedback_data)
+        # print(feedback_data)
 
 
         # # Coherence analysis
