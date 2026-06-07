@@ -1,6 +1,7 @@
 export type LlmModelKey = string;
 export type LlmBackend = string;
 export type LlmModelFamily = string;
+export type BulkLlmRecyclePolicy = 'never' | 'after_each_file';
 
 export interface CatalogLlmModelDto {
   key: LlmModelKey;
@@ -10,6 +11,7 @@ export interface CatalogLlmModelDto {
   mmprojFilename: string | null;
   backend: LlmBackend;
   modelFamily: LlmModelFamily;
+  chatTemplateAsset: string | null;
 }
 
 export interface DownloadedLlmModelDto {
@@ -36,6 +38,10 @@ export interface LlmRuntimeSettings {
   llm_seed: number | null;
   llm_rope_freq_base: number | null;
   llm_rope_freq_scale: number | null;
+  llm_model_family: string;
+  llm_reasoning_mode: string | null;
+  llm_reasoning_budget: number | null;
+  llm_chat_template_path: string | null;
   llm_use_jinja: boolean;
   llm_cache_prompt: boolean;
   llm_flash_attn: boolean;
@@ -47,6 +53,8 @@ export interface LlmRuntimeSettings {
   request_seed: number | null;
   use_fake_reply: boolean;
   fake_reply_text: string | null;
+  llm_log_outbound_payload: boolean;
+  bulk_llm_recycle_policy: BulkLlmRecyclePolicy;
 }
 
 export interface ListCatalogModelsRequest {}

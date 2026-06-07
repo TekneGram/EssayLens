@@ -29,6 +29,7 @@ export async function getLlmNotReadyDetails(
   const issues: LlmReadinessIssue[] = [];
   const ggufPath = normalizePath(settings.llm_gguf_path);
   const serverPath = normalizePath(settings.llm_server_path);
+  const chatTemplatePath = normalizePath(settings.llm_chat_template_path);
 
   if (!ggufPath) {
     issues.push({
@@ -66,6 +67,22 @@ export async function getLlmNotReadyDetails(
       message: 'The configured llama-server path is not executable.',
       path: serverPath
     });
+  }
+
+  if (chatTemplatePath) {
+    if (!(await deps.fileExists(chatTemplatePath))) {
+      issues.push({
+        code: 'CHAT_TEMPLATE_FILE_NOT_FOUND',
+        message: 'The configured chat template file does not exist on disk.',
+        path: chatTemplatePath
+      });
+    } else if (!(await deps.isFile(chatTemplatePath))) {
+      issues.push({
+        code: 'CHAT_TEMPLATE_PATH_NOT_FILE',
+        message: 'The configured chat template path is not a file.',
+        path: chatTemplatePath
+      });
+    }
   }
 
   if (issues.length === 0) {

@@ -8,6 +8,7 @@ import type {
 } from '../contracts/workspace.contracts';
 import { WorkspaceRepository } from '../../db/repositories/workspaceRepository';
 import { scanFilesInWorkspace, type ScannedFile } from '../../services/workspace/fileScanner';
+import { convertHtmlFilesToDocx } from '../../services/workspace/htmlDocxConverter';
 import type { IpcMainLike } from '../types';
 import { safeHandle } from '../safeHandle';
 import { validateOrThrow } from '../validate';
@@ -33,6 +34,7 @@ interface WorkspaceHandlerDeps {
   dialog: DialogLike;
   repository: WorkspaceRepository;
   scanFiles: (folderPath: string) => Promise<ScannedFile[]>;
+  convertHtmlFiles: (scannedFiles: ScannedFile[]) => Promise<ScannedFile[]>;
 }
 
 function getDefaultDeps(): WorkspaceHandlerDeps {
@@ -40,7 +42,8 @@ function getDefaultDeps(): WorkspaceHandlerDeps {
   return {
     dialog: electron.dialog,
     repository: new WorkspaceRepository(),
-    scanFiles: scanFilesInWorkspace
+    scanFiles: scanFilesInWorkspace,
+    convertHtmlFiles: convertHtmlFilesToDocx
   };
 }
 
@@ -96,7 +99,8 @@ export function registerWorkspaceHandlers(ipc: IpcMainLike, deps: WorkspaceHandl
     try {
       const folder = await deps.repository.setCurrentFolder(selectedPath);
       const scannedFiles = await deps.scanFiles(folder.path);
-      const fileRecords = toWorkspaceFileDtos(folder.id, scannedFiles);
+      const generatedFiles = await deps.convertHtmlFiles(scannedFiles);
+      const fileRecords = toWorkspaceFileDtos(folder.id, [...scannedFiles, ...generatedFiles]);
       await deps.repository.upsertFiles(folder.id, fileRecords);
 
       return { folder };

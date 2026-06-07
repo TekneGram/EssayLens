@@ -542,6 +542,12 @@
   gap: 10px;
 }
 
+.comments-list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 @container (max-width: 720px) {
   .assessment-window-title {
     display: none;
@@ -989,6 +995,34 @@
 
 .msg-body-plain {
   white-space: pre-wrap;
+}
+
+.msg-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.msg-action-button {
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: color-mix(in hsl, var(--bg-surface) 88%, var(--bg-muted));
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.msg-action-button:hover {
+  border-color: color-mix(in hsl, var(--accent-primary) 38%, var(--border-subtle));
+  color: var(--accent-primary);
+}
+
+.msg-action-button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .msg-markdown p,

@@ -34,6 +34,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
     onEditComment,
     onDeleteComment,
     onApplyComment,
+    onApplyAllComments,
     onSendToLlm,
     onGenerateFeedbackDocument,
     onCommentsTabChange,
@@ -98,6 +99,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
         onDeleteComment={onDeleteComment}
         onSendToLlm={onSendToLlm}
         onApplyComment={onApplyComment}
+        onApplyAllComments={onApplyAllComments}
         onGenerateFeedbackDocument={onGenerateFeedbackDocument}
         activeTab={activeCommentsTab}
         onTabChange={onCommentsTabChange}

@@ -10,6 +10,7 @@ interface UseAssessmentChatStateSyncParams {
   handleSubmit: () => Promise<void>;
   handleModeChange: (mode: AssessmentTabChatBindings['chatMode']) => void;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
+  onCreateCommentFromChatMessage?: AssessmentTabChatBindings['onCreateCommentFromChatMessage'];
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
 }
 
@@ -21,6 +22,7 @@ export function useAssessmentChatStateSync({
   handleSubmit,
   handleModeChange,
   setActiveCommandWithModeRule,
+  onCreateCommentFromChatMessage,
   onChatBindingsChange
 }: UseAssessmentChatStateSyncParams): void {
   const { activeCommand, pendingSelection, chatMode, draftText } = localState;
@@ -36,7 +38,8 @@ export function useAssessmentChatStateSync({
       onDraftChange: setDraftText,
       onSubmit: handleSubmit,
       onModeChange: handleModeChange,
-      onCommandSelected: setActiveCommandWithModeRule
+      onCommandSelected: setActiveCommandWithModeRule,
+      onCreateCommentFromChatMessage
     }),
     [
       activeCommand,
@@ -48,7 +51,8 @@ export function useAssessmentChatStateSync({
       setDraftText,
       handleSubmit,
       handleModeChange,
-      setActiveCommandWithModeRule
+      setActiveCommandWithModeRule,
+      onCreateCommentFromChatMessage
     ]
   );
 

@@ -34,6 +34,10 @@ def _base_settings() -> dict[str, object]:
         "llm_seed": 42,
         "llm_rope_freq_base": None,
         "llm_rope_freq_scale": None,
+        "llm_model_family": "instruct/think",
+        "llm_reasoning_mode": None,
+        "llm_reasoning_budget": None,
+        "llm_chat_template_path": None,
         "llm_use_jinja": True,
         "llm_cache_prompt": True,
         "llm_flash_attn": False,
@@ -45,6 +49,7 @@ def _base_settings() -> dict[str, object]:
         "request_seed": None,
         "use_fake_reply": False,
         "fake_reply_text": None,
+        "llm_log_outbound_payload": False,
     }
 
 

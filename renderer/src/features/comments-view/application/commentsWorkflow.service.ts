@@ -98,6 +98,22 @@ export async function applyCommentWorkflow({
   await refetchFeedback();
 }
 
+interface ApplyAllCommentsWorkflowParams {
+  comments: FeedbackItem[];
+  applyFeedback: (request: { feedbackId: string; applied: boolean }) => Promise<void>;
+  refetchFeedback: () => Promise<unknown>;
+}
+
+export async function applyAllCommentsWorkflow({
+  comments,
+  applyFeedback,
+  refetchFeedback
+}: ApplyAllCommentsWorkflowParams): Promise<void> {
+  const unappliedComments = comments.filter((comment) => !comment.applied);
+  await Promise.all(unappliedComments.map((comment) => applyFeedback({ feedbackId: comment.id, applied: true })));
+  await refetchFeedback();
+}
+
 interface SendCommentToLlmWorkflowParams {
   commentId: string;
   commandId: CommandId | undefined;

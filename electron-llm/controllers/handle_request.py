@@ -8,6 +8,7 @@ from app.pipeline_simple import (
     warm_runtime,
 )
 from app.pipeline_rubric_eval import run_evaluate_with_rubric
+from app.pipeline_paragraph_feedback_bulk import run_paragraph_feedback_bulk
 from controllers.responses import success
 from app.runtime_lifecycle import RuntimeLifecycle
 from app.pipeline_errors import WorkerActionError
@@ -110,6 +111,28 @@ class HandleRequest:
             }:
                 if pipeline_key == EVALUATE_WITH_RUBRIC_PIPELINE_KEY:
                     reply = run_evaluate_with_rubric(payload, self.lifecycle)
+                    return success(request_id, {"reply": reply})
+                if pipeline_key == PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY:
+                    seq = 0
+                    client_request_id = payload.get("clientRequestId")
+                    if not isinstance(client_request_id, str):
+                        client_request_id = ""
+
+                    def emit_status(text: str) -> None:
+                        nonlocal seq
+                        seq += 1
+                        self.emit_stream_event(
+                            "stream_chunk",
+                            {
+                                "clientRequestId": client_request_id,
+                                "channel": "meta",
+                                "text": text,
+                                "done": False,
+                                "seq": seq,
+                            },
+                        )
+
+                    reply = run_paragraph_feedback_bulk(payload, self.lifecycle, on_status=emit_status)
                     return success(request_id, {"reply": reply})
                 raise WorkerActionError(f"Action not implemented yet: {pipeline_key}")
             raise WorkerActionError(f"Unsupported pipeline key: {pipeline_key}")

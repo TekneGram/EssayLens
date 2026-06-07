@@ -28,4 +28,5 @@ export interface ChatInterfaceBindings {
   onSubmit: () => void;
   onModeChange: (mode: ChatMode) => void;
   onCommandSelected: (command: ActiveCommand | null) => void;
+  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
 }

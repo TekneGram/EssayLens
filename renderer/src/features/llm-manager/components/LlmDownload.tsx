@@ -1,5 +1,15 @@
 import type { DownloadProgressView, LlmCatalogModel, LlmDownloadedModel, LlmKey } from '../domain/llmManager.types';
 
+function getTemplateLabel(model: LlmCatalogModel): string {
+  if (!model.chatTemplateAsset) {
+    return 'Template: Default server/model template';
+  }
+
+  const segments = model.chatTemplateAsset.split('/');
+  const fileName = segments[segments.length - 1] ?? model.chatTemplateAsset;
+  return `Template: ${fileName}`;
+}
+
 interface LlmDownloadProps {
   catalogModels: LlmCatalogModel[];
   downloadedModels: LlmDownloadedModel[];
@@ -43,6 +53,7 @@ export function LlmDownload({
                   <p className="llm-model-name">{model.displayName}</p>
                   <p className="llm-model-detail">{model.hfRepoId}</p>
                   <p className="llm-model-detail">{model.hfFilename}</p>
+                  <p className="llm-model-detail">{getTemplateLabel(model)}</p>
                   {showProgress ? (
                     <div className="llm-download-progress" aria-live="polite">
                       <p className="llm-model-detail llm-progress-status">{progress?.status}</p>

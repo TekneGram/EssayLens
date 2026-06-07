@@ -3,6 +3,7 @@ import type { LlmSessionListItemDto } from '@/app/ports/llmSession.port';
 
 type SetMessagesAction = { type: 'chat/setMessages'; payload: ChatMessage[] };
 type AddMessageAction = { type: 'chat/addMessage'; payload: ChatMessage };
+type RemoveMessageAction = { type: 'chat/removeMessage'; payload: { messageId: string } };
 type SetSessionTranscriptAction = {
   type: 'chat/setSessionTranscript';
   payload: { sessionId: string; messages: ChatMessage[] };
@@ -10,6 +11,10 @@ type SetSessionTranscriptAction = {
 type UpdateMessageContentAction = {
   type: 'chat/updateMessageContent';
   payload: { messageId: string; content: string; mode: 'append' | 'replace' };
+};
+type SetMessageCommentableAction = {
+  type: 'chat/setMessageCommentable';
+  payload: { messageId: string; canCreateComment: boolean };
 };
 type SetStatusAction = { type: 'chat/setStatus'; payload: ChatState['status'] };
 type SetErrorAction = { type: 'chat/setError'; payload?: string };
@@ -50,12 +55,20 @@ export function addChatMessage(payload: ChatMessage): AddMessageAction {
   return { type: 'chat/addMessage', payload };
 }
 
+export function removeChatMessage(payload: RemoveMessageAction['payload']): RemoveMessageAction {
+  return { type: 'chat/removeMessage', payload };
+}
+
 export function setSessionTranscript(payload: SetSessionTranscriptAction['payload']): SetSessionTranscriptAction {
   return { type: 'chat/setSessionTranscript', payload };
 }
 
 export function updateChatMessageContent(payload: UpdateMessageContentAction['payload']): UpdateMessageContentAction {
   return { type: 'chat/updateMessageContent', payload };
+}
+
+export function setChatMessageCommentable(payload: SetMessageCommentableAction['payload']): SetMessageCommentableAction {
+  return { type: 'chat/setMessageCommentable', payload };
 }
 
 export function setChatStatus(payload: ChatState['status']): SetStatusAction {
@@ -103,8 +116,10 @@ export function clearTransientSessionDrafts(
 export type ChatInterfaceAction =
   | SetMessagesAction
   | AddMessageAction
+  | RemoveMessageAction
   | SetSessionTranscriptAction
   | UpdateMessageContentAction
+  | SetMessageCommentableAction
   | SetStatusAction
   | SetErrorAction
   | SetActiveSessionForFileAction

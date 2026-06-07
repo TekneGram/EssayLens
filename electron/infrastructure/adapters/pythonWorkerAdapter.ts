@@ -150,6 +150,7 @@ function isValidPythonStreamEvent(value: unknown): value is PythonStreamEventEnv
 
   const validType =
     value.type === 'stream_start' ||
+    value.type === 'stream_status' ||
     value.type === 'stream_chunk' ||
     value.type === 'stream_done' ||
     value.type === 'stream_error';
@@ -326,7 +327,7 @@ export class PythonWorkerClient {
         if (!pending) {
           continue;
         }
-        if (envelope.type === 'stream_start' || envelope.type === 'stream_chunk') {
+        if (envelope.type === 'stream_start' || envelope.type === 'stream_status' || envelope.type === 'stream_chunk') {
           this.refreshPendingTimeout(pending);
         }
         pending.onStreamEvent?.(envelope);

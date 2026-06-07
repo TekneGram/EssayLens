@@ -2,6 +2,8 @@ import type { Dispatch } from 'react';
 import type { ChatStreamChunkEvent } from '@/app/ports/chat.port';
 import {
   addChatMessage,
+  removeChatMessage,
+  setChatMessageCommentable,
   setChatError,
   setChatStatus,
   setSessionSendPhase,
@@ -20,10 +22,12 @@ import {
 interface SubmitChatMessageWorkflowParams {
   chatApi: ChatPort;
   dispatch: Dispatch<AppAction>;
-  kind?: 'chat' | 'rubric-feedback';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
   message?: string;
   essay?: string;
   rubricId?: string;
+  bulkFileIds?: string[];
+  redoCompletedFileIds?: string[];
   selectedFileId: string | null;
   activeSessionId?: string;
   pendingSelection: PendingSelection | null;
@@ -39,6 +43,8 @@ export async function submitChatMessageWorkflow({
   message,
   essay,
   rubricId,
+  bulkFileIds,
+  redoCompletedFileIds,
   selectedFileId,
   activeSessionId,
   pendingSelection,
@@ -46,7 +52,12 @@ export async function submitChatMessageWorkflow({
   streamSeqByClientRequestId,
   streamSessionByClientRequestId
 }: SubmitChatMessageWorkflowParams): Promise<void> {
-  const clientRequestId = makeLocalId(kind === 'rubric-feedback' ? 'rubricreq' : 'chatreq');
+  const clientRequestId =
+    kind === 'rubric-feedback'
+      ? makeLocalId('rubricreq')
+      : kind === 'paragraph-feedback-bulk'
+        ? makeLocalId('paragraphbulkreq')
+        : makeLocalId('chatreq');
   const createdAt = new Date().toISOString();
 
   if (kind === 'chat') {
@@ -77,7 +88,8 @@ export async function submitChatMessageWorkflow({
         content: '',
         relatedFileId: selectedFileId ?? undefined,
         sessionId: activeSessionId,
-        createdAt
+        createdAt,
+        canCreateComment: false
       })
     );
   }
@@ -95,8 +107,10 @@ export async function submitChatMessageWorkflow({
       sessionId: activeSessionId,
       clientRequestId
     } as {
-      kind: 'chat' | 'rubric-feedback';
+      kind: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
       fileId?: string;
+      fileIds?: string[];
+      redoCompletedFileIds?: string[];
       sessionId?: string;
       clientRequestId: string;
       message?: string;
@@ -112,6 +126,12 @@ export async function submitChatMessageWorkflow({
     }
     if (typeof rubricId === 'string') {
       request.rubricId = rubricId;
+    }
+    if (kind === 'paragraph-feedback-bulk' && bulkFileIds && bulkFileIds.length > 0) {
+      request.fileIds = bulkFileIds;
+    }
+    if (kind === 'paragraph-feedback-bulk' && redoCompletedFileIds && redoCompletedFileIds.length > 0) {
+      request.redoCompletedFileIds = redoCompletedFileIds;
     }
     if (typeof pendingSelection?.exactQuote === 'string') {
       request.contextText = pendingSelection.exactQuote;
@@ -130,6 +150,7 @@ export async function submitChatMessageWorkflow({
           mode: 'replace'
         })
       );
+      dispatch(setChatMessageCommentable({ messageId: assistantMessageId, canCreateComment: true }));
       streamMessageByClientRequestId.delete(clientRequestId);
       streamSeqByClientRequestId.delete(clientRequestId);
       streamSessionByClientRequestId.delete(clientRequestId);
@@ -145,7 +166,8 @@ export async function submitChatMessageWorkflow({
               content: reply.reply,
               relatedFileId: selectedFileId ?? undefined,
               sessionId: activeSessionId,
-              createdAt
+              createdAt,
+              canCreateComment: true
             })
           );
           continue;
@@ -158,10 +180,78 @@ export async function submitChatMessageWorkflow({
             mode: 'replace'
           })
         );
+        dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: true }));
 
         streamMessageByClientRequestId.delete(reply.clientRequestId);
         streamSeqByClientRequestId.delete(reply.clientRequestId);
         streamSessionByClientRequestId.delete(reply.clientRequestId);
+      }
+    } else if (kind === 'paragraph-feedback-bulk') {
+      for (const reply of result.data.paragraphFeedbackBulk?.replies ?? []) {
+        const responseMessageId = reply.messageId;
+        const responseSessionId = reply.sessionId;
+        const createdAt = new Date().toISOString();
+        if (reply.progressMessageId) {
+          dispatch(removeChatMessage({ messageId: reply.progressMessageId }));
+        }
+        if (!streamMessageByClientRequestId.has(reply.clientRequestId)) {
+          dispatch(
+            addChatMessage({
+              id: responseMessageId,
+              role: 'assistant',
+              content: reply.reply,
+              relatedFileId: reply.fileId,
+              sessionId: responseSessionId,
+              createdAt,
+              canCreateComment: !reply.diagnosticType
+            })
+          );
+        } else {
+          dispatch(
+            updateChatMessageContent({
+              messageId: responseMessageId,
+              content: reply.reply,
+              mode: 'replace'
+            })
+          );
+          dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: !reply.diagnosticType }));
+        }
+
+        streamMessageByClientRequestId.delete(reply.clientRequestId);
+        streamSeqByClientRequestId.delete(reply.clientRequestId);
+        streamSessionByClientRequestId.delete(reply.clientRequestId);
+      }
+
+      for (const failure of result.data.paragraphFeedbackBulk?.failures ?? []) {
+        const createdAt = new Date().toISOString();
+        const existingMessageId = streamMessageByClientRequestId.get(failure.clientRequestId);
+        const failureContent = formatParagraphFeedbackBulkFailure(failure.reason, failure.details);
+
+        if (existingMessageId) {
+          dispatch(
+            updateChatMessageContent({
+              messageId: existingMessageId,
+              content: failureContent,
+              mode: 'replace'
+            })
+          );
+        } else {
+          dispatch(
+            addChatMessage({
+              id: failure.messageId,
+              role: 'assistant',
+              content: failureContent,
+              relatedFileId: failure.fileId,
+              sessionId: failure.sessionId,
+              createdAt,
+              canCreateComment: false
+            })
+          );
+        }
+
+        streamMessageByClientRequestId.delete(failure.clientRequestId);
+        streamSeqByClientRequestId.delete(failure.clientRequestId);
+        streamSessionByClientRequestId.delete(failure.clientRequestId);
       }
     }
     if (streamMessageByClientRequestId.size === 0) {
@@ -171,7 +261,7 @@ export async function submitChatMessageWorkflow({
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
   } catch (error) {
-    if (kind === 'rubric-feedback') {
+    if (kind === 'rubric-feedback' || kind === 'paragraph-feedback-bulk') {
       streamMessageByClientRequestId.clear();
       streamSeqByClientRequestId.clear();
       streamSessionByClientRequestId.clear();
@@ -231,7 +321,8 @@ function ensureStreamAssistantMessage(args: HandleChatStreamChunkWorkflowParams)
       content: '',
       relatedFileId: event.fileId,
       sessionId: event.sessionId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      canCreateComment: false
     })
   );
 
@@ -287,7 +378,33 @@ export function handleChatStreamChunkWorkflow({
     return;
   }
 
+  if (event.type === 'status') {
+    dispatch(
+      updateChatMessageContent({
+        messageId: assistantMessageId,
+        content: event.text || 'Processing paragraph feedback...',
+        mode: 'replace'
+      })
+    );
+    if (activeSessionId) {
+      dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: 'thinking' }));
+    }
+    return;
+  }
+
   if (event.type === 'done') {
+    if (event.workflow === 'paragraph-feedback-bulk' && !event.feedbackType) {
+      dispatch(removeChatMessage({ messageId: assistantMessageId }));
+      streamMessageByClientRequestId.delete(clientRequestId);
+      streamSeqByClientRequestId.delete(clientRequestId);
+      streamSessionByClientRequestId.delete(clientRequestId);
+      if (activeSessionId) {
+        dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
+      }
+      return;
+    }
+
+    dispatch(setChatMessageCommentable({ messageId: assistantMessageId, canCreateComment: true }));
     if (activeSessionId) {
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
@@ -295,14 +412,43 @@ export function handleChatStreamChunkWorkflow({
   }
 
   if (event.type === 'error') {
+    const message = event.error?.message || 'Streaming chat request failed.';
+    const detailsText =
+      event.error?.details === undefined
+        ? ''
+        : typeof event.error.details === 'string'
+          ? event.error.details
+          : JSON.stringify(event.error.details);
+    const visibleError = detailsText ? `${message}\n\nDetails: ${detailsText}` : message;
+
+    dispatch(
+      updateChatMessageContent({
+        messageId: assistantMessageId,
+        content: visibleError,
+        mode: 'replace'
+      })
+    );
+
+    if (event.workflow === 'paragraph-feedback-bulk') {
+      if (activeSessionId) {
+        dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
+      }
+      return;
+    }
+
     streamMessageByClientRequestId.delete(clientRequestId);
     streamSeqByClientRequestId.delete(clientRequestId);
     streamSessionByClientRequestId.delete(clientRequestId);
-    const message = event.error?.message || 'Streaming chat request failed.';
     dispatch(setChatStatus('error'));
     dispatch(setChatError(message));
     if (activeSessionId) {
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
   }
+}
+
+function formatParagraphFeedbackBulkFailure(reason: string, details: unknown): string {
+  const detailsText =
+    details === undefined ? '' : typeof details === 'string' ? details : JSON.stringify(details);
+  return detailsText ? `${reason}\n\nDetails: ${detailsText}` : reason;
 }

@@ -12,11 +12,13 @@ export function mapPythonStreamEventToChatChunkEvent(args: {
   const mappedType =
     streamEvent.type === 'stream_start'
       ? 'start'
-      : streamEvent.type === 'stream_chunk'
-        ? 'chunk'
-        : streamEvent.type === 'stream_done'
-          ? 'done'
-          : 'error';
+      : streamEvent.type === 'stream_status'
+        ? 'status'
+        : streamEvent.type === 'stream_chunk'
+          ? 'chunk'
+          : streamEvent.type === 'stream_done'
+            ? 'done'
+            : 'error';
 
   return {
     requestId: streamEvent.requestId,

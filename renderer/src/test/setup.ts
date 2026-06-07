@@ -109,6 +109,7 @@ beforeEach(() => {
   };
 
   appWindow.api.chat = {
+    checkParagraphFeedbackCompletions: vi.fn().mockResolvedValue({ ok: true, data: { activeModel: null, completions: [] } }),
     sendMessage: vi.fn().mockResolvedValue({ ok: true, data: { reply: '' } }),
     onStreamChunk: vi.fn().mockReturnValue(() => {}),
     ...existingChat
@@ -123,11 +124,16 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),
@@ -135,11 +141,16 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),
@@ -147,11 +158,16 @@ beforeEach(() => {
       ok: true,
       data: {
         settings: {
+          llm_model_family: 'instruct/think',
+          llm_reasoning_mode: null,
+          llm_reasoning_budget: null,
+          llm_chat_template_path: null,
           llm_n_ctx: 4096,
           llm_n_predict: 1024,
           llm_top_k: 40,
           llm_top_p: 0.95,
-          temperature: 0.2
+          temperature: 0.2,
+          llm_log_outbound_payload: false
         }
       }
     }),

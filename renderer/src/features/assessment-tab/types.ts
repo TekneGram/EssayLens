@@ -30,6 +30,7 @@ export interface CommentsViewProps {
   onDeleteComment: (commentId: string) => void;
   onSendToLlm: (commentId: string, command?: CommandId) => void;
   onApplyComment: (commentId: string, applied: boolean) => void;
+  onApplyAllComments: () => void;
   onGenerateFeedbackDocument: () => void;
 }
 

@@ -21,6 +21,7 @@ interface UseAssessmentChatControllerParams {
   addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
+  onCreateCommentFromChatMessage?: AssessmentTabChatBindings['onCreateCommentFromChatMessage'];
 }
 
 interface UseAssessmentChatControllerResult {
@@ -37,7 +38,8 @@ export function useAssessmentChatController({
   selectedEssayText,
   addFeedback,
   onChatBindingsChange,
-  setActiveCommandWithModeRule
+  setActiveCommandWithModeRule,
+  onCreateCommentFromChatMessage
 }: UseAssessmentChatControllerParams): UseAssessmentChatControllerResult {
   const { handleModeChange, handleSubmit, setDraftText, isModeLockedToChat, isChatSendDisabled } = useAssessmentChatActions({
     appDispatch,
@@ -56,6 +58,7 @@ export function useAssessmentChatController({
     handleSubmit,
     handleModeChange,
     setActiveCommandWithModeRule,
+    onCreateCommentFromChatMessage,
     onChatBindingsChange
   });
 

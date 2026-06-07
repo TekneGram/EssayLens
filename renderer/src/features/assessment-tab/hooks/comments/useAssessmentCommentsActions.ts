@@ -2,6 +2,10 @@ import { useCallback } from 'react';
 import type { Dispatch } from 'react';
 import { toast } from 'react-toastify';
 import { usePorts } from '@/app/ports';
+import type {
+  AddBlockFeedbackRequest,
+  AddInlineFeedbackRequest
+} from '@/app/ports/assessment.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
 import {
@@ -12,6 +16,7 @@ import {
 } from '@/features/comments-view';
 import { useGenerateFeedbackDocumentMutation } from '@/features/comments-view';
 import {
+  applyAllCommentsWorkflow,
   applyCommentWorkflow,
   deleteCommentWorkflow,
   editCommentWorkflow,
@@ -26,12 +31,15 @@ import { selectActiveCommentsTab } from '@/app/providers/state';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { UseQueryResult } from '@tanstack/react-query';
 
+type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
+
 interface UseAssessmentCommentsActionsParams {
   appDispatch: Dispatch<AppAction>;
   localDispatch: Dispatch<AssessmentTabAction>;
   selectedFileId: string | null;
   feedbackListQuery: UseQueryResult<FeedbackItem[], Error>;
   comments: FeedbackItem[];
+  addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   canGenerateFeedbackDocument: boolean;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
 }
@@ -42,6 +50,7 @@ export function useAssessmentCommentsActions({
   selectedFileId,
   feedbackListQuery,
   comments,
+  addFeedback,
   canGenerateFeedbackDocument,
   setActiveCommandWithModeRule
 }: UseAssessmentCommentsActionsParams) {
@@ -123,6 +132,19 @@ export function useAssessmentCommentsActions({
     [feedbackListQuery]
   );
 
+  const onApplyAllComments = useCallback(async () => {
+    try {
+      await applyAllCommentsWorkflow({
+        comments,
+        applyFeedback: (request) => applyAssessmentFeedback(assessment, request),
+        refetchFeedback: feedbackListQuery.refetch
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to update apply state.';
+      toast.error(message);
+    }
+  }, [comments, feedbackListQuery]);
+
   const onSendToLlm = useCallback(
     async (commentId: string, commandId?: string) => {
       try {
@@ -170,6 +192,41 @@ export function useAssessmentCommentsActions({
     [appDispatch]
   );
 
+  const onCreateCommentFromChatMessage = useCallback(
+    async (text: string) => {
+      if (!text) {
+        return;
+      }
+
+      const existingComment = comments.find((comment) => comment.commentText === text);
+      if (existingComment) {
+        appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
+        appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
+        localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: existingComment.id });
+        localDispatch({
+          type: 'assessmentTab/setActiveCommentSelection',
+          payload: selectPendingSelectionFromComments(comments, existingComment.id)
+        });
+        return;
+      }
+
+      try {
+        const createdComment = await addFeedback({
+          kind: 'block',
+          source: 'llm',
+          commentText: text
+        });
+        appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
+        appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
+        localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: createdComment.id });
+        localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: null });
+      } catch {
+        // Mutation hook owns the user-facing error toast.
+      }
+    },
+    [addFeedback, appDispatch, comments, localDispatch]
+  );
+
   return {
     isGenerateFeedbackPending,
     onSelectionCaptured,
@@ -177,8 +234,10 @@ export function useAssessmentCommentsActions({
     onEditComment,
     onDeleteComment,
     onApplyComment,
+    onApplyAllComments,
     onSendToLlm,
     onGenerateFeedbackDocument,
-    onCommentsTabChange
+    onCommentsTabChange,
+    onCreateCommentFromChatMessage
   };
 }

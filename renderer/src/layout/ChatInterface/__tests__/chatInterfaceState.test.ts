@@ -17,8 +17,10 @@ import {
   setSessionTranscript,
   setSessionsForFile,
   setChatStatus,
+  setChatMessageCommentable,
   updateChatMessageContent
 } from '@/layout/ChatInterface/state';
+import { chatReducer } from '@/layout/ChatInterface/state/chatInterface.reducer';
 
 describe('chat-interface state helpers', () => {
   it('creates chat actions', () => {
@@ -33,6 +35,10 @@ describe('chat-interface state helpers', () => {
     ).toEqual({
       type: 'chat/updateMessageContent',
       payload: { messageId: 'a1', content: 'chunk', mode: 'append' }
+    });
+    expect(setChatMessageCommentable({ messageId: 'a1', canCreateComment: true })).toEqual({
+      type: 'chat/setMessageCommentable',
+      payload: { messageId: 'a1', canCreateComment: true }
     });
     expect(
       addChatMessage({
@@ -166,5 +172,25 @@ describe('chat-interface state helpers', () => {
     expect(selectSessionsForFile(state, 'file-1')).toHaveLength(1);
     expect(selectSessionListStatusForFile(state, 'file-1')).toBe('idle');
     expect(selectSessionListErrorForFile(state, 'file-1')).toBe('Could not load sessions');
+  });
+
+  it('updates assistant message commentable state', () => {
+    const next = chatReducer(
+      {
+        ...initialAppState.chat,
+        messages: [
+          {
+            id: 'assistant-1',
+            role: 'assistant',
+            content: 'Streaming response',
+            canCreateComment: false,
+            createdAt: '2026-02-20T00:00:00.000Z'
+          }
+        ]
+      },
+      setChatMessageCommentable({ messageId: 'assistant-1', canCreateComment: true })
+    );
+
+    expect(next.messages[0].canCreateComment).toBe(true);
   });
 });

@@ -40,7 +40,7 @@ export interface PythonFailure {
 
 export type PythonResponse<TData = unknown> = PythonSuccess<TData> | PythonFailure;
 
-export type PythonStreamEventType = 'stream_start' | 'stream_chunk' | 'stream_done' | 'stream_error';
+export type PythonStreamEventType = 'stream_start' | 'stream_status' | 'stream_chunk' | 'stream_done' | 'stream_error';
 
 export interface PythonStreamEventData {
   clientRequestId?: string;

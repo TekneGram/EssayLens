@@ -56,6 +56,18 @@ function createInlineComment(): FeedbackItem {
   };
 }
 
+function createBlockComment(id: string, applied = false): FeedbackItem {
+  return {
+    id,
+    fileId: '/workspace/essays/draft.docx',
+    source: 'teacher',
+    kind: 'block',
+    commentText: `Block comment ${id}.`,
+    createdAt: new Date('2026-02-19T12:00:00.000Z').toISOString(),
+    applied
+  };
+}
+
 describe('CommentsView interactions', () => {
   it('renders comment rows and emits tool actions', () => {
     const inlineComment = createInlineComment();
@@ -64,6 +76,7 @@ describe('CommentsView interactions', () => {
     const onDeleteComment = vi.fn();
     const onSendToLlm = vi.fn();
     const onApplyComment = vi.fn();
+    const onApplyAllComments = vi.fn();
     const onGenerateFeedbackDocument = vi.fn();
 
     const { rerender } = render(
@@ -78,6 +91,7 @@ describe('CommentsView interactions', () => {
         onDeleteComment={onDeleteComment}
         onSendToLlm={onSendToLlm}
         onApplyComment={onApplyComment}
+        onApplyAllComments={onApplyAllComments}
         onGenerateFeedbackDocument={onGenerateFeedbackDocument}
         activeTab="comments"
         onTabChange={vi.fn()}
@@ -85,6 +99,7 @@ describe('CommentsView interactions', () => {
     );
 
     expect(screen.getByText('Quote:')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Apply all' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Select Inline comment/i }));
     expect(onSelectComment).toHaveBeenCalledWith('feedback-inline-1');
@@ -135,6 +150,7 @@ describe('CommentsView interactions', () => {
         onDeleteComment={onDeleteComment}
         onSendToLlm={onSendToLlm}
         onApplyComment={onApplyComment}
+        onApplyAllComments={onApplyAllComments}
         onGenerateFeedbackDocument={onGenerateFeedbackDocument}
         activeTab="generate"
         onTabChange={vi.fn()}
@@ -145,6 +161,49 @@ describe('CommentsView interactions', () => {
     expect(screen.getByText('Create a document that compiles the current comments into a shareable feedback draft.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Create feedback document' }));
     expect(onGenerateFeedbackDocument).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows apply all above multiple comments and disables it when all are applied', () => {
+    const comments = [createInlineComment(), createBlockComment('feedback-block-1')];
+    const onApplyAllComments = vi.fn();
+    const props = {
+      comments,
+      activeCommentId: null,
+      isLoading: false,
+      isGeneratePending: false,
+      canGenerateFeedbackDocument: true,
+      onSelectComment: vi.fn(),
+      onEditComment: vi.fn(),
+      onDeleteComment: vi.fn(),
+      onSendToLlm: vi.fn(),
+      onApplyComment: vi.fn(),
+      onApplyAllComments,
+      onGenerateFeedbackDocument: vi.fn(),
+      activeTab: 'comments' as const,
+      onTabChange: vi.fn()
+    };
+
+    const { rerender } = render(<CommentsView {...props} />);
+
+    const applyAllButton = screen.getByRole('button', { name: 'Apply all' });
+    expect(applyAllButton).toBeTruthy();
+    expect(applyAllButton.closest('.comments-list-actions')).toBeTruthy();
+
+    fireEvent.click(applyAllButton);
+    expect(onApplyAllComments).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <CommentsView
+        {...props}
+        comments={[createInlineComment(), createBlockComment('feedback-block-1', true)].map((comment) => ({
+          ...comment,
+          applied: true
+        }))}
+      />
+    );
+
+    expect((screen.getByRole('button', { name: 'Apply all' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'Unapply' })).toHaveLength(2);
   });
 
   it('focuses selected inline comments in OriginalTextView without showing pending comment UI', async () => {

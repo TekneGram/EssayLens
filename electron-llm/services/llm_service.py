@@ -25,6 +25,12 @@ class LlmService:
             max_parallel=self.max_parallel,
         )
 
+    def with_timeout(self, timeout_s: float) -> "LlmService":
+        return LlmService(
+            client=self.client.with_timeout(timeout_s),
+            max_parallel=self.max_parallel,
+        )
+
     def chat(
         self,
         system: str,
@@ -71,6 +77,20 @@ class LlmService:
         **kwargs: Any,
     ) -> Any:
         return self.client.json_schema_chat(
+            system=system,
+            user=user,
+            schema=schema,
+            **kwargs,
+        )
+
+    def json_schema_chat_response(
+        self,
+        system: str,
+        user: str,
+        schema: dict[str, Any],
+        **kwargs: Any,
+    ) -> ChatResponse:
+        return self.client.json_schema_chat_response(
             system=system,
             user=user,
             schema=schema,

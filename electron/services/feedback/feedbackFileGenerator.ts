@@ -17,10 +17,15 @@ export interface FeedbackFileComment {
   endAnchor: FeedbackAnchor;
 }
 
+export interface FeedbackFileBlockComment {
+  commentText: string;
+}
+
 export interface FeedbackFileRequest {
   sourceFilePath: string;
   outputPath: string;
   comments: FeedbackFileComment[];
+  blockComments?: FeedbackFileBlockComment[];
 }
 
 export interface FeedbackFileResult {
@@ -327,17 +332,82 @@ function findMaxCommentId(commentsDoc: Document): number {
   return max;
 }
 
-function appendSummaryParagraph(doc: Document, body: Element, text: string): void {
-  const p = doc.createElementNS(W_NS, 'w:p');
-  const r = doc.createElementNS(W_NS, 'w:r');
-  const t = doc.createElementNS(W_NS, 'w:t');
-  setText(t, text);
-  r.appendChild(t);
-  p.appendChild(r);
-  body.appendChild(p);
+function findSectionProperties(body: Element): Element | null {
+  const sectionProperties = directChildrenByLocalName(body, 'sectPr');
+  return sectionProperties[0] ?? null;
 }
 
-async function generateAnnotatedDocx(sourceBuffer: Buffer, comments: FeedbackFileComment[]): Promise<Buffer> {
+function insertParagraphBeforeSectionProperties(body: Element, paragraph: Element): void {
+  const sectionProperties = findSectionProperties(body);
+  if (sectionProperties) {
+    body.insertBefore(paragraph, sectionProperties);
+    return;
+  }
+
+  body.appendChild(paragraph);
+}
+
+function createBlankParagraph(doc: Document): Element {
+  return doc.createElementNS(W_NS, 'w:p');
+}
+
+function appendRunTextWithBreaks(doc: Document, run: Element, text: string): void {
+  const lines = text.split(/\r\n|\r|\n/);
+  lines.forEach((line, index) => {
+    if (index > 0) {
+      run.appendChild(doc.createElementNS(W_NS, 'w:br'));
+    }
+
+    if (line.length === 0) {
+      return;
+    }
+
+    const t = doc.createElementNS(W_NS, 'w:t');
+    setText(t, line);
+    run.appendChild(t);
+  });
+}
+
+function createTextParagraph(doc: Document, text: string): Element {
+  const p = doc.createElementNS(W_NS, 'w:p');
+  const r = doc.createElementNS(W_NS, 'w:r');
+  appendRunTextWithBreaks(doc, r, text);
+  p.appendChild(r);
+  return p;
+}
+
+function appendSummaryParagraph(doc: Document, body: Element, text: string): void {
+  insertParagraphBeforeSectionProperties(body, createTextParagraph(doc, text));
+}
+
+function blockCommentParagraphLines(commentText: string): string[] {
+  return commentText.split(/\r\n|\r|\n/);
+}
+
+function appendBlockFeedbackParagraphs(
+  doc: Document,
+  body: Element,
+  blockComments: FeedbackFileBlockComment[]
+): void {
+  if (blockComments.length === 0) {
+    return;
+  }
+
+  insertParagraphBeforeSectionProperties(body, createBlankParagraph(doc));
+  insertParagraphBeforeSectionProperties(body, createBlankParagraph(doc));
+
+  blockComments.forEach((comment) => {
+    blockCommentParagraphLines(comment.commentText).forEach((line) => {
+      insertParagraphBeforeSectionProperties(body, line.length > 0 ? createTextParagraph(doc, line) : createBlankParagraph(doc));
+    });
+  });
+}
+
+async function generateAnnotatedDocx(
+  sourceBuffer: Buffer,
+  comments: FeedbackFileComment[],
+  blockComments: FeedbackFileBlockComment[]
+): Promise<Buffer> {
   const zip = await JSZip.loadAsync(sourceBuffer);
   const documentEntry = zip.file('word/document.xml');
   if (!documentEntry) {
@@ -422,6 +492,8 @@ async function generateAnnotatedDocx(sourceBuffer: Buffer, comments: FeedbackFil
     appendCommentToCommentsXml(commentsDoc, commentId, comment.commentText);
   }
 
+  appendBlockFeedbackParagraphs(documentDoc, body, blockComments);
+
   if (comments.length > 0) {
     appendSummaryParagraph(documentDoc, body, 'Feedback Summary');
     comments.forEach((comment) => {
@@ -442,7 +514,7 @@ export async function generateFeedbackFile(request: FeedbackFileRequest): Promis
   }
 
   const sourceBuffer = await fs.readFile(request.sourceFilePath);
-  const outputBuffer = await generateAnnotatedDocx(sourceBuffer, request.comments);
+  const outputBuffer = await generateAnnotatedDocx(sourceBuffer, request.comments, request.blockComments ?? []);
   await fs.writeFile(request.outputPath, outputBuffer);
 
   return {

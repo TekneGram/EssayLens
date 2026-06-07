@@ -19,6 +19,10 @@ interface LlmSettingsRow {
   llm_seed: number | null;
   llm_rope_freq_base: number | null;
   llm_rope_freq_scale: number | null;
+  llm_model_family: string;
+  llm_reasoning_mode: string | null;
+  llm_reasoning_budget: number | null;
+  llm_chat_template_path: string | null;
   llm_use_jinja: number;
   llm_cache_prompt: number;
   llm_flash_attn: number;
@@ -30,6 +34,8 @@ interface LlmSettingsRow {
   request_seed: number | null;
   use_fake_reply: number;
   fake_reply_text: string | null;
+  llm_log_outbound_payload: number;
+  bulk_llm_recycle_policy: LlmRuntimeSettings['bulk_llm_recycle_policy'];
 }
 
 export class LlmSettingsRepository {
@@ -46,9 +52,10 @@ export class LlmSettingsRepository {
          llm_server_url, llm_host, llm_port, llm_n_ctx,
          llm_n_threads, llm_n_gpu_layers, llm_n_batch, llm_n_parallel,
          llm_seed, llm_rope_freq_base, llm_rope_freq_scale,
+         llm_model_family, llm_reasoning_mode, llm_reasoning_budget, llm_chat_template_path,
          llm_use_jinja, llm_cache_prompt, llm_flash_attn,
          max_tokens, temperature, top_p, top_k, repeat_penalty, request_seed,
-         use_fake_reply, fake_reply_text
+         use_fake_reply, fake_reply_text, llm_log_outbound_payload, bulk_llm_recycle_policy
        FROM llm_settings
        WHERE id = 'default'
        LIMIT 1;`
@@ -73,6 +80,10 @@ export class LlmSettingsRepository {
       llm_seed: row.llm_seed,
       llm_rope_freq_base: row.llm_rope_freq_base,
       llm_rope_freq_scale: row.llm_rope_freq_scale,
+      llm_model_family: row.llm_model_family,
+      llm_reasoning_mode: row.llm_reasoning_mode,
+      llm_reasoning_budget: row.llm_reasoning_budget,
+      llm_chat_template_path: row.llm_chat_template_path,
       llm_use_jinja: row.llm_use_jinja === 1,
       llm_cache_prompt: row.llm_cache_prompt === 1,
       llm_flash_attn: row.llm_flash_attn === 1,
@@ -83,7 +94,9 @@ export class LlmSettingsRepository {
       repeat_penalty: row.repeat_penalty,
       request_seed: row.request_seed,
       use_fake_reply: row.use_fake_reply === 1,
-      fake_reply_text: row.fake_reply_text
+      fake_reply_text: row.fake_reply_text,
+      llm_log_outbound_payload: row.llm_log_outbound_payload === 1,
+      bulk_llm_recycle_policy: row.bulk_llm_recycle_policy
     };
   }
 
@@ -109,7 +122,13 @@ export class LlmSettingsRepository {
     field: keyof LlmRuntimeSettings,
     value: LlmRuntimeSettings[keyof LlmRuntimeSettings]
   ): string | number | null {
-    if (field === 'llm_use_jinja' || field === 'llm_cache_prompt' || field === 'llm_flash_attn' || field === 'use_fake_reply') {
+    if (
+      field === 'llm_use_jinja'
+      || field === 'llm_cache_prompt'
+      || field === 'llm_flash_attn'
+      || field === 'use_fake_reply'
+      || field === 'llm_log_outbound_payload'
+    ) {
       return value ? 1 : 0;
     }
     return value as string | number | null;

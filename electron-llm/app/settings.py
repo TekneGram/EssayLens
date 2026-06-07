@@ -11,6 +11,8 @@ from config.llm_config import LlmConfig
 class AppConfig:
     use_fake_reply: bool
     fake_reply_text: str
+    llm_log_outbound_payload: bool
+    llm_model_family: str
     llm_config: LlmConfig | None
     llm_server: LlmServerConfig | None
     llm_request: LlmRequestConfig | None
@@ -28,6 +30,8 @@ class AppConfig:
         llm_config, llm_server, llm_request = self.require_real_config()
         return (
             "real",
+            self.llm_log_outbound_payload,
+            self.llm_model_family,
             str(llm_server.llm_server_path),
             str(llm_config.llm_gguf_path),
             str(llm_config.llm_mmproj_path) if llm_config.llm_mmproj_path is not None else None,
@@ -42,6 +46,9 @@ class AppConfig:
             llm_server.llm_seed,
             llm_server.llm_rope_freq_base,
             llm_server.llm_rope_freq_scale,
+            llm_server.llm_reasoning_mode,
+            llm_server.llm_reasoning_budget,
+            str(llm_server.llm_chat_template_path) if llm_server.llm_chat_template_path is not None else None,
             llm_server.llm_use_jinja,
             llm_server.llm_cache_prompt,
             llm_server.llm_flash_attn,
@@ -129,18 +136,27 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
 
     use_fake_reply = _optional_bool(settings, "use_fake_reply")
     fake_reply_text = _optional_str(settings, "fake_reply_text")
+    llm_log_outbound_payload = _optional_bool(settings, "llm_log_outbound_payload")
     normalized_fake_reply = (
         fake_reply_text.strip() if isinstance(fake_reply_text, str) and fake_reply_text.strip() else "LLM is not configured yet."
     )
+    if llm_log_outbound_payload is None:
+        llm_log_outbound_payload = False
 
     if use_fake_reply is True:
         return AppConfig(
             use_fake_reply=True,
             fake_reply_text=normalized_fake_reply,
+            llm_log_outbound_payload=False,
+            llm_model_family="instruct/think",
             llm_config=None,
             llm_server=None,
             llm_request=None,
         )
+
+    llm_model_family = _optional_str(settings, "llm_model_family")
+    if llm_model_family is None or not llm_model_family.strip():
+        llm_model_family = "instruct/think"
 
     llm_host = _required_str(settings, "llm_host")
     llm_port = _required_int(settings, "llm_port")
@@ -169,6 +185,9 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
         llm_seed=_optional_int(settings, "llm_seed"),
         llm_rope_freq_base=_optional_float(settings, "llm_rope_freq_base"),
         llm_rope_freq_scale=_optional_float(settings, "llm_rope_freq_scale"),
+        llm_reasoning_mode=_optional_str(settings, "llm_reasoning_mode"),
+        llm_reasoning_budget=_optional_int(settings, "llm_reasoning_budget"),
+        llm_chat_template_path=_optional_str(settings, "llm_chat_template_path"),
         llm_use_jinja=_required_bool(settings, "llm_use_jinja"),
         llm_cache_prompt=_required_bool(settings, "llm_cache_prompt"),
         llm_flash_attn=_required_bool(settings, "llm_flash_attn"),
@@ -191,6 +210,8 @@ def build_settings_from_payload(payload: dict[str, Any]) -> AppConfig:
     return AppConfig(
         use_fake_reply=False,
         fake_reply_text=normalized_fake_reply,
+        llm_log_outbound_payload=llm_log_outbound_payload,
+        llm_model_family=llm_model_family.strip(),
         llm_config=llm_config,
         llm_server=llm_server,
         llm_request=llm_request

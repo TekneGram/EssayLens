@@ -11,6 +11,13 @@ export interface ResolveLlamaServerPathOptions {
   devRootPath?: string;
 }
 
+export interface ResolveAssetPathOptions {
+  mode: LlmRuntimeMode;
+  assetRelativePath: string;
+  resourcesPath?: string;
+  devRootPath?: string;
+}
+
 function getDefaultDevRootPath(): string {
   return path.resolve(__dirname, '..', '..');
 }
@@ -42,4 +49,14 @@ export function resolveLlamaServerPath(options: ResolveLlamaServerPathOptions): 
 
   const devRootPath = options.devRootPath ?? getDefaultDevRootPath();
   return resolveCandidateServerPath(path.resolve(devRootPath, 'vendor'), executableName, targetDir);
+}
+
+export function resolveAssetPath(options: ResolveAssetPathOptions): string {
+  if (options.mode === 'packaged') {
+    const resourcesPath = options.resourcesPath ?? process.resourcesPath ?? process.cwd();
+    return path.resolve(resourcesPath, 'assets', options.assetRelativePath);
+  }
+
+  const devRootPath = options.devRootPath ?? getDefaultDevRootPath();
+  return path.resolve(devRootPath, 'assets', options.assetRelativePath);
 }

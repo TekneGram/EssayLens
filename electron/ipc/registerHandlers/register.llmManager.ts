@@ -23,7 +23,7 @@ import type {
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository } from '../../db/repositories/llmSettingsRepository';
 import { downloadModelFile } from '../../services/llm/llmModelDownloader';
-import { resolveLlamaServerPath } from '../../runtime/runtimePaths';
+import { resolveAssetPath, resolveLlamaServerPath } from '../../runtime/runtimePaths';
 import type { IpcMainLike } from '../types';
 import { safeHandle } from '../safeHandle';
 import { validateOrThrow } from '../validate';
@@ -67,11 +67,17 @@ interface LlmManagerHandlerDeps {
   fileExists?: (targetPath: string) => Promise<boolean>;
   removePath?: (targetPath: string) => Promise<void>;
   resolveLlmServerPath?: () => string;
+  resolveLlmAssetPath?: (assetRelativePath: string) => string;
 }
 
 function resolveDefaultLlmServerPath(): string {
   const runtimeMode = process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === 'development' ? 'dev' : 'packaged';
   return resolveLlamaServerPath({ mode: runtimeMode });
+}
+
+function resolveDefaultLlmAssetPath(assetRelativePath: string): string {
+  const runtimeMode = process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === 'development' ? 'dev' : 'packaged';
+  return resolveAssetPath({ mode: runtimeMode, assetRelativePath });
 }
 
 function isUnsetLlmServerPath(value: string): boolean {
@@ -87,8 +93,27 @@ function getDefaultDeps(): LlmManagerHandlerDeps {
     downloadModel: downloadModelFile,
     fileExists: defaultFileExists,
     removePath: defaultRemovePath,
-    resolveLlmServerPath: resolveDefaultLlmServerPath
+    resolveLlmServerPath: resolveDefaultLlmServerPath,
+    resolveLlmAssetPath: resolveDefaultLlmAssetPath
   };
+}
+
+function resolveChatTemplatePath(
+  model: { chatTemplateAsset: string | null } | null,
+  resolver: (assetRelativePath: string) => string
+): string | null {
+  if (!model?.chatTemplateAsset) {
+    return null;
+  }
+  return resolver(model.chatTemplateAsset);
+}
+
+function normalizeOptionalPath(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 async function defaultFileExists(targetPath: string): Promise<boolean> {
@@ -145,17 +170,33 @@ export function registerLlmManagerHandlers(ipcMain: IpcMainLike, deps: LlmManage
 
   const healLegacyActiveModelSettings = async (): Promise<LlmRuntimeSettings> => {
     const settings = await deps.settingsRepository.getRuntimeSettings();
-    if (!isUnsetLlmServerPath(settings.llm_server_path)) {
+    const activeModel = await deps.selectionRepository.getActiveModel();
+    if (
+      !activeModel &&
+      !isUnsetLlmServerPath(settings.llm_server_path) &&
+      settings.llm_model_family.trim().length > 0
+    ) {
       return settings;
     }
-
-    const activeModel = await deps.selectionRepository.getActiveModel();
     if (!activeModel) {
       return settings;
     }
 
     const llmServerPath = (deps.resolveLlmServerPath ?? resolveDefaultLlmServerPath)();
-    const reset = await deps.selectionRepository.resetSettingsToDefaults(llmServerPath);
+    const catalogModels = await deps.selectionRepository.listCatalogModels();
+    const activeCatalogModel = catalogModels.find((model) => model.key === activeModel.key) ?? null;
+    const llmChatTemplatePath = resolveChatTemplatePath(
+      activeCatalogModel,
+      deps.resolveLlmAssetPath ?? resolveDefaultLlmAssetPath
+    );
+    const hasServerPathIssue = isUnsetLlmServerPath(settings.llm_server_path);
+    const hasModelFamilyIssue = settings.llm_model_family.trim().length === 0;
+    const currentChatTemplatePath = normalizeOptionalPath(settings.llm_chat_template_path);
+    const hasChatTemplateIssue = currentChatTemplatePath !== llmChatTemplatePath;
+    if (!hasServerPathIssue && !hasModelFamilyIssue && !hasChatTemplateIssue) {
+      return settings;
+    }
+    const reset = await deps.selectionRepository.resetSettingsToDefaults(llmServerPath, llmChatTemplatePath);
     return reset?.settings ?? settings;
   };
 
@@ -326,7 +367,13 @@ export function registerLlmManagerHandlers(ipcMain: IpcMainLike, deps: LlmManage
 
     await reconcileDownloadedModels();
     const llmServerPath = (deps.resolveLlmServerPath ?? resolveDefaultLlmServerPath)();
-    const selected = await deps.selectionRepository.selectModel(request.key, llmServerPath);
+    const catalogModels = await deps.selectionRepository.listCatalogModels();
+    const selectedCatalogModel = catalogModels.find((model) => model.key === request.key) ?? null;
+    const llmChatTemplatePath = resolveChatTemplatePath(
+      selectedCatalogModel,
+      deps.resolveLlmAssetPath ?? resolveDefaultLlmAssetPath
+    );
+    const selected = await deps.selectionRepository.selectModel(request.key, llmServerPath, llmChatTemplatePath);
     if (!selected) {
       throw new AppException({
         code: 'LLM_MANAGER_SELECT_MODEL_NOT_DOWNLOADED',
@@ -351,7 +398,16 @@ export function registerLlmManagerHandlers(ipcMain: IpcMainLike, deps: LlmManage
 
   safeHandle(ipcMain, LLM_MANAGER_CHANNELS.resetSettingsToDefaults, async () => {
     const llmServerPath = (deps.resolveLlmServerPath ?? resolveDefaultLlmServerPath)();
-    const reset = await deps.selectionRepository.resetSettingsToDefaults(llmServerPath);
+    const activeModel = await deps.selectionRepository.getActiveModel();
+    const catalogModels = await deps.selectionRepository.listCatalogModels();
+    const activeCatalogModel = activeModel
+      ? catalogModels.find((model) => model.key === activeModel.key) ?? null
+      : null;
+    const llmChatTemplatePath = resolveChatTemplatePath(
+      activeCatalogModel,
+      deps.resolveLlmAssetPath ?? resolveDefaultLlmAssetPath
+    );
+    const reset = await deps.selectionRepository.resetSettingsToDefaults(llmServerPath, llmChatTemplatePath);
     if (!reset) {
       throw new AppException({
         code: 'LLM_MANAGER_RESET_NO_ACTIVE_MODEL',

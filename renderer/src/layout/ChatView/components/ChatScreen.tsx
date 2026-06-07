@@ -8,9 +8,17 @@ interface ChatScreenProps {
   error?: string;
   showLlmLoading?: boolean;
   showThinking?: boolean;
+  onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
 }
 
-export function ChatScreen({ items, isLoading, error, showLlmLoading = false, showThinking = false }: ChatScreenProps) {
+export function ChatScreen({
+  items,
+  isLoading,
+  error,
+  showLlmLoading = false,
+  showThinking = false,
+  onCreateCommentFromChatMessage
+}: ChatScreenProps) {
   if (isLoading) {
     return <p className="content-block">Loading chat messages...</p>;
   }
@@ -37,9 +45,22 @@ export function ChatScreen({ items, isLoading, error, showLlmLoading = false, sh
           <li key={item.id} className={`msg ${item.roleClassName}`}>
             <div className="msg-role">{item.roleLabel}</div>
             {item.roleClassName === 'assistant' ? (
-              <div className="msg-body msg-markdown">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
-              </div>
+              <>
+                {onCreateCommentFromChatMessage && item.canCreateComment && item.content.trim().length > 0 ? (
+                  <div className="msg-actions">
+                    <button
+                      type="button"
+                      className="msg-action-button"
+                      onClick={() => void onCreateCommentFromChatMessage(item.content)}
+                    >
+                      Add to comments
+                    </button>
+                  </div>
+                ) : null}
+                <div className="msg-body msg-markdown">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.content}</ReactMarkdown>
+                </div>
+              </>
             ) : (
               <div className="msg-body msg-body-plain">{item.content}</div>
             )}

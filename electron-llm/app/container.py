@@ -31,8 +31,10 @@ def build_container(app_cfg: AppConfig):
     client = OpenAICompatChatClient(
         server_url=llm_server.llm_server_url,
         model_name="",
-        model_family="",
-        request_cfg=llm_request
+        model_family=app_cfg.llm_model_family,
+        request_cfg=llm_request,
+        log_outbound_payload=app_cfg.llm_log_outbound_payload,
+        chat_template_path=llm_server.llm_chat_template_path if llm_server.llm_use_jinja else None,
     )
 
     llm_service = LlmService(

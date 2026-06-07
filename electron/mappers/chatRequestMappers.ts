@@ -7,13 +7,19 @@ import type { LlmRuntimeSettings } from '../ipc/contracts/llmManager.contracts';
 import type { LlmSessionTurn } from '../db/repositories/llmChatSessionRepository';
 import type {
   LlmChatPayload,
+  LlmParagraphFeedbackBulkPayload,
   LlmRubricEvaluationPayload,
+  ParagraphFeedbackBulkRequest,
   RubricFeedbackCategorySection,
   RubricFeedbackRequest
 } from '../services/llm/chatService.shared';
 
 export function isRubricFeedbackRequest(request: SendChatMessageRequest): request is RubricFeedbackRequest {
   return request.kind === 'rubric-feedback' && typeof request.fileId === 'string' && !!request.fileId.trim() && typeof request.essay === 'string' && !!request.essay.trim();
+}
+
+export function isParagraphFeedbackBulkRequest(request: SendChatMessageRequest): request is ParagraphFeedbackBulkRequest {
+  return request.kind === 'paragraph-feedback-bulk' && Array.isArray(request.fileIds) && request.fileIds.length > 0;
 }
 
 export function requireChatMessage(request: SendChatMessageRequest): string {
@@ -55,6 +61,18 @@ export function buildLlmRubricEvaluationPayload(args: {
     essay: request.essay,
     rubricCategory: section.category,
     rubricEntries: section.entries
+  };
+}
+
+export function buildLlmParagraphFeedbackBulkPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmParagraphFeedbackBulkPayload {
+  return {
+    settings: args.settings,
+    essay: args.essay,
+    clientRequestId: args.clientRequestId
   };
 }
 

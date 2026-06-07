@@ -46,6 +46,7 @@ describe('RubricForReact editability', () => {
       },
       chat: {
         listMessages: vi.fn(),
+        checkParagraphFeedbackCompletions: vi.fn(),
         sendMessage: vi.fn(),
         onStreamChunk: vi.fn().mockReturnValue(() => {})
       },

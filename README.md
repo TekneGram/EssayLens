@@ -43,11 +43,11 @@ For Apple Silicon macOS, the expected path is:
 
 `vendor/llama-server/darwin-arm64/llama-server`
 
-Right now, EssayLens uses the TurboQuant fork of llama.cpp for the bundled server build. Clone it into `third_party/` from the repo root:
+Right now, EssayLens uses the TurboQuant fork of llama.cpp for the bundled server build. Clone the Gemma 4-capable checkout into `third_party_new/` from the repo root:
 
 ```bash
-mkdir -p third_party
-git clone https://github.com/TheTom/llama-cpp-turboquant.git third_party/llama-cpp-turboquant
+mkdir -p third_party_new
+git clone https://github.com/TheTom/llama-cpp-turboquant.git third_party_new/llama-cpp-turboquant
 ```
 
 Then build and vendor the macOS bundle with:
@@ -59,7 +59,7 @@ scripts/build_llama_server.sh --backend metal --clean
 What the script does:
 
 - configures and builds `llama-server` from the TurboQuant checkout
-- installs it into a staging directory under `third_party/llama-cpp-turboquant/`
+- installs it into a staging directory under `third_party_new/llama-cpp-turboquant/`
 - rewrites macOS library paths so the binary is relocatable
 - signs the staged binaries ad hoc so they can run locally after Mach-O fixups
 - copies the final shippable `llama-server` bundle into `vendor/llama-server/darwin-arm64/`

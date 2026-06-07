@@ -40,7 +40,8 @@ interface LlmOrchestratorDeps {
   workerClient: PythonWorkerPort;
   requestIdFactory: () => string;
   now: () => string;
-  timeoutMs: number;
+  defaultTimeoutMs: number;
+  actionTimeoutMs: Partial<Record<LlmAction, number>>;
 }
 
 function createRequestId(): string {
@@ -75,7 +76,10 @@ export class LlmOrchestrator {
     this.deps = {
       requestIdFactory: createRequestId,
       now: () => new Date().toISOString(),
-      timeoutMs: 180_000,
+      defaultTimeoutMs: 180_000,
+      actionTimeoutMs: {
+        'llm.paragraph.feedback.bulk': 600_000
+      },
       ...deps
     };
   }
@@ -117,8 +121,9 @@ export class LlmOrchestrator {
     }
 
     try {
+      const timeoutMs = this.deps.actionTimeoutMs[request.action] ?? this.deps.defaultTimeoutMs;
       const response = await this.deps.workerClient.request(request as PythonRequest<unknown>, {
-        timeoutMs: this.deps.timeoutMs,
+        timeoutMs,
         onStreamEvent
       });
 
