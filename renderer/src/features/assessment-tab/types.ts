@@ -8,6 +8,7 @@ import type {
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { EntityId } from '@/app/types/primitives';
 import type { WordTextMap } from '@/features/text-view-window';
+import type { CommentToolsController } from '@/features/comments-view/hooks/useCommentToolsController';
 
 export interface OriginalTextViewProps {
   selectedFileId: EntityId | null;
@@ -55,16 +56,12 @@ export interface CommentHeaderProps {
 export interface CommentBodyProps {
   comment: FeedbackItem;
   quotePreviewLength?: number;
+  isEditing?: boolean;
 }
 
 export interface CommentToolsProps {
-  commentId: string;
-  commentText: string;
   applied: boolean;
-  onEditComment: (commentId: string, nextText: string) => void;
-  onDeleteComment: (commentId: string) => void;
-  onSendToLlm: (commentId: string, command?: CommandId) => void;
-  onApplyComment: (commentId: string, applied: boolean) => void;
+  tools: CommentToolsController;
 }
 
 export type AssessmentTabChatBindings = ChatInterfaceBindings;
