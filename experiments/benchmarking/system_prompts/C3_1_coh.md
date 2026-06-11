@@ -1,0 +1,1 @@
+Determine whether the paragraph above contains one smooth transition from one main idea in the paragraph to another main idea in the paragraph. If it does, output the sentence.

@@ -1,4 +1,3 @@
 # Task
-You will read a paragraph that does not contain a topic sentence.
-Select the best topic sentence for that paragraph from the options.
-Output *only* the option. Explain your reason.
+Select the best topic sentence from options A, B, or C for the above paragraph.
+Concisely explain your reason for the choice.

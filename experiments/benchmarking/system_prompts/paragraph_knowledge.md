@@ -6,7 +6,7 @@ You have the following knowledge that you always refer to when providing feedbac
 Students have the following common knowledge about paragraph organization:
 1. Paragraphs start with a topic sentence.
 2. A topic sentence contains a topic and a controlling idea.
-    2.1: Example: Visiting Hikone City can bring tranquility to your life from many perspectives
+    2.1: Example: Visiting Hikone City can bring tranquility to your life from many perspectives.
     2.2. Example explained: The controlling idea is the many perspectives around tranquility.
 3. Supporting sentences develop the controlling idea.
 4. Supporting sentences can define, describe, give facts about and give examples of the controlling idea.

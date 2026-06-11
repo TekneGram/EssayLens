@@ -1,0 +1,1 @@
+For each suggestion, output the simple vocabulary, the text around the simple vocabulary, and the precise vocabulary alternatives.
