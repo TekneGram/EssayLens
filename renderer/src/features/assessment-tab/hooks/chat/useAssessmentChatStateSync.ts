@@ -11,6 +11,7 @@ interface UseAssessmentChatStateSyncParams {
   handleModeChange: (mode: AssessmentTabChatBindings['chatMode']) => void;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
   onCreateCommentFromChatMessage?: AssessmentTabChatBindings['onCreateCommentFromChatMessage'];
+  onCreateInlineCommentFromVocabulary?: AssessmentTabChatBindings['onCreateInlineCommentFromVocabulary'];
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
 }
 
@@ -23,6 +24,7 @@ export function useAssessmentChatStateSync({
   handleModeChange,
   setActiveCommandWithModeRule,
   onCreateCommentFromChatMessage,
+  onCreateInlineCommentFromVocabulary,
   onChatBindingsChange
 }: UseAssessmentChatStateSyncParams): void {
   const { activeCommand, pendingSelection, chatMode, draftText } = localState;
@@ -39,7 +41,8 @@ export function useAssessmentChatStateSync({
       onSubmit: handleSubmit,
       onModeChange: handleModeChange,
       onCommandSelected: setActiveCommandWithModeRule,
-      onCreateCommentFromChatMessage
+      onCreateCommentFromChatMessage,
+      onCreateInlineCommentFromVocabulary
     }),
     [
       activeCommand,
@@ -52,7 +55,8 @@ export function useAssessmentChatStateSync({
       handleSubmit,
       handleModeChange,
       setActiveCommandWithModeRule,
-      onCreateCommentFromChatMessage
+      onCreateCommentFromChatMessage,
+      onCreateInlineCommentFromVocabulary
     ]
   );
 

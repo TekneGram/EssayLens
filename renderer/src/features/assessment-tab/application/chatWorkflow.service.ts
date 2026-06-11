@@ -322,7 +322,9 @@ function ensureStreamAssistantMessage(args: HandleChatStreamChunkWorkflowParams)
       relatedFileId: event.fileId,
       sessionId: event.sessionId,
       createdAt: new Date().toISOString(),
-      canCreateComment: false
+      canCreateComment: false,
+      feedbackType: event.feedbackType === 'vocabulary' ? 'vocabulary' : undefined,
+      vocabulary: event.vocabulary
     })
   );
 

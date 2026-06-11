@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AppException } from '../../core/appException';
-import type { SendChatMessageResponse } from '../../ipc/contracts/chat.contracts';
+import type { ChatVocabularyFeedback, SendChatMessageResponse } from '../../ipc/contracts/chat.contracts';
 import type { StopLlmServerResponse } from '../../ipc/contracts/llmServer.contracts';
 import {
   buildLlmParagraphFeedbackBulkPayload,
@@ -24,6 +24,7 @@ interface ParagraphFeedbackBulkReply {
   clientRequestId: string;
   feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  vocabulary?: ChatVocabularyFeedback;
   diagnosticType?: 'reasoning_leak';
   progressMessageId?: string;
 }
@@ -306,7 +307,14 @@ export class ParagraphFeedbackBulkChatService {
         await this.deps.llmChatSessionRepository.createSession(sessionId, fileId);
         await this.deps.llmChatSessionRepository.appendTurns(
           sessionId,
-          feedbackReplies.map((item) => ({ role: 'assistant' as const, content: item.reply })),
+          feedbackReplies.map((item) => ({
+            role: 'assistant' as const,
+            content: item.reply,
+            metadata:
+              item.feedbackType === 'vocabulary' && item.vocabulary
+                ? { feedbackType: 'vocabulary' as const, vocabulary: item.vocabulary }
+                : undefined
+          })),
           fileId
         );
         for (const item of feedbackReplies) {
@@ -355,6 +363,7 @@ export class ParagraphFeedbackBulkChatService {
           workflow: 'paragraph-feedback-bulk',
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
+          vocabulary: item.vocabulary,
           type: 'chunk',
           seq: 2,
           channel: 'content',
@@ -553,6 +562,11 @@ ${reasoningContent}`;
             reply: this.formatVocabularyReply(item),
             clientRequestId: `${baseClientRequestId}:vocabulary:${index + 1}`,
             feedbackType: 'vocabulary' as const,
+            vocabulary: {
+              simpleVocabulary: item.simple_vocabulary.trim(),
+              textContext: item.text_context.trim(),
+              preciseVocabulary: item.precise_vocabulary.trim()
+            },
             progressMessageId
           }))
       : [];

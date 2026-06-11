@@ -46,4 +46,35 @@ describe('ChatScreen comment actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add to comments' }));
     expect(onCreateCommentFromChatMessage).toHaveBeenCalledWith('Final feedback.');
   });
+
+  it('renders an inline-comment button for vocabulary bubbles and passes the payload', () => {
+    const onCreateCommentFromChatMessage = vi.fn();
+    const onCreateInlineCommentFromVocabulary = vi.fn();
+    const vocabulary = { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' };
+
+    render(
+      <ChatScreen
+        items={[
+          {
+            id: 'vocab-1',
+            roleClassName: 'assistant',
+            roleLabel: 'Assistant',
+            content: "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'.",
+            canCreateComment: true,
+            feedbackType: 'vocabulary',
+            vocabulary
+          }
+        ]}
+        isLoading={false}
+        onCreateCommentFromChatMessage={onCreateCommentFromChatMessage}
+        onCreateInlineCommentFromVocabulary={onCreateInlineCommentFromVocabulary}
+      />
+    );
+
+    // Vocabulary bubbles get the inline button, not the generic "Add to comments" one.
+    expect(screen.queryByRole('button', { name: 'Add to comments' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
+    expect(onCreateInlineCommentFromVocabulary).toHaveBeenCalledWith(vocabulary);
+    expect(onCreateCommentFromChatMessage).not.toHaveBeenCalled();
+  });
 });

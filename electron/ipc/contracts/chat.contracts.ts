@@ -1,3 +1,9 @@
+export interface ChatVocabularyFeedback {
+  simpleVocabulary: string;
+  textContext: string;
+  preciseVocabulary: string;
+}
+
 export interface ChatMessageDto {
   id: string;
   role: 'system' | 'teacher' | 'assistant';
@@ -50,6 +56,7 @@ export interface SendChatMessageResponse {
       clientRequestId: string;
       feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
       feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+      vocabulary?: ChatVocabularyFeedback;
       diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
@@ -98,6 +105,7 @@ export interface ChatStreamChunkEvent {
   rubricCategory?: string;
   feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
+  vocabulary?: ChatVocabularyFeedback;
   workflow?: 'paragraph-feedback-bulk';
   type: ChatStreamEventType;
   seq: number;

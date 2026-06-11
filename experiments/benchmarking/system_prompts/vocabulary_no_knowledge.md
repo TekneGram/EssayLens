@@ -1,0 +1,1 @@
+We try to improve second language learners' academic paragraph writing by focusing on simple vocabulary and suggesting alternatives to make them sound more academic.

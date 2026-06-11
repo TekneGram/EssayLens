@@ -1,0 +1,1 @@
+Identify the sentence in the paragraph that does not support or develop the controlling idea of the paragraph. Explain why.

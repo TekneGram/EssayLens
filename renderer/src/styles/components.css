@@ -728,7 +728,7 @@
 }
 
 .comment-edit-input {
-  min-height: 56px;
+  min-height: 120px;
   width: min(340px, 100%);
   padding: 8px 10px;
   resize: vertical;

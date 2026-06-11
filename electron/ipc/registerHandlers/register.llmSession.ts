@@ -95,7 +95,12 @@ export function registerLlmSessionHandlers(
     const result: GetLlmSessionTurnsResponse = {
       sessionId: data.sessionId,
       fileEntityUuid: data.fileEntityUuid,
-      turns
+      turns: turns.map((turn) => ({
+        role: turn.role,
+        content: turn.content,
+        feedbackType: turn.metadata?.feedbackType,
+        vocabulary: turn.metadata?.vocabulary
+      }))
     };
     return result;
   });

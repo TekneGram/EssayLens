@@ -1,26 +1,7 @@
 import type { CommentToolsProps } from '@/features/assessment-tab/types';
-import { useCommentToolsController } from '../hooks/useCommentToolsController';
 import { SEND_TO_LLM_COMMANDS } from '../domain/commentTools.constants';
 
-export function CommentTools({
-  commentId,
-  commentText,
-  applied,
-  onApplyComment,
-  onDeleteComment,
-  onEditComment,
-  onSendToLlm
-}: CommentToolsProps) {
-  const tools = useCommentToolsController({
-    commentId,
-    commentText,
-    applied,
-    onApplyComment,
-    onDeleteComment,
-    onEditComment,
-    onSendToLlm
-  });
-
+export function CommentTools({ applied, tools }: CommentToolsProps) {
   return (
     <div
       className="comment-tools"

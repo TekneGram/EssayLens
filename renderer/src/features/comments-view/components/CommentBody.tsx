@@ -1,7 +1,7 @@
 import type { CommentBodyProps } from '@/features/assessment-tab/types';
 import { truncateText } from '../domain/commentBody.logic';
 
-export function CommentBody({ comment, quotePreviewLength = 120 }: CommentBodyProps) {
+export function CommentBody({ comment, quotePreviewLength = 120, isEditing = false }: CommentBodyProps) {
   const preview = comment.kind === 'inline' ? truncateText(comment.exactQuote, quotePreviewLength) : '';
 
   return (
@@ -11,7 +11,7 @@ export function CommentBody({ comment, quotePreviewLength = 120 }: CommentBodyPr
           <strong>Quote:</strong> {preview}
         </p>
       ) : null}
-      <p className="comment-text">{comment.commentText}</p>
+      {isEditing ? null : <p className="comment-text">{comment.commentText}</p>}
     </section>
   );
 }

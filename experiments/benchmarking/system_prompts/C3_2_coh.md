@@ -1,0 +1,1 @@
+Add a transition sentence and explain the position of the transition sentence in the paragraph

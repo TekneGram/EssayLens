@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { selectAssessmentSplitRatio, useAppDispatch, useAppState } from '@/app/providers/state';
 import type { SelectedFileType } from '@/app/types';
+import type { WordTextMap } from '@/features/text-view-window';
 import { toChatModeAfterCommandSelection } from '../domain/assessmentTab.logic';
 import { useAddFeedbackMutation } from '@/features/comments-view';
 import { useAssessmentChatController } from './useAssessmentChatController';
@@ -21,6 +22,11 @@ export function useAssessmentTabController({
   const appDispatch = useAppDispatch();
   const [localState, localDispatch] = useReducer(assessmentTabReducer, initialAssessmentTabState);
   const [selectedEssayText, setSelectedEssayText] = useState<string | null>(null);
+  const textMapRef = useRef<WordTextMap | null>(null);
+
+  const onDocumentTextMapChange = useCallback((textMap: WordTextMap | null) => {
+    textMapRef.current = textMap;
+  }, []);
 
   const assessmentSplitRatio = selectAssessmentSplitRatio(appState);
   const selectedFile = appState.workspace.files.find((f: any) => f.id === appState.workspace.selectedFile?.fileId) ?? null;
@@ -66,7 +72,8 @@ export function useAssessmentTabController({
     onSendToLlm,
     onGenerateFeedbackDocument,
     onCommentsTabChange,
-    onCreateCommentFromChatMessage
+    onCreateCommentFromChatMessage,
+    onCreateInlineCommentFromVocabulary
   } = useAssessmentCommentsController({
     appState,
     appDispatch,
@@ -77,7 +84,8 @@ export function useAssessmentTabController({
     isAddFeedbackPending,
     addFeedbackErrorMessage,
     addFeedback,
-    setActiveCommandWithModeRule
+    setActiveCommandWithModeRule,
+    textMapRef
   });
 
   const { chatMode, isModeLockedToChat } = useAssessmentChatController({
@@ -89,7 +97,8 @@ export function useAssessmentTabController({
     addFeedback,
     onChatBindingsChange,
     setActiveCommandWithModeRule,
-    onCreateCommentFromChatMessage
+    onCreateCommentFromChatMessage,
+    onCreateInlineCommentFromVocabulary
   });
 
   const originalText =
@@ -129,6 +138,7 @@ export function useAssessmentTabController({
     onGenerateFeedbackDocument,
     onCommentsTabChange,
     onDocumentTextChange: setSelectedEssayText,
+    onDocumentTextMapChange,
     setSplitRatio
   };
 }

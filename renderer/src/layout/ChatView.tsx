@@ -1,3 +1,4 @@
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 import { ChatControl } from '@/layout/ChatView/components/ChatControl';
 import { ChatListScreen } from '@/layout/ChatView/components/ChatListScreen';
 import { ChatScreen } from '@/layout/ChatView/components/ChatScreen';
@@ -9,9 +10,14 @@ export { collapseChatPanel, expandChatPanel, selectIsChatCollapsed } from '@/lay
 interface ChatViewProps {
   onCollapse: () => void;
   onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
+  onCreateInlineCommentFromVocabulary?: (vocabulary: ChatVocabularyFeedback) => void | Promise<void>;
 }
 
-export function ChatView({ onCollapse, onCreateCommentFromChatMessage }: ChatViewProps) {
+export function ChatView({
+  onCollapse,
+  onCreateCommentFromChatMessage,
+  onCreateInlineCommentFromVocabulary
+}: ChatViewProps) {
   const {
     fileEntityUuid,
     activeScreen,
@@ -63,6 +69,7 @@ export function ChatView({ onCollapse, onCreateCommentFromChatMessage }: ChatVie
             showLlmLoading={showLlmLoading}
             showThinking={showThinking}
             onCreateCommentFromChatMessage={onCreateCommentFromChatMessage}
+            onCreateInlineCommentFromVocabulary={onCreateInlineCommentFromVocabulary}
           />
         ) : null}
       </div>

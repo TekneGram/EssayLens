@@ -1,0 +1,1 @@
+Would the cohesion between two sentences be improved by adding a signpost. Examine all pairs of sentences next to each other. Recommend a signpost if one is needed to improve cohesion. Leave blank if not necessary.

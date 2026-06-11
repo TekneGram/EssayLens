@@ -3,6 +3,7 @@ import { usePorts } from '@/app/ports';
 import { renderDocxIntoContainer } from '../adapters/docxRenderer';
 import { buildRenderBridge, type RenderBridge } from '../adapters/renderBridge';
 import { loadTextViewDocument, type LoadedTextViewDocument, type TextViewStatusKind } from '../application/textViewDocument.workflows';
+import type { WordTextMap } from '../domain/textMapTypes';
 export type { LoadedTextViewDocument, TextViewStatusKind } from '../application/textViewDocument.workflows';
 
 interface UseTextViewDocumentArgs {
@@ -10,6 +11,7 @@ interface UseTextViewDocumentArgs {
   containerRef: RefObject<HTMLDivElement>;
   onSelectionCleared: () => void;
   onDocumentTextChange?: (text: string | null) => void;
+  onDocumentTextMapChange?: (textMap: WordTextMap | null) => void;
 }
 
 interface UseTextViewDocumentResult {
@@ -24,7 +26,8 @@ export function useTextViewDocument({
   selectedFileId,
   containerRef,
   onSelectionCleared,
-  onDocumentTextChange
+  onDocumentTextChange,
+  onDocumentTextMapChange
 }: UseTextViewDocumentArgs): UseTextViewDocumentResult {
   const { assessment } = usePorts();
   const [document, setDocument] = useState<LoadedTextViewDocument | null>(null);
@@ -103,6 +106,13 @@ export function useTextViewDocument({
     const fullText = document.textMap.paragraphs.map((paragraph) => paragraph.text).join('\n');
     onDocumentTextChange(fullText);
   }, [document, onDocumentTextChange]);
+
+  useEffect(() => {
+    if (!onDocumentTextMapChange) {
+      return;
+    }
+    onDocumentTextMapChange(document?.textMap ?? null);
+  }, [document, onDocumentTextMapChange]);
 
   useEffect(() => {
     if (!document || !containerRef.current) {

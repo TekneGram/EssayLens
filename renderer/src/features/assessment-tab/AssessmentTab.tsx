@@ -39,6 +39,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
     onGenerateFeedbackDocument,
     onCommentsTabChange,
     onDocumentTextChange,
+    onDocumentTextMapChange,
     setSplitRatio
   } = useAssessmentTabController({ selectedFileType, onChatBindingsChange });
 
@@ -74,6 +75,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
         activeCommentId={activeCommentId}
         onSelectionCaptured={onSelectionCaptured}
         onDocumentTextChange={onDocumentTextChange}
+        onDocumentTextMapChange={onDocumentTextMapChange}
       />
       {!isImageViewOpen ? (
         <div

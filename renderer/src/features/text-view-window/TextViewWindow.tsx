@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { PendingSelection } from '@/features/assessment-tab/types';
+import type { WordTextMap } from './domain/textMapTypes';
 import { toFallbackPendingSelection } from './application/textView.workflows';
 import { PendingCommentBanner } from './components/PendingCommentBanner';
 import { TextViewCanvas } from './components/TextViewCanvas';
@@ -21,6 +22,7 @@ interface TextViewWindowProps {
   activeCommentId?: string | null;
   onSelectionCaptured: (selection: PendingSelection | null) => void;
   onDocumentTextChange?: (text: string | null) => void;
+  onDocumentTextMapChange?: (textMap: WordTextMap | null) => void;
 }
 
 const MIN_ZOOM_PERCENT = 60;
@@ -37,7 +39,8 @@ export function TextViewWindow({
   activeCommentSelection = null,
   activeCommentId = null,
   onSelectionCaptured,
-  onDocumentTextChange
+  onDocumentTextChange,
+  onDocumentTextMapChange
 }: TextViewWindowProps) {
   const paragraphs = text.split(/\n+/).filter((paragraph) => paragraph.trim().length > 0);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +60,8 @@ export function TextViewWindow({
     selectedFileId,
     containerRef,
     onSelectionCleared: () => onSelectionCaptured(null),
-    onDocumentTextChange
+    onDocumentTextChange,
+    onDocumentTextMapChange
   });
 
   useTextViewDocxLayout({

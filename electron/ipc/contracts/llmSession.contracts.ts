@@ -31,9 +31,13 @@ export interface GetLlmSessionTurnsRequest {
   fileEntityUuid: string;
 }
 
+import type { ChatVocabularyFeedback } from './chat.contracts';
+
 export interface LlmSessionTurnDto {
   role: 'teacher' | 'assistant' | 'system';
   content: string;
+  feedbackType?: 'vocabulary';
+  vocabulary?: ChatVocabularyFeedback;
 }
 
 export interface GetLlmSessionTurnsResponse {

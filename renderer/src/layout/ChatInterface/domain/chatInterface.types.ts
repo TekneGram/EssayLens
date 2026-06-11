@@ -1,4 +1,5 @@
 import type { FeedbackAnchor } from '@/features/feedback/domain';
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 
 export type ChatMode = 'comment' | 'chat';
 export type CommandId = string;
@@ -29,4 +30,5 @@ export interface ChatInterfaceBindings {
   onModeChange: (mode: ChatMode) => void;
   onCommandSelected: (command: ActiveCommand | null) => void;
   onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
+  onCreateInlineCommentFromVocabulary?: (vocabulary: ChatVocabularyFeedback) => void | Promise<void>;
 }
