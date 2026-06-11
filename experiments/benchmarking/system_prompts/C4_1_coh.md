@@ -1,0 +1,1 @@
+Determine whether the paragraph above contains a summary noun phrase that captures a key idea developed from sentences in the early part of the paragraph. If it does, provide the summary noun phrase

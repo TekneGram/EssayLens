@@ -7,7 +7,9 @@ import pytest
 from nlp.llm.tasks.paragraph_feedback import (
     _ReasoningLeakCollector,
     _run_json_schema_chat,
+    _run_vocabulary_feedback,
     _sanitize_field_value,
+    _sanitize_vocabulary_items,
     run_paragraph_feedback_bundle,
 )
 from nlp.llm.llm_types import ChatResponse
@@ -25,6 +27,7 @@ class _DummyRequestConfig:
         self.repeat_penalty = None
         self.seed = None
         self.stop = None
+        self.response_format = None
 
 
 class _DummyAppConfig:
@@ -189,7 +192,10 @@ def test_sanitize_field_value_uses_doubled_schema_limit() -> None:
 
 
 def test_all_paragraph_feedback_prompts_include_be_concise() -> None:
-    prompt_files = sorted(PROMPT_DIR.glob("*.md"))
+    # vocabulary_simple.md is used verbatim from the experiments prompt set and
+    # intentionally omits the "be concise" instruction.
+    exempt = {"vocabulary_simple.md"}
+    prompt_files = [path for path in sorted(PROMPT_DIR.glob("*.md")) if path.name not in exempt]
 
     assert prompt_files
     for prompt_file in prompt_files:
@@ -204,6 +210,7 @@ def test_run_paragraph_feedback_bundle_reports_reasoning_leak_and_status() -> No
             ChatResponse(content='{"verdict":"perfect","reason":"ok","revision_suggestion":"ok"}', reasoning_content="Thought 2", finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"verdict":"strong","reason":"Coherence reason."}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
             ChatResponse(content='{"praise_1":"Praise 1","praise_2":"Praise 2"}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
+            ChatResponse(content='{"items":[]}', reasoning_content=None, finish_reason="stop", model="m", usage=None),
         ]
     )
     app_cfg = _DummyAppConfig(max_tokens=128)
@@ -219,3 +226,72 @@ def test_run_paragraph_feedback_bundle_reports_reasoning_leak_and_status() -> No
     assert result["reasoning_leak"]["warning"].startswith("Reasoning output was detected unexpectedly")
     assert result["reasoning_leak"]["reasoning_content"] == "Thought 1\n\nThought 2"
     assert any("entered thinking mode" in status for status in statuses)
+    assert result["paragraph_feedback"]["vocabulary"] == []
+
+
+def test_sanitize_vocabulary_items_strips_and_drops_malformed() -> None:
+    sanitized = _sanitize_vocabulary_items(
+        obj={
+            "items": [
+                {"simple_vocabulary": " good ", "text_context": " It was good. ", "precise_vocabulary": " exemplary "},
+                {"simple_vocabulary": "thing", "text_context": "", "precise_vocabulary": "artifact"},
+                {"simple_vocabulary": "do", "precise_vocabulary": "accomplish"},
+                "not-an-object",
+            ]
+        },
+        schema={},
+    )
+
+    assert sanitized == {
+        "items": [
+            {"simple_vocabulary": "good", "text_context": "It was good.", "precise_vocabulary": "exemplary"},
+        ]
+    }
+
+
+def test_sanitize_vocabulary_items_rejects_missing_array() -> None:
+    with pytest.raises(RuntimeError):
+        _sanitize_vocabulary_items(obj={"items": "nope"}, schema={})
+
+
+def test_run_vocabulary_feedback_returns_items() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"items":[{"simple_vocabulary":"good","text_context":"It was good.","precise_vocabulary":"exemplary"}]}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            ),
+        ]
+    )
+
+    items = _run_vocabulary_feedback(
+        llm_service=service,
+        app_cfg=_DummyAppConfig(max_tokens=128),
+        system_prompt="sys",
+        prefix_context="Here is a paragraph:\nIt was good.",
+    )
+
+    assert items == [
+        {"simple_vocabulary": "good", "text_context": "It was good.", "precise_vocabulary": "exemplary"}
+    ]
+
+
+def test_run_vocabulary_feedback_degrades_gracefully_on_failure() -> None:
+    service = _FakeLlmService(
+        responses=[RuntimeError("LLM Server connection failed")]
+    )
+    statuses: list[str] = []
+
+    items = _run_vocabulary_feedback(
+        llm_service=service,
+        app_cfg=_DummyAppConfig(max_tokens=128),
+        system_prompt="sys",
+        prefix_context="Here is a paragraph:\nIt was good.",
+        on_status=statuses.append,
+    )
+
+    assert items == []
+    assert any("Skipping vocabulary feedback" in status for status in statuses)

@@ -1,13 +1,16 @@
 import { useCallback } from 'react';
-import type { Dispatch } from 'react';
+import type { Dispatch, MutableRefObject } from 'react';
 import { toast } from 'react-toastify';
 import { usePorts } from '@/app/ports';
 import type {
   AddBlockFeedbackRequest,
   AddInlineFeedbackRequest
 } from '@/app/ports/assessment.port';
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
+import { resolveInlineSelectionFromText, type WordTextMap } from '@/features/text-view-window';
+import { buildVocabularyFeedbackDraft } from '../../domain/vocabularyInlineComment';
 import {
   applyAssessmentFeedback,
   deleteAssessmentFeedback,
@@ -42,6 +45,7 @@ interface UseAssessmentCommentsActionsParams {
   addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   canGenerateFeedbackDocument: boolean;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
+  textMapRef: MutableRefObject<WordTextMap | null>;
 }
 
 export function useAssessmentCommentsActions({
@@ -52,7 +56,8 @@ export function useAssessmentCommentsActions({
   comments,
   addFeedback,
   canGenerateFeedbackDocument,
-  setActiveCommandWithModeRule
+  setActiveCommandWithModeRule,
+  textMapRef
 }: UseAssessmentCommentsActionsParams) {
   const { assessment } = usePorts();
   const {
@@ -227,6 +232,29 @@ export function useAssessmentCommentsActions({
     [addFeedback, appDispatch, comments, localDispatch]
   );
 
+  const onCreateInlineCommentFromVocabulary = useCallback(
+    async (vocabulary: ChatVocabularyFeedback) => {
+      const textMap = textMapRef.current;
+      const selection = textMap ? resolveInlineSelectionFromText(textMap, vocabulary.textContext) : null;
+      const draft = buildVocabularyFeedbackDraft(vocabulary, selection);
+
+      if (!selection) {
+        toast.warn('Could not locate that text in the document. Added it as a general comment instead.');
+      }
+
+      try {
+        const created = await addFeedback(draft);
+        appDispatch({ type: 'ui/setTopTab', payload: 'assessment' });
+        appDispatch({ type: 'ui/setCommentsTab', payload: 'comments' });
+        localDispatch({ type: 'assessmentTab/setActiveCommentId', payload: created.id });
+        localDispatch({ type: 'assessmentTab/setActiveCommentSelection', payload: selection });
+      } catch {
+        // Mutation hook owns the user-facing error toast.
+      }
+    },
+    [addFeedback, appDispatch, localDispatch, textMapRef]
+  );
+
   return {
     isGenerateFeedbackPending,
     onSelectionCaptured,
@@ -238,6 +266,7 @@ export function useAssessmentCommentsActions({
     onSendToLlm,
     onGenerateFeedbackDocument,
     onCommentsTabChange,
-    onCreateCommentFromChatMessage
+    onCreateCommentFromChatMessage,
+    onCreateInlineCommentFromVocabulary
   };
 }

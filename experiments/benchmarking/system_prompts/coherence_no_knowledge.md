@@ -1,0 +1,1 @@
+Coherence involves signposts, summary nouns and transitions between ideas.

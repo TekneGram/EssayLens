@@ -8,11 +8,14 @@ import type { SelectedFileType } from '@/app/types';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { Dispatch } from 'react';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type {
   AddBlockFeedbackRequest,
   AddInlineFeedbackRequest
 } from '@/app/ports/assessment.port';
+import type { MutableRefObject } from 'react';
+import type { WordTextMap } from '@/features/text-view-window';
 
 type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlockFeedbackRequest, 'fileId'>;
 
@@ -27,6 +30,7 @@ interface UseAssessmentCommentsControllerParams {
   addFeedbackErrorMessage?: string;
   addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
+  textMapRef: MutableRefObject<WordTextMap | null>;
 }
 
 interface UseAssessmentCommentsControllerResult {
@@ -49,6 +53,7 @@ interface UseAssessmentCommentsControllerResult {
   onGenerateFeedbackDocument: () => Promise<void>;
   onCommentsTabChange: (tab: import('@/app/providers/state').CommentsTab) => void;
   onCreateCommentFromChatMessage: (text: string) => Promise<void>;
+  onCreateInlineCommentFromVocabulary: (vocabulary: ChatVocabularyFeedback) => Promise<void>;
 }
 
 export function useAssessmentCommentsController({
@@ -61,7 +66,8 @@ export function useAssessmentCommentsController({
   isAddFeedbackPending,
   addFeedbackErrorMessage,
   addFeedback,
-  setActiveCommandWithModeRule
+  setActiveCommandWithModeRule,
+  textMapRef
 }: UseAssessmentCommentsControllerParams): UseAssessmentCommentsControllerResult {
   const feedbackListQuery = useFeedbackListQuery(selectedFileId);
 
@@ -82,7 +88,8 @@ export function useAssessmentCommentsController({
     comments: synced.comments,
     addFeedback,
     canGenerateFeedbackDocument: synced.canGenerateFeedbackDocument,
-    setActiveCommandWithModeRule
+    setActiveCommandWithModeRule,
+    textMapRef
   });
 
   return {

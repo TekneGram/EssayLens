@@ -1,0 +1,1 @@
+Do the sentences support the claim effectively? Explain your reason?

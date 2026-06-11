@@ -1,0 +1,1 @@
+When someone makes a claim in a paragraph they should support the claim by explaining it in more detail. They should give definitions, examples, explanations and expand on the points in the claim.

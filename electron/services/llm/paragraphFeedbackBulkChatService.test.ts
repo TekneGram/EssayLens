@@ -227,6 +227,106 @@ describe('ParagraphFeedbackBulkChatService', () => {
     ).toHaveLength(2);
   });
 
+  it('emits one vocabulary bubble per item with the improvement sentence', async () => {
+    const structuredReply = JSON.stringify({
+      paragraph_feedback: {
+        topic_sentence: {
+          verdict: 'Topic verdict',
+          reason: 'Topic reason',
+          revision_suggestion: 'Topic revision'
+        },
+        coherence: {
+          verdict: 'Coherence verdict',
+          reason: 'Coherence reason',
+          revision_suggestion: 'Coherence revision'
+        },
+        vocabulary: [
+          { simple_vocabulary: 'good', text_context: 'It was good.', precise_vocabulary: 'exemplary' },
+          { simple_vocabulary: 'thing', text_context: 'a useful thing', precise_vocabulary: 'instrument' }
+        ]
+      }
+    });
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, addMessage, appendTurns } = await createService(structuredReply);
+
+    const result = await service.sendMessage(
+      {
+        kind: 'paragraph-feedback-bulk',
+        fileIds: ['file-1'],
+        clientRequestId: 'bulk-client-vocab'
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    const replies = result.paragraphFeedbackBulk?.replies ?? [];
+    const vocabularyReplies = replies.filter((reply) => reply.feedbackType === 'vocabulary');
+    expect(vocabularyReplies).toHaveLength(2);
+    expect(vocabularyReplies.map((reply) => reply.reply)).toEqual([
+      "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'.",
+      "You used 'thing' when you wrote 'a useful thing'. You can improve this with: 'instrument'."
+    ]);
+    expect(vocabularyReplies.every((reply) => reply.feedbackSection === undefined)).toBe(true);
+    // The structured vocabulary payload rides on the reply so the renderer can build an inline anchor.
+    expect(vocabularyReplies.map((reply) => reply.vocabulary)).toEqual([
+      { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' },
+      { simpleVocabulary: 'thing', textContext: 'a useful thing', preciseVocabulary: 'instrument' }
+    ]);
+    expect(new Set(vocabularyReplies.map((reply) => reply.messageId)).size).toBe(2);
+    expect(new Set(vocabularyReplies.map((reply) => reply.clientRequestId)).size).toBe(2);
+    // 6 section bubbles + 2 vocabulary bubbles
+    expect(replies).toHaveLength(8);
+    expect(addMessage).toHaveBeenCalledTimes(8);
+
+    // The vocabulary payload is also emitted on the streamed chunk events.
+    const vocabularyChunks = emittedEvents.filter(
+      (event) => event.type === 'chunk' && event.feedbackType === 'vocabulary'
+    );
+    expect(vocabularyChunks).toHaveLength(2);
+    expect(vocabularyChunks[0].vocabulary).toEqual({
+      simpleVocabulary: 'good',
+      textContext: 'It was good.',
+      preciseVocabulary: 'exemplary'
+    });
+
+    // And persisted as turn metadata so the inline button survives a session reload.
+    const persistedTurns = appendTurns.mock.calls[0][1] as Array<{ metadata?: unknown }>;
+    const vocabularyMetadata = persistedTurns
+      .map((turn) => turn.metadata)
+      .filter((metadata): metadata is { feedbackType: string } => Boolean(metadata));
+    expect(vocabularyMetadata).toEqual([
+      { feedbackType: 'vocabulary', vocabulary: { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' } },
+      { feedbackType: 'vocabulary', vocabulary: { simpleVocabulary: 'thing', textContext: 'a useful thing', preciseVocabulary: 'instrument' } }
+    ]);
+  });
+
+  it('emits no vocabulary bubbles when the vocabulary array is empty', async () => {
+    const structuredReply = JSON.stringify({
+      paragraph_feedback: {
+        topic_sentence: {
+          verdict: 'Topic verdict',
+          reason: 'Topic reason',
+          revision_suggestion: 'Topic revision'
+        },
+        coherence: {
+          verdict: 'Coherence verdict',
+          reason: 'Coherence reason',
+          revision_suggestion: 'Coherence revision'
+        },
+        vocabulary: []
+      }
+    });
+    const { service } = await createService(structuredReply);
+
+    const result = await service.sendMessage(
+      { kind: 'paragraph-feedback-bulk', fileIds: ['file-1'], clientRequestId: 'bulk-client-empty-vocab' },
+      () => {}
+    );
+
+    const replies = result.paragraphFeedbackBulk?.replies ?? [];
+    expect(replies.filter((reply) => reply.feedbackType === 'vocabulary')).toHaveLength(0);
+    expect(replies).toHaveLength(6);
+  });
+
   it('reports and persists leaked reasoning as a diagnostic reply without blocking feedback', async () => {
     const structuredReply = JSON.stringify({
       paragraph_feedback: {

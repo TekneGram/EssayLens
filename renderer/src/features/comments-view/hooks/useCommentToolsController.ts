@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react';
-import type { CommentToolsProps } from '@/features/assessment-tab/types';
+import type { CommentViewProps } from '@/features/assessment-tab/types';
 import { canSaveCommentEdit, normalizeEditedCommentText, normalizeSendToLlmCommand } from '../application/commentTools.service';
 import { commentToolsReducer, createInitialCommentToolsState } from '../state/commentTools.state';
 
 interface UseCommentToolsControllerParams {
-  commentId: CommentToolsProps['commentId'];
-  commentText: CommentToolsProps['commentText'];
-  applied: CommentToolsProps['applied'];
-  onApplyComment: CommentToolsProps['onApplyComment'];
-  onDeleteComment: CommentToolsProps['onDeleteComment'];
-  onEditComment: CommentToolsProps['onEditComment'];
-  onSendToLlm: CommentToolsProps['onSendToLlm'];
+  commentId: string;
+  commentText: string;
+  applied: boolean;
+  onApplyComment: CommentViewProps['onApplyComment'];
+  onDeleteComment: CommentViewProps['onDeleteComment'];
+  onEditComment: CommentViewProps['onEditComment'];
+  onSendToLlm: CommentViewProps['onSendToLlm'];
 }
+
+export type CommentToolsController = ReturnType<typeof useCommentToolsController>;
 
 export function useCommentToolsController({
   commentId,

@@ -1,3 +1,4 @@
+import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
 import type { LlmSessionTurnDto } from '@/app/ports/llmSession.port';
 import type { ChatMessage } from '@/layout/ChatInterface/domain';
 
@@ -7,6 +8,8 @@ export interface ChatViewMessageItem {
   roleLabel: string;
   content: string;
   canCreateComment: boolean;
+  feedbackType?: 'vocabulary';
+  vocabulary?: ChatVocabularyFeedback;
 }
 
 export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessageItem[] {
@@ -15,7 +18,9 @@ export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessage
     roleClassName: message.role,
     roleLabel: toRoleLabel(message.role),
     content: message.content,
-    canCreateComment: message.role === 'assistant' && (message.canCreateComment ?? true)
+    canCreateComment: message.role === 'assistant' && (message.canCreateComment ?? true),
+    feedbackType: message.feedbackType,
+    vocabulary: message.vocabulary
   }));
 }
 
@@ -25,7 +30,9 @@ export function toSessionTurnItems(sessionId: string, turns: LlmSessionTurnDto[]
     roleClassName: turn.role,
     roleLabel: toRoleLabel(turn.role),
     content: turn.content,
-    canCreateComment: turn.role === 'assistant'
+    canCreateComment: turn.role === 'assistant',
+    feedbackType: turn.feedbackType,
+    vocabulary: turn.vocabulary
   }));
 }
 
@@ -38,7 +45,9 @@ export function toSessionChatMessages(sessionId: string, fileEntityUuid: string,
     relatedFileId: fileEntityUuid,
     sessionId,
     createdAt,
-    canCreateComment: turn.role === 'assistant'
+    canCreateComment: turn.role === 'assistant',
+    feedbackType: turn.feedbackType,
+    vocabulary: turn.vocabulary
   }));
 }
 

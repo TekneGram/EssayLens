@@ -79,7 +79,7 @@ describe('CommentsView interactions', () => {
     const onApplyAllComments = vi.fn();
     const onGenerateFeedbackDocument = vi.fn();
 
-    const { rerender } = render(
+    const { rerender, container } = render(
       <CommentsView
         comments={[inlineComment]}
         activeCommentId={null}
@@ -111,6 +111,10 @@ describe('CommentsView interactions', () => {
     expect(screen.queryByRole('combobox', { name: 'Send command' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+    // While editing, the textbox replaces the comment text (the read-only paragraph is gone),
+    // but the Quote preview stays as context.
+    expect(container.querySelector('.comment-text')).toBeNull();
+    expect(screen.getByText('Quote:')).toBeTruthy();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Edit comment text' }), {
       target: { value: 'Updated comment text from tools.' }
