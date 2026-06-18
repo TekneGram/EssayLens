@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A3_8|yes|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Volunteering can help students become more thoughtful members of society.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_8\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Volunteering can help students become more thoughtful members of society.\"}}"
+  },
+  {
+    "Row ID": "A3_8|no|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Volunteering can help students become more thoughtful members of society.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_8\", \"knowledge\": \"no\", \"content\": {\"content\": \"Volunteering can help students become more thoughtful members of society.\"}}"
+  }
+]

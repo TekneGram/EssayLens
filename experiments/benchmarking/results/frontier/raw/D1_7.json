@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_7|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_7",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "Yes. The sentences support the claim by explaining how a planner helps students organize homework, tests, and activities in one place. They also explain why that matters: students can decide what to do first, avoid forgetting tasks, and feel more in control, which connects clearly to reduced stress.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_7\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"yes\", \"details\": \"Yes. The sentences support the claim by explaining how a planner helps students organize homework, tests, and activities in one place. They also explain why that matters: students can decide what to do first, avoid forgetting tasks, and feel more in control, which connects clearly to reduced stress.\"}}"
+  },
+  {
+    "Row ID": "D1_7|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_7",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "Yes. The sentences support the claim because they give reasons a planner can reduce stress. They show that a planner helps students keep track of tasks, choose priorities, and feel more in control of their schedule.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_7\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"yes\", \"details\": \"Yes. The sentences support the claim because they give reasons a planner can reduce stress. They show that a planner helps students keep track of tasks, choose priorities, and feel more in control of their schedule.\"}}"
+  }
+]

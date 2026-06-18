@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A3_5|yes|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Bicycles can make daily life easier because they are simple, cheap, and useful for short trips.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_5\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Bicycles can make daily life easier because they are simple, cheap, and useful for short trips.\"}}"
+  },
+  {
+    "Row ID": "A3_5|no|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Bicycles can make daily life easier because they are simple, cheap, and useful for short trips.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_5\", \"knowledge\": \"no\", \"content\": {\"content\": \"Bicycles can make daily life easier because they are simple, cheap, and useful for short trips.\"}}"
+  }
+]

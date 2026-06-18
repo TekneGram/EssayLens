@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_6|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A is best because it matches both the topic and the controlling idea of the paragraph: social media shows small parts of daily life and helps people learn about culture. The supporting sentences give examples like food, clothes, music, and personal posts, and the conclusion adds a careful warning. B is too strong because the paragraph says we should be thoughtful, and C is too informal and focuses more on people than culture.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_6\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"A is best because it matches both the topic and the controlling idea of the paragraph: social media shows small parts of daily life and helps people learn about culture. The supporting sentences give examples like food, clothes, music, and personal posts, and the conclusion adds a careful warning. B is too strong because the paragraph says we should be thoughtful, and C is too informal and focuses more on people than culture.\"}}"
+  },
+  {
+    "Row ID": "A2_6|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A fits the paragraph best because the paragraph explains that social media shows everyday examples from different countries and can teach people about culture. B is too broad and too strong, and C sounds too informal and does not match the paragraph's main focus on culture.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_6\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"A fits the paragraph best because the paragraph explains that social media shows everyday examples from different countries and can teach people about culture. B is too broad and too strong, and C sounds too informal and does not match the paragraph's main focus on culture.\"}}"
+  }
+]

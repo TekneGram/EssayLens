@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_7|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_7",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "The sentence that does not support the controlling idea is: \"The station has many restaurants and shops on the second floor.\"",
+    "Reason": "This sentence does not develop your controlling idea that even simple English can be useful in real life. The paragraph is about how you used simple English to help a lost tourist and how that experience built your confidence. However, the sentence about restaurants and shops introduces a new detail that is not connected to helping the tourist or to the usefulness of simple English. Because of this, it weakens the unity of your paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_7\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"The sentence that does not support the controlling idea is: \\\"The station has many restaurants and shops on the second floor.\\\"\", \"details\": \"This sentence does not develop your controlling idea that even simple English can be useful in real life. The paragraph is about how you used simple English to help a lost tourist and how that experience built your confidence. However, the sentence about restaurants and shops introduces a new detail that is not connected to helping the tourist or to the usefulness of simple English. Because of this, it weakens the unity of your paragraph.\"}}"
+  },
+  {
+    "Row ID": "D2_7|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_7",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "The sentence that does not support the controlling idea is: \"The station has many restaurants and shops on the second floor.\"",
+    "Reason": "This sentence seems unrelated to the main point of the paragraph. Your controlling idea is that even simple English can be useful in real life, and most of the paragraph shows that through your experience helping a lost tourist. The sentence about the station’s restaurants and shops does not connect clearly to that experience or to the usefulness of English, so it does not support the paragraph well.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_7\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"The sentence that does not support the controlling idea is: \\\"The station has many restaurants and shops on the second floor.\\\"\", \"details\": \"This sentence seems unrelated to the main point of the paragraph. Your controlling idea is that even simple English can be useful in real life, and most of the paragraph shows that through your experience helping a lost tourist. The sentence about the station’s restaurants and shops does not connect clearly to that experience or to the usefulness of English, so it does not support the paragraph well.\"}}"
+  }
+]

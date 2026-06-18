@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_7|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_7",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "B is the best topic sentence because the paragraph’s supporting sentences show gradual improvement: students begin with simple sentences, then add details, connect ideas better, and build confidence over time. That matches the controlling idea of improving little by little more directly than A or C.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_7\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"B is the best topic sentence because the paragraph’s supporting sentences show gradual improvement: students begin with simple sentences, then add details, connect ideas better, and build confidence over time. That matches the controlling idea of improving little by little more directly than A or C.\"}}"
+  },
+  {
+    "Row ID": "A2_7|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_7",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "B fits best because the paragraph explains a step-by-step change in students’ writing. It shows how diary writing helps them improve gradually, from simple sentences to more detailed and connected writing. A is close, but regular writing is not the main focus, and C is too general.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_7\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"B fits best because the paragraph explains a step-by-step change in students’ writing. It shows how diary writing helps them improve gradually, from simple sentences to more detailed and connected writing. A is close, but regular writing is not the main focus, and C is too general.\"}}"
+  }
+]

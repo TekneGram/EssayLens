@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_10|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_10",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively. They talk about students using screens and say screens are useful, but they do not explain how screen time damages sleep habits. There are no examples, definitions, or explanations connecting screen use to sleep.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_10\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively. They talk about students using screens and say screens are useful, but they do not explain how screen time damages sleep habits. There are no examples, definitions, or explanations connecting screen use to sleep.\"}}"
+  },
+  {
+    "Row ID": "D1_10|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_10",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The claim is not supported effectively. The sentences mention that students use screens often and that some prefer large screens, but they do not give a reason or evidence showing that screen time harms sleep habits.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_10\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"no\", \"details\": \"The claim is not supported effectively. The sentences mention that students use screens often and that some prefer large screens, but they do not give a reason or evidence showing that screen time harms sleep habits.\"}}"
+  }
+]

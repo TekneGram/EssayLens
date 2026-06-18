@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_8|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively. They only describe where planners are sold, what they look like, and that some students enjoy choosing them. They do not explain how using a planner reduces stress, give examples of stress reduction, or expand on the claim with reasons such as helping students organize assignments or manage time.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_8\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively. They only describe where planners are sold, what they look like, and that some students enjoy choosing them. They do not explain how using a planner reduces stress, give examples of stress reduction, or expand on the claim with reasons such as helping students organize assignments or manage time.\"}}"
+  },
+  {
+    "Row ID": "D1_8|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively because they do not give reasons that connect planners to reducing students' stress. They talk about appearance and where planners are sold instead of supporting the claim itself.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_8\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively because they do not give reasons that connect planners to reducing students' stress. They talk about appearance and where planners are sold instead of supporting the claim itself.\"}}"
+  }
+]

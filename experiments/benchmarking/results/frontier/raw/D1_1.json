@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_1|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_1",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "The sentences support the claim effectively because they explain how reading improves writing. They give clear examples: students see correct sentence patterns, learn how ideas are connected with transition words like \"however,\" \"therefore,\" and \"in addition,\" and then apply these patterns in their own writing. This explanation shows the link between reading and better English writing.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_1\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"Yes\", \"details\": \"The sentences support the claim effectively because they explain how reading improves writing. They give clear examples: students see correct sentence patterns, learn how ideas are connected with transition words like \\\"however,\\\" \\\"therefore,\\\" and \\\"in addition,\\\" and then apply these patterns in their own writing. This explanation shows the link between reading and better English writing.\"}}"
+  },
+  {
+    "Row ID": "D1_1|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_1",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "The sentences do support the claim because they give reasons why reading helps writing. They explain that students learn sentence patterns and ways to connect ideas, and that students can later use these in their own writing. This makes the claim supported.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_1\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"Yes\", \"details\": \"The sentences do support the claim because they give reasons why reading helps writing. They explain that students learn sentence patterns and ways to connect ideas, and that students can later use these in their own writing. This makes the claim supported.\"}}"
+  }
+]

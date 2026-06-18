@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_6|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively. They give general facts about English classes, classroom layout, and school requirements, but they do not explain how learning with classmates increases speaking confidence. There are no examples, explanations, or details connecting classmates to confidence.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_6\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively. They give general facts about English classes, classroom layout, and school requirements, but they do not explain how learning with classmates increases speaking confidence. There are no examples, explanations, or details connecting classmates to confidence.\"}}"
+  },
+  {
+    "Row ID": "D1_6|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively because they do not give reasons or evidence for the claim. They talk about textbooks, desks, and required study, but they do not show how classmates help students become more confident in speaking English.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_6\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively because they do not give reasons or evidence for the claim. They talk about textbooks, desks, and required study, but they do not show how classmates help students become more confident in speaking English.\"}}"
+  }
+]

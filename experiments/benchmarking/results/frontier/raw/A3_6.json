@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A3_6|yes|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Learning English with others can help students build both language skills and confidence.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_6\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Learning English with others can help students build both language skills and confidence.\"}}"
+  },
+  {
+    "Row ID": "A3_6|no|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Learning English with others can help students build both language skills and confidence.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_6\", \"knowledge\": \"no\", \"content\": {\"content\": \"Learning English with others can help students build both language skills and confidence.\"}}"
+  }
+]

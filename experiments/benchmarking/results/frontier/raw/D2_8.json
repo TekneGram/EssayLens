@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_8|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "English is spoken in many countries around the world.",
+    "Reason": "This sentence does not support the controlling idea, \"preparation can reduce fear,\" because it gives a general fact about English instead of showing how preparation helped you feel less afraid. Your other supporting sentences stay focused on practicing, feeling nervous, and becoming more confident, but this sentence breaks the unity of the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_8\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"English is spoken in many countries around the world.\", \"details\": \"This sentence does not support the controlling idea, \\\"preparation can reduce fear,\\\" because it gives a general fact about English instead of showing how preparation helped you feel less afraid. Your other supporting sentences stay focused on practicing, feeling nervous, and becoming more confident, but this sentence breaks the unity of the paragraph.\"}}"
+  },
+  {
+    "Row ID": "D2_8|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "English is spoken in many countries around the world.",
+    "Reason": "This sentence does not develop the controlling idea of the paragraph. The main idea is that preparation reduced fear before giving a speech, but this sentence only gives a general fact about English. It is unrelated to the writer’s preparation or fear, so it does not fit the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_8\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"English is spoken in many countries around the world.\", \"details\": \"This sentence does not develop the controlling idea of the paragraph. The main idea is that preparation reduced fear before giving a speech, but this sentence only gives a general fact about English. It is unrelated to the writer’s preparation or fear, so it does not fit the paragraph.\"}}"
+  }
+]

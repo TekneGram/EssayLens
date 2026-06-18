@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C3_9|yes|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_9",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Although school uniforms can support equality and school identity, they also have disadvantages related to personal expression and comfort.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_9\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Although school uniforms can support equality and school identity, they also have disadvantages related to personal expression and comfort.\"}}"
+  },
+  {
+    "Row ID": "C3_9|no|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_9",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Although school uniforms can support equality and school identity, they also have disadvantages related to personal expression and comfort.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_9\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Although school uniforms can support equality and school identity, they also have disadvantages related to personal expression and comfort.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_6|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Kyoto has many famous shops that sell traditional sweets.",
+    "Reason": "This sentence does not clearly support the controlling idea that Kyoto feels peaceful and beautiful because of its warm autumn colors. It introduces a new idea about shopping and sweets, but it does not describe the autumn scenery or explain how the seasonal colors create the peaceful and beautiful feeling. To keep unity, you should replace it with a sentence that stays focused on the autumn colors and atmosphere.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_6\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"Kyoto has many famous shops that sell traditional sweets.\", \"details\": \"This sentence does not clearly support the controlling idea that Kyoto feels peaceful and beautiful because of its warm autumn colors. It introduces a new idea about shopping and sweets, but it does not describe the autumn scenery or explain how the seasonal colors create the peaceful and beautiful feeling. To keep unity, you should replace it with a sentence that stays focused on the autumn colors and atmosphere.\"}}"
+  },
+  {
+    "Row ID": "D2_6|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Kyoto has many famous shops that sell traditional sweets.",
+    "Reason": "This sentence does not really develop the main idea. The paragraph is about how Kyoto feels peaceful and beautiful because of the warm colors of autumn, but this sentence shifts to shops and sweets. That idea may be interesting, but it is not closely connected to the focus of the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_6\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"Kyoto has many famous shops that sell traditional sweets.\", \"details\": \"This sentence does not really develop the main idea. The paragraph is about how Kyoto feels peaceful and beautiful because of the warm colors of autumn, but this sentence shifts to shops and sweets. That idea may be interesting, but it is not closely connected to the focus of the paragraph.\"}}"
+  }
+]

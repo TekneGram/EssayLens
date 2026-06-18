@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C3_7|yes|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_7",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Although commuting by train can be reliable and useful for short study activities, it also has disadvantages related to crowding and lost time.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_7\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Although commuting by train can be reliable and useful for short study activities, it also has disadvantages related to crowding and lost time.\"}}"
+  },
+  {
+    "Row ID": "C3_7|no|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_7",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Although commuting by train can be reliable and useful for short study activities, it also has disadvantages related to crowding and lost time.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_7\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Although commuting by train can be reliable and useful for short study activities, it also has disadvantages related to crowding and lost time.\"}}"
+  }
+]

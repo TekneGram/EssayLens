@@ -1,0 +1,7 @@
+interface:
+  display_name: "Grader"
+  short_description: "Grade EssayLens benchmark CSVs in place"
+  default_prompt: "Use $grader to open a benchmark CSV, resolve each row to its question and task files, and update Judgement and Reason Judgement in place."
+
+policy:
+  allow_implicit_invocation: true

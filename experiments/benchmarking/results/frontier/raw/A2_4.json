@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_4|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A is the best choice because it states the topic, breakfast for students, and the controlling idea, that it helps them start the day well in body and mind. The paragraph’s supporting sentences explain energy, concentration, memory, health, and simple examples of breakfast, so they all develop that idea. B is too strong and absolute, and C does not match the paragraph’s focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_4\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"A is the best choice because it states the topic, breakfast for students, and the controlling idea, that it helps them start the day well in body and mind. The paragraph’s supporting sentences explain energy, concentration, memory, health, and simple examples of breakfast, so they all develop that idea. B is too strong and absolute, and C does not match the paragraph’s focus.\"}}"
+  },
+  {
+    "Row ID": "A2_4|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A matches the paragraph best because the paragraph explains that breakfast gives students energy, helps concentration and memory, and supports health. B is too extreme because the paragraph does not say students cannot study well at all. C is too personal and does not fit the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_4\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"A matches the paragraph best because the paragraph explains that breakfast gives students energy, helps concentration and memory, and supports health. B is too extreme because the paragraph does not say students cannot study well at all. C is too personal and does not fit the paragraph.\"}}"
+  }
+]

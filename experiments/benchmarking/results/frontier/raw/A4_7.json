@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_7|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_7",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "The topic sentence is suitable because it clearly gives the topic, \"a peaceful morning at a Japanese shrine,\" and the controlling idea, \"a quiet and special atmosphere.\" The supporting sentences stay unified by describing sounds, sights, smells, and feelings that develop that atmosphere.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_7\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"The topic sentence is suitable because it clearly gives the topic, \\\"a peaceful morning at a Japanese shrine,\\\" and the controlling idea, \\\"a quiet and special atmosphere.\\\" The supporting sentences stay unified by describing sounds, sights, smells, and feelings that develop that atmosphere.\"}}"
+  },
+  {
+    "Row ID": "A4_7|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_7",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "The topic sentence is suitable because it clearly introduces the paragraph and matches the details that follow. The rest of the paragraph consistently describes the calm feeling of the shrine in the morning.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_7\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"The topic sentence is suitable because it clearly introduces the paragraph and matches the details that follow. The rest of the paragraph consistently describes the calm feeling of the shrine in the morning.\"}}"
+  }
+]

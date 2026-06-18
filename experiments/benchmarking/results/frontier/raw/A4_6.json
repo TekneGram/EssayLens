@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_6|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "The topic sentence needs improving because it is too long and combines several ideas without clear focus. Your topic is clear, but the controlling idea is mixed: it mentions small-town quietness, neighbors, big-city shops and entertainment, and lifestyle choice all at once. This weakens unity and makes the sentence less coherent. A stronger topic sentence should state one main comparison more clearly and more directly.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_6\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"The topic sentence needs improving because it is too long and combines several ideas without clear focus. Your topic is clear, but the controlling idea is mixed: it mentions small-town quietness, neighbors, big-city shops and entertainment, and lifestyle choice all at once. This weakens unity and makes the sentence less coherent. A stronger topic sentence should state one main comparison more clearly and more directly.\"}}"
+  },
+  {
+    "Row ID": "A4_6|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "The topic sentence needs improving because it is long, unclear, and tries to include too many ideas at once. It mentions quiet small-town life, neighbors, city shops and entertainment, and personal lifestyle in one sentence. This makes the main point hard to follow. A better topic sentence would express the main comparison more simply and clearly.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_6\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"The topic sentence needs improving because it is long, unclear, and tries to include too many ideas at once. It mentions quiet small-town life, neighbors, city shops and entertainment, and personal lifestyle in one sentence. This makes the main point hard to follow. A better topic sentence would express the main comparison more simply and clearly.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A1_8|yes|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Japanese school lunches are useful for children's health because they teach good eating habits.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_8\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Japanese school lunches are useful for children's health because they teach good eating habits.\"}}"
+  },
+  {
+    "Row ID": "A1_8|no|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Japanese school lunches are useful for children's health because they teach good eating habits.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_8\", \"knowledge\": \"no\", \"content\": {\"content\": \"Japanese school lunches are useful for children's health because they teach good eating habits.\"}}"
+  }
+]

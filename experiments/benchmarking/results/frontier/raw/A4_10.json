@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_10|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_10",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "The topic is clear, but the sentence needs improving because it is too long and includes too many controlling ideas. It mentions anxiety symptoms, weak presentation quality, and the need to overcome anxiety, so your paragraph loses some unity and focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_10\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"The topic is clear, but the sentence needs improving because it is too long and includes too many controlling ideas. It mentions anxiety symptoms, weak presentation quality, and the need to overcome anxiety, so your paragraph loses some unity and focus.\"}}"
+  },
+  {
+    "Row ID": "A4_10|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_10",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "The sentence needs improving because it is very long and tries to say too many things at once. A shorter, more focused topic sentence would make the paragraph clearer.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_10\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"The sentence needs improving because it is very long and tries to say too many things at once. A shorter, more focused topic sentence would make the paragraph clearer.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_3|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_3",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "The sentence that does not support the controlling idea is: \"Many popular novels have been made into movies.\"",
+    "Reason": "This sentence does not develop your controlling idea that regular reading gives students repeated examples of how English sentences work. Your other supporting sentences explain how reading helps students learn vocabulary, grammar patterns, transitions, and paragraph organization. However, the idea that novels become movies is a different topic, so it weakens the unity of your paragraph. To improve the paragraph, replace this sentence with another example that shows how reading helps students understand English writing.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_3\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"The sentence that does not support the controlling idea is: \\\"Many popular novels have been made into movies.\\\"\", \"details\": \"This sentence does not develop your controlling idea that regular reading gives students repeated examples of how English sentences work. Your other supporting sentences explain how reading helps students learn vocabulary, grammar patterns, transitions, and paragraph organization. However, the idea that novels become movies is a different topic, so it weakens the unity of your paragraph. To improve the paragraph, replace this sentence with another example that shows how reading helps students understand English writing.\"}}"
+  },
+  {
+    "Row ID": "D2_3|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_3",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "The sentence that does not support the paragraph’s controlling idea is: \"Many popular novels have been made into movies.\"",
+    "Reason": "This sentence seems unrelated to the main point about how regular reading improves English writing. The paragraph is focused on how reading helps students learn sentence patterns, vocabulary, connections between ideas, and paragraph structure. The comment about novels being made into movies does not explain or support that idea, so it interrupts the paragraph’s focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_3\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"The sentence that does not support the paragraph’s controlling idea is: \\\"Many popular novels have been made into movies.\\\"\", \"details\": \"This sentence seems unrelated to the main point about how regular reading improves English writing. The paragraph is focused on how reading helps students learn sentence patterns, vocabulary, connections between ideas, and paragraph structure. The comment about novels being made into movies does not explain or support that idea, so it interrupts the paragraph’s focus.\"}}"
+  }
+]

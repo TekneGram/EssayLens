@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C3_6|yes|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_6",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Despite this, some students may find it harder to communicate naturally through a screen.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_6\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Despite this, some students may find it harder to communicate naturally through a screen.\"}}"
+  },
+  {
+    "Row ID": "C3_6|no|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_6",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Despite this, some students may find it harder to communicate naturally through a screen.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_6\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Despite this, some students may find it harder to communicate naturally through a screen.\"}}"
+  }
+]

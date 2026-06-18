@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A1_4|yes|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Convenience stores make life in Japan easier because they offer many useful services in one place.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_4\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Convenience stores make life in Japan easier because they offer many useful services in one place.\"}}"
+  },
+  {
+    "Row ID": "A1_4|no|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Convenience stores make life in Japan easier because they offer many useful services in one place.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_4\", \"knowledge\": \"no\", \"content\": {\"content\": \"Convenience stores make life in Japan easier because they offer many useful services in one place.\"}}"
+  }
+]
