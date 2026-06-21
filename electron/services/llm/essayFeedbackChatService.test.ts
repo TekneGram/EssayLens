@@ -54,7 +54,7 @@ async function createMinimalDocx(filePath: string): Promise<void> {
   <w:body>
     <w:p><w:r><w:t>Introduction paragraph.</w:t></w:r></w:p>
     <w:p><w:r><w:t>Body paragraph one. More detail here.</w:t></w:r></w:p>
-    <w:p><w:r><w:t>Conclusion paragraph.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Conclusion paragraph. Final sentence here.</w:t></w:r></w:p>
   </w:body>
 </w:document>`
   );
@@ -73,11 +73,45 @@ async function createEssayFeedbackService() {
   });
   const appendTurns = vi.fn().mockResolvedValue(undefined);
   const addMessage = vi.fn().mockResolvedValue(undefined);
-  const upsertIdentifiedParagraphs = vi.fn().mockResolvedValue(undefined);
-  const saveThesisStatement = vi.fn().mockResolvedValue(undefined);
-  const saveMainIdea = vi.fn().mockResolvedValue(undefined);
+  let storedAnalysis: {
+    introductionParagraph: string;
+    bodyParagraphs: Array<{ body_paragraph: string }>;
+    conclusionParagraph: string;
+    thesisStatement?: string | null;
+    mainIdea?: string | null;
+  } | null = null;
+  const upsertIdentifiedParagraphs = vi.fn().mockImplementation(async (_sessionId, _fileId, paragraphs) => {
+    storedAnalysis = {
+      ...paragraphs
+    };
+  });
+  const saveThesisStatement = vi.fn().mockImplementation(async (_sessionId, _fileId, thesisStatement) => {
+    storedAnalysis = {
+      introductionParagraph: storedAnalysis?.introductionParagraph ?? '',
+      bodyParagraphs: storedAnalysis?.bodyParagraphs ?? [],
+      conclusionParagraph: storedAnalysis?.conclusionParagraph ?? '',
+      thesisStatement,
+      mainIdea: storedAnalysis?.mainIdea ?? null
+    };
+  });
+  const saveMainIdea = vi.fn().mockImplementation(async (_sessionId, _fileId, mainIdea) => {
+    storedAnalysis = {
+      introductionParagraph: storedAnalysis?.introductionParagraph ?? '',
+      bodyParagraphs: storedAnalysis?.bodyParagraphs ?? [],
+      conclusionParagraph: storedAnalysis?.conclusionParagraph ?? '',
+      thesisStatement: storedAnalysis?.thesisStatement ?? null,
+      mainIdea
+    };
+  });
   const addCompletion = vi.fn().mockResolvedValue(undefined);
-  const requestActionStream = vi.fn().mockImplementation(async (action, _payload, onStreamEvent) => {
+  const getIdentifyResult = () => ({
+    introduction_paragraph: 'Introduction paragraph.',
+    body_paragraphs: {
+      items: [{ body_paragraph: 'Body paragraph one. More detail here.' }]
+    },
+    conclusion_paragraph: 'Conclusion paragraph. Final sentence here.'
+  });
+  const requestActionStream = vi.fn().mockImplementation(async (action, payload, onStreamEvent) => {
     if (action === 'llm.essay.feedback.identifyParagraphs') {
       onStreamEvent({
         requestId: 'llm-identify-status-1',
@@ -95,13 +129,7 @@ async function createEssayFeedbackService() {
       return {
         requestId: 'llm-identify-1',
         ok: true,
-        data: {
-          introduction_paragraph: 'Introduction paragraph.',
-          body_paragraphs: {
-            items: [{ body_paragraph: 'Body paragraph one. More detail here.' }]
-          },
-          conclusion_paragraph: 'Conclusion paragraph.'
-        },
+        data: getIdentifyResult(),
         timestamp: '2026-06-21T00:00:00.000Z'
       };
     }
@@ -155,6 +183,81 @@ async function createEssayFeedbackService() {
       };
     }
 
+    if (action === 'llm.essay.feedback.thesisRestatement') {
+      onStreamEvent({
+        requestId: 'llm-thesis-restatement-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: payload.clientRequestId,
+          channel: 'meta',
+          text: 'Evaluating how well the conclusion restates the thesis...',
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-thesis-restatement-1',
+        ok: true,
+        data: {
+          verdict: 'strong paraphrase',
+          comments: 'The conclusion restates the thesis clearly without copying it exactly.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.summaryFeedback') {
+      onStreamEvent({
+        requestId: 'llm-summary-feedback-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: payload.clientRequestId,
+          channel: 'meta',
+          text: 'Evaluating how effectively the conclusion summarizes the essay...',
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-summary-feedback-1',
+        ok: true,
+        data: {
+          verdict: 'summarizes key points effectively',
+          comments: "The conclusion revisits the essay's main points in a concise way."
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.conclusionFinalComment') {
+      onStreamEvent({
+        requestId: 'llm-conclusion-final-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: payload.clientRequestId,
+          channel: 'meta',
+          text: 'Evaluating the final sentence of the conclusion...',
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-conclusion-final-1',
+        ok: true,
+        data: {
+          verdict: 'gives a confident suggestion',
+          comments: 'The final sentence ends with a clear and confident takeaway.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
     onStreamEvent({
       requestId: 'llm-thesis-status-1',
       type: 'stream_chunk',
@@ -199,7 +302,7 @@ async function createEssayFeedbackService() {
       upsertIdentifiedParagraphs,
       saveThesisStatement,
       saveMainIdea,
-      getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
+      getIdentifiedParagraphs: vi.fn().mockImplementation(async () => storedAnalysis)
     } as any,
     rubricRepository: {} as any,
     workspaceRepository: {
@@ -259,10 +362,12 @@ describe('EssayFeedbackChatService', () => {
       (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
     );
 
-    expect(requestActionStream).toHaveBeenCalledTimes(1);
-    expect(result.essayFeedback?.replies).toHaveLength(2);
+    expect(requestActionStream).toHaveBeenCalledTimes(3);
+    expect(result.essayFeedback?.replies).toHaveLength(4);
     expect(result.essayFeedback?.replies.map((reply) => reply.essayFeedbackType)).toEqual([
       'summary-feedback',
+      'summary-feedback',
+      'conclusion-final-comment',
       'conclusion-final-comment'
     ]);
     expect(createSession).toHaveBeenCalledTimes(1);
@@ -273,7 +378,7 @@ describe('EssayFeedbackChatService', () => {
       {
         introductionParagraph: 'Introduction paragraph.',
         bodyParagraphs: [{ body_paragraph: 'Body paragraph one. More detail here.' }],
-        conclusionParagraph: 'Conclusion paragraph.'
+        conclusionParagraph: 'Conclusion paragraph. Final sentence here.'
       }
     );
     expect(addCompletion).toHaveBeenCalledWith({
@@ -289,8 +394,25 @@ describe('EssayFeedbackChatService', () => {
       [
         {
           role: 'assistant',
-          content:
-            'Stub: Summary feedback is queued for essay.docx (docx) using the identified conclusion paragraph.'
+          content: '### Summary Feedback\nVerdict: summarizes key points effectively',
+          metadata: {
+            feedbackType: 'summary-feedback',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: 'summarizes key points effectively'
+            }
+          }
+        },
+        {
+          role: 'assistant',
+          content: "### Summary Feedback\nComments: The conclusion revisits the essay's main points in a concise way.",
+          metadata: {
+            feedbackType: 'summary-feedback',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: "The conclusion revisits the essay's main points in a concise way."
+            }
+          }
         }
       ],
       'file-1'
@@ -301,13 +423,30 @@ describe('EssayFeedbackChatService', () => {
       [
         {
           role: 'assistant',
-          content:
-            'Stub: Conclusion final comment is queued for essay.docx (docx) using the identified conclusion paragraph.'
+          content: '### Conclusion Final Comment\nVerdict: gives a confident suggestion',
+          metadata: {
+            feedbackType: 'conclusion-final-comment',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: 'gives a confident suggestion'
+            }
+          }
+        },
+        {
+          role: 'assistant',
+          content: '### Conclusion Final Comment\nComments: The final sentence ends with a clear and confident takeaway.',
+          metadata: {
+            feedbackType: 'conclusion-final-comment',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: 'The final sentence ends with a clear and confident takeaway.'
+            }
+          }
         }
       ],
       'file-1'
     );
-    expect(addMessage).toHaveBeenCalledTimes(2);
+    expect(addMessage).toHaveBeenCalledTimes(4);
     expect(
       emittedEvents.map((event) => ({
         type: event.type,
@@ -320,9 +459,13 @@ describe('EssayFeedbackChatService', () => {
       { type: 'status', stage: 'identify-paragraphs', feedbackType: undefined, channel: 'meta' },
       { type: 'done', stage: 'identify-paragraphs', feedbackType: undefined, channel: 'meta' },
       { type: 'start', stage: undefined, feedbackType: 'summary-feedback', channel: 'meta' },
+      { type: 'status', stage: undefined, feedbackType: 'summary-feedback', channel: 'meta' },
+      { type: 'chunk', stage: undefined, feedbackType: 'summary-feedback', channel: 'content' },
       { type: 'chunk', stage: undefined, feedbackType: 'summary-feedback', channel: 'content' },
       { type: 'done', stage: undefined, feedbackType: 'summary-feedback', channel: 'meta' },
       { type: 'start', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'meta' },
+      { type: 'status', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'meta' },
+      { type: 'chunk', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'content' },
       { type: 'chunk', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'content' },
       { type: 'done', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'meta' }
     ]);
@@ -588,6 +731,81 @@ describe('EssayFeedbackChatService', () => {
     ]);
   });
 
+  it('emits inline-comment bubbles for thesis restatement feedback anchored to the full conclusion paragraph', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, requestActionStream } = await createEssayFeedbackService();
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-1',
+        selectedFeedbackTypes: ['thesis-statement-feedback', 'thesis-restatement-feedback']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(requestActionStream.mock.calls.map((call) => call[0])).toEqual([
+      'llm.essay.feedback.identifyParagraphs',
+      'llm.essay.feedback.thesisStatement',
+      'llm.essay.feedback.thesisRestatement'
+    ]);
+    expect(result.essayFeedback?.replies).toHaveLength(4);
+    expect(result.essayFeedback?.replies?.slice(2).map((reply) => reply.essayFeedbackSection)).toEqual([
+      'verdict',
+      'comments'
+    ]);
+    expect(result.essayFeedback?.replies?.slice(2).map((reply) => reply.inlineComment)).toEqual([
+      {
+        searchText: 'Conclusion paragraph. Final sentence here.',
+        commentText: 'strong paraphrase'
+      },
+      {
+        searchText: 'Conclusion paragraph. Final sentence here.',
+        commentText: 'The conclusion restates the thesis clearly without copying it exactly.'
+      }
+    ]);
+    expect(appendTurns).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('essay-feedback:file-1:'),
+      [
+        {
+          role: 'assistant',
+          content: '### Thesis Restatement Feedback\nVerdict: strong paraphrase',
+          metadata: {
+            feedbackType: 'thesis-restatement-feedback',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: 'strong paraphrase'
+            }
+          }
+        },
+        {
+          role: 'assistant',
+          content:
+            '### Thesis Restatement Feedback\nComments: The conclusion restates the thesis clearly without copying it exactly.',
+          metadata: {
+            feedbackType: 'thesis-restatement-feedback',
+            inlineComment: {
+              searchText: 'Conclusion paragraph. Final sentence here.',
+              commentText: 'The conclusion restates the thesis clearly without copying it exactly.'
+            }
+          }
+        }
+      ],
+      'file-1'
+    );
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'done')
+        .map((event) => event.clientRequestId)
+    ).toEqual([
+      'essay-client-1:identify',
+      'essay-client-1:essay:1:thesis-statement-feedback',
+      'essay-client-1:essay:2:thesis-restatement-feedback'
+    ]);
+  });
+
   it('does not create a session for unsupported non-docx files', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-essay-feedback-pdf-'));
     const sourcePath = path.join(tempDir, 'essay.pdf');
@@ -669,7 +887,7 @@ describe('EssayFeedbackChatService', () => {
       (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
     );
 
-    expect(result.essayFeedback?.replies).toHaveLength(1);
+    expect(result.essayFeedback?.replies).toHaveLength(2);
     expect(result.essayFeedback?.failures).toEqual([]);
     expect(
       emittedEvents.some(

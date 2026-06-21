@@ -12,9 +12,15 @@ import type {
   LlmEssayFeedbackIdentifyResult,
   LlmEssayFeedbackParagraphEvaluationPayload,
   LlmEssayFeedbackParagraphEvaluationResult,
+  LlmEssayFeedbackConclusionFinalCommentPayload,
+  LlmEssayFeedbackConclusionFinalCommentResult,
   LlmEssayFeedbackStubPayload,
+  LlmEssayFeedbackSummaryFeedbackPayload,
+  LlmEssayFeedbackSummaryFeedbackResult,
   LlmEssayFeedbackSummarizeMainIdeaPayload,
   LlmEssayFeedbackSummarizeMainIdeaResult,
+  LlmEssayFeedbackThesisRestatementPayload,
+  LlmEssayFeedbackThesisRestatementResult,
   LlmEssayFeedbackThesisStatementPayload,
   LlmEssayFeedbackThesisStatementResult,
   LlmParagraphFeedbackBulkPayload,
@@ -172,6 +178,46 @@ export function buildLlmEssayFeedbackParagraphEvaluationPayload(args: {
   };
 }
 
+export function buildLlmEssayFeedbackThesisRestatementPayload(args: {
+  thesisStatement: string;
+  conclusionFirstSentence: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackThesisRestatementPayload {
+  return {
+    thesisStatement: args.thesisStatement,
+    conclusionFirstSentence: args.conclusionFirstSentence,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackSummaryFeedbackPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackSummaryFeedbackPayload {
+  return {
+    essay: args.essay,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackConclusionFinalCommentPayload(args: {
+  essay: string;
+  finalSentence: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackConclusionFinalCommentPayload {
+  return {
+    essay: args.essay,
+    finalSentence: args.finalSentence,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
 export function isEssayFeedbackIdentifyResult(data: unknown): data is LlmEssayFeedbackIdentifyResult {
   if (typeof data !== 'object' || data === null) {
     return false;
@@ -224,6 +270,36 @@ export function isEssayFeedbackSummarizeMainIdeaResult(
 export function isEssayFeedbackParagraphEvaluationResult(
   data: unknown
 ): data is LlmEssayFeedbackParagraphEvaluationResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackThesisRestatementResult(
+  data: unknown
+): data is LlmEssayFeedbackThesisRestatementResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackSummaryFeedbackResult(
+  data: unknown
+): data is LlmEssayFeedbackSummaryFeedbackResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackConclusionFinalCommentResult(
+  data: unknown
+): data is LlmEssayFeedbackConclusionFinalCommentResult {
   if (typeof data !== 'object' || data === null) {
     return false;
   }

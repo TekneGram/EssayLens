@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from nlp.llm.tasks.essay_feedback import (
+    run_conclusion_final_comment,
     run_identify_paragraphs,
     run_paragraph_evaluation,
+    run_summary_feedback,
     run_summarize_main_idea,
+    run_thesis_restatement_feedback,
     run_thesis_statement_feedback,
 )
 from nlp.llm.llm_types import ChatResponse
@@ -164,3 +167,95 @@ def test_run_paragraph_evaluation_returns_expected_structure_and_status() -> Non
     }
     assert statuses == ["Evaluating how the body paragraph supports the main idea..."]
     assert service.calls[0]["system"]
+
+
+def test_run_thesis_restatement_feedback_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"verdict":"strong paraphrase","comments":"The conclusion restates the thesis clearly without copying it exactly."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_thesis_restatement_feedback(
+        llm_service=service,
+        app_cfg=app_cfg,
+        thesis_statement_text="Students should read more books.",
+        conclusion_first_sentence_text="Reading more books helps students learn and imagine more.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "verdict": "strong paraphrase",
+        "comments": "The conclusion restates the thesis clearly without copying it exactly.",
+    }
+    assert statuses == ["Evaluating how well the conclusion restates the thesis..."]
+    assert service.calls[0]["system"] == "You are a paraphrase judge."
+
+
+def test_run_summary_feedback_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"verdict":"summarizes key points effectively","comments":"The conclusion revisits the essay\\'s main points clearly."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_summary_feedback(
+        llm_service=service,
+        app_cfg=app_cfg,
+        essay_text="Introduction.\nBody.\nConclusion.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "verdict": "summarizes key points effectively",
+        "comments": "The conclusion revisits the essay's main points clearly.",
+    }
+    assert statuses == ["Evaluating how effectively the conclusion summarizes the essay..."]
+    assert service.calls[0]["system"] == "Here is an essay: \nIntroduction.\nBody.\nConclusion."
+
+
+def test_run_conclusion_final_comment_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"verdict":"gives a confident suggestion","comments":"The final sentence ends with a clear and confident takeaway."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_conclusion_final_comment(
+        llm_service=service,
+        app_cfg=app_cfg,
+        essay_text="Introduction.\nBody.\nConclusion.",
+        final_sentence_text="Students should keep reading every day.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "verdict": "gives a confident suggestion",
+        "comments": "The final sentence ends with a clear and confident takeaway.",
+    }
+    assert statuses == ["Evaluating the final sentence of the conclusion..."]
+    assert service.calls[0]["system"] == "Here is an essay: \nIntroduction.\nBody.\nConclusion."

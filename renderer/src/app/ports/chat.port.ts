@@ -37,7 +37,10 @@ export type ChatFeedbackType =
   | 'coherence'
   | 'vocabulary'
   | 'thesis-statement-feedback'
-  | 'paragraph-evaluation';
+  | 'paragraph-evaluation'
+  | 'thesis-restatement-feedback'
+  | 'summary-feedback'
+  | 'conclusion-final-comment';
 
 export interface ListMessagesResponse {
   messages: ChatMessageDto[];

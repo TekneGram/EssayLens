@@ -140,4 +140,34 @@ describe('ChatScreen comment actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
     expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
   });
+
+  it('renders an inline-comment button for conclusion feedback bubbles', () => {
+    const onCreateInlineCommentFromChatMessage = vi.fn();
+    const inlineComment = {
+      searchText: 'Conclusion paragraph. Final sentence here.',
+      commentText: 'The final sentence ends with a clear and confident takeaway.'
+    };
+
+    render(
+      <ChatScreen
+        items={[
+          {
+            id: 'conclusion-1',
+            roleClassName: 'assistant',
+            roleLabel: 'Assistant',
+            content:
+              '### Conclusion Final Comment\nComments: The final sentence ends with a clear and confident takeaway.',
+            canCreateComment: false,
+            feedbackType: 'conclusion-final-comment',
+            inlineComment
+          }
+        ]}
+        isLoading={false}
+        onCreateInlineCommentFromChatMessage={onCreateInlineCommentFromChatMessage}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
+    expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
+  });
 });

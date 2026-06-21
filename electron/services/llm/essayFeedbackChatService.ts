@@ -12,14 +12,20 @@ import type {
 } from '../../ipc/contracts/chat.contracts';
 import { extractDocxTextFromBuffer } from '../documents/docxTextExtractor';
 import {
+  buildLlmEssayFeedbackConclusionFinalCommentPayload,
   buildLlmEssayFeedbackIdentifyPayload,
   buildLlmEssayFeedbackParagraphEvaluationPayload,
+  buildLlmEssayFeedbackSummaryFeedbackPayload,
   buildLlmEssayFeedbackStubPayload,
   buildLlmEssayFeedbackSummarizeMainIdeaPayload,
+  buildLlmEssayFeedbackThesisRestatementPayload,
   buildLlmEssayFeedbackThesisStatementPayload,
+  isEssayFeedbackConclusionFinalCommentResult,
   isEssayFeedbackIdentifyResult,
   isEssayFeedbackParagraphEvaluationResult,
+  isEssayFeedbackSummaryFeedbackResult,
   isEssayFeedbackSummarizeMainIdeaResult,
+  isEssayFeedbackThesisRestatementResult,
   isEssayFeedbackThesisStatementResult
 } from '../../mappers/chatRequestMappers';
 import { LlmRuntimeService } from '../../runtime/llmRuntimeService';
@@ -30,7 +36,10 @@ import type {
   EssayFeedbackRequest,
   LlmEssayFeedbackIdentifyResult,
   LlmEssayFeedbackParagraphEvaluationResult,
+  LlmEssayFeedbackConclusionFinalCommentResult,
+  LlmEssayFeedbackSummaryFeedbackResult,
   LlmEssayFeedbackSummarizeMainIdeaResult,
+  LlmEssayFeedbackThesisRestatementResult,
   LlmEssayFeedbackThesisStatementResult
 } from './chatService.shared';
 
@@ -279,6 +288,12 @@ export class EssayFeedbackChatService {
         return this.runSummarizeMainIdea(args);
       case 'paragraph-evaluation':
         return this.runParagraphEvaluation(args);
+      case 'thesis-restatement-feedback':
+        return this.runThesisRestatementFeedback(args);
+      case 'summary-feedback':
+        return this.runSummaryFeedback(args);
+      case 'conclusion-final-comment':
+        return this.runConclusionFinalComment(args);
       default:
         return this.runEssayFeedbackStub({
           fileId: args.fileId,
@@ -803,6 +818,250 @@ export class EssayFeedbackChatService {
     };
   }
 
+  private async runThesisRestatementFeedback(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackStageResult> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'thesis-restatement-feedback',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const thesisStatement = await this.requireThesisStatement(args.sessionId, args.fileId, args.identifiedEssayContext);
+    const conclusionParagraph = args.identifiedEssayContext.identifiedParagraphs.conclusion_paragraph.trim();
+    const conclusionFirstSentence = this.extractFirstSentence(conclusionParagraph);
+    if (!conclusionFirstSentence) {
+      throw new Error('Thesis restatement feedback requires a conclusion first sentence.');
+    }
+
+    const payload = buildLlmEssayFeedbackThesisRestatementPayload({
+      thesisStatement,
+      conclusionFirstSentence,
+      settings: args.settings,
+      clientRequestId: args.clientRequestId
+    });
+
+    const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+      typeof payload,
+      LlmEssayFeedbackThesisRestatementResult
+    >('llm.essay.feedback.thesisRestatement', payload, (streamEvent) => {
+      if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+        return;
+      }
+      args.emitToRenderer({
+        requestId: streamEvent.requestId,
+        clientRequestId: args.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'thesis-restatement-feedback',
+        type: 'status',
+        seq: streamEvent.data.seq + 1,
+        channel: 'meta',
+        text: streamEvent.data.text,
+        done: false
+      });
+    });
+
+    if (!llmResult.ok) {
+      throw new Error(llmResult.error.message);
+    }
+    if (!isEssayFeedbackThesisRestatementResult(llmResult.data)) {
+      throw new Error('Python worker returned an invalid thesis-restatement-feedback response.');
+    }
+
+    return {
+      clientRequestId: args.clientRequestId,
+      replies: this.buildConclusionFeedbackReplies({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: args.clientRequestId,
+        essayFeedbackType: 'thesis-restatement-feedback',
+        title: 'Thesis Restatement Feedback',
+        verdict: llmResult.data.verdict,
+        comments: llmResult.data.comments,
+        conclusionParagraph
+      }),
+      statusMessageId
+    };
+  }
+
+  private async runSummaryFeedback(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackStageResult> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'summary-feedback',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const payload = buildLlmEssayFeedbackSummaryFeedbackPayload({
+      essay: args.identifiedEssayContext.essayText,
+      settings: args.settings,
+      clientRequestId: args.clientRequestId
+    });
+
+    const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+      typeof payload,
+      LlmEssayFeedbackSummaryFeedbackResult
+    >('llm.essay.feedback.summaryFeedback', payload, (streamEvent) => {
+      if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+        return;
+      }
+      args.emitToRenderer({
+        requestId: streamEvent.requestId,
+        clientRequestId: args.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'summary-feedback',
+        type: 'status',
+        seq: streamEvent.data.seq + 1,
+        channel: 'meta',
+        text: streamEvent.data.text,
+        done: false
+      });
+    });
+
+    if (!llmResult.ok) {
+      throw new Error(llmResult.error.message);
+    }
+    if (!isEssayFeedbackSummaryFeedbackResult(llmResult.data)) {
+      throw new Error('Python worker returned an invalid summary-feedback response.');
+    }
+
+    const conclusionParagraph = args.identifiedEssayContext.identifiedParagraphs.conclusion_paragraph.trim();
+    return {
+      clientRequestId: args.clientRequestId,
+      replies: this.buildConclusionFeedbackReplies({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: args.clientRequestId,
+        essayFeedbackType: 'summary-feedback',
+        title: 'Summary Feedback',
+        verdict: llmResult.data.verdict,
+        comments: llmResult.data.comments,
+        conclusionParagraph
+      }),
+      statusMessageId
+    };
+  }
+
+  private async runConclusionFinalComment(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackStageResult> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'conclusion-final-comment',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const conclusionParagraph = args.identifiedEssayContext.identifiedParagraphs.conclusion_paragraph.trim();
+    const finalSentence = this.extractLastSentence(conclusionParagraph);
+    if (!finalSentence) {
+      throw new Error('Conclusion final comment requires a final sentence.');
+    }
+
+    const payload = buildLlmEssayFeedbackConclusionFinalCommentPayload({
+      essay: args.identifiedEssayContext.essayText,
+      finalSentence,
+      settings: args.settings,
+      clientRequestId: args.clientRequestId
+    });
+
+    const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+      typeof payload,
+      LlmEssayFeedbackConclusionFinalCommentResult
+    >('llm.essay.feedback.conclusionFinalComment', payload, (streamEvent) => {
+      if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+        return;
+      }
+      args.emitToRenderer({
+        requestId: streamEvent.requestId,
+        clientRequestId: args.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'conclusion-final-comment',
+        type: 'status',
+        seq: streamEvent.data.seq + 1,
+        channel: 'meta',
+        text: streamEvent.data.text,
+        done: false
+      });
+    });
+
+    if (!llmResult.ok) {
+      throw new Error(llmResult.error.message);
+    }
+    if (!isEssayFeedbackConclusionFinalCommentResult(llmResult.data)) {
+      throw new Error('Python worker returned an invalid conclusion-final-comment response.');
+    }
+
+    return {
+      clientRequestId: args.clientRequestId,
+      replies: this.buildConclusionFeedbackReplies({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: args.clientRequestId,
+        essayFeedbackType: 'conclusion-final-comment',
+        title: 'Conclusion Final Comment',
+        verdict: llmResult.data.verdict,
+        comments: llmResult.data.comments,
+        conclusionParagraph
+      }),
+      statusMessageId
+    };
+  }
+
   private runEssayFeedbackStub(args: {
     fileId: string;
     sessionId: string;
@@ -998,6 +1257,16 @@ export class EssayFeedbackChatService {
         inlineComment: reply.inlineComment
       };
     }
+    if (
+      reply.feedbackType === 'thesis-restatement-feedback' ||
+      reply.feedbackType === 'summary-feedback' ||
+      reply.feedbackType === 'conclusion-final-comment'
+    ) {
+      return {
+        feedbackType: reply.feedbackType,
+        inlineComment: reply.inlineComment
+      };
+    }
     return undefined;
   }
 
@@ -1008,6 +1277,65 @@ export class EssayFeedbackChatService {
     }
     const match = normalized.match(/^.*?[.!?](?:\s|$)/);
     return (match?.[0] ?? normalized).trim();
+  }
+
+  private extractLastSentence(text: string): string {
+    const normalized = text.trim();
+    if (!normalized) {
+      return '';
+    }
+    const sentenceMatches = normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+    return (sentenceMatches?.[sentenceMatches.length - 1] ?? normalized).trim();
+  }
+
+  private buildConclusionFeedbackReplies(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    essayFeedbackType:
+      | 'thesis-restatement-feedback'
+      | 'summary-feedback'
+      | 'conclusion-final-comment';
+    title: string;
+    verdict: string;
+    comments: string;
+    conclusionParagraph: string;
+  }): EssayFeedbackReply[] {
+    return [
+      this.buildEssayFeedbackReply({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: `${args.clientRequestId}:verdict`,
+        essayFeedbackType: args.essayFeedbackType,
+        essayFeedbackSection: 'verdict',
+        feedbackType: args.essayFeedbackType,
+        reply: this.formatEssayFeedbackSectionReply(args.title, 'Verdict', args.verdict),
+        inlineComment: this.buildInlineCommentPayload(args.conclusionParagraph, args.verdict)
+      }),
+      this.buildEssayFeedbackReply({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: `${args.clientRequestId}:comments`,
+        essayFeedbackType: args.essayFeedbackType,
+        essayFeedbackSection: 'comments',
+        feedbackType: args.essayFeedbackType,
+        reply: this.formatEssayFeedbackSectionReply(args.title, 'Comments', args.comments),
+        inlineComment: this.buildInlineCommentPayload(args.conclusionParagraph, args.comments)
+      })
+    ];
+  }
+
+  private async requireThesisStatement(
+    sessionId: string,
+    fileId: string,
+    _identifiedEssayContext: IdentifiedEssayContext
+  ): Promise<string> {
+    const saved = await this.deps.essayFeedbackAnalysisRepository.getIdentifiedParagraphs(sessionId, fileId);
+    const thesisStatement = saved?.thesisStatement?.trim();
+    if (thesisStatement) {
+      return thesisStatement;
+    }
+    throw new Error('Thesis restatement feedback requires a saved thesis statement.');
   }
 
   private formatEssayFeedbackSectionReply(title: string, section: string, text: string): string {

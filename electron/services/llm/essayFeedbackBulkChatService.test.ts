@@ -54,7 +54,7 @@ async function createMinimalDocx(filePath: string, intro: string): Promise<void>
   <w:body>
     <w:p><w:r><w:t>${intro}</w:t></w:r></w:p>
     <w:p><w:r><w:t>Body paragraph one. More detail here.</w:t></w:r></w:p>
-    <w:p><w:r><w:t>Conclusion paragraph.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Conclusion paragraph. Final sentence here.</w:t></w:r></w:p>
   </w:body>
 </w:document>`
   );
@@ -117,6 +117,18 @@ async function createBulkService() {
         data: {
           verdict: 'contributes to the main idea well',
           comments: "The paragraph stays focused and develops the essay's central point."
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.summaryFeedback') {
+      return {
+        requestId: `${payload.clientRequestId}:ok`,
+        ok: true,
+        data: {
+          verdict: 'summarizes key points effectively',
+          comments: "The conclusion revisits the essay's main points clearly."
         },
         timestamp: '2026-06-21T00:00:00.000Z'
       };
@@ -198,7 +210,7 @@ describe('EssayFeedbackBulkChatService', () => {
       () => {}
     );
 
-    expect(result.essayFeedback?.replies).toHaveLength(2);
+    expect(result.essayFeedback?.replies).toHaveLength(4);
     expect(requestAction).toHaveBeenCalledTimes(3);
     expect(requestAction).toHaveBeenNthCalledWith(1, 'llm.server.stop', {});
     expect(requestAction).toHaveBeenNthCalledWith(2, 'llm.server.stop', {});

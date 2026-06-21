@@ -27,10 +27,19 @@ export interface LlmSessionTurnParagraphEvaluationMetadata {
   inlineComment: LlmSessionTurnInlineCommentPayload;
 }
 
+export interface LlmSessionTurnConclusionFeedbackMetadata {
+  feedbackType:
+    | 'thesis-restatement-feedback'
+    | 'summary-feedback'
+    | 'conclusion-final-comment';
+  inlineComment: LlmSessionTurnInlineCommentPayload;
+}
+
 export type LlmSessionTurnMetadata =
   | LlmSessionTurnVocabularyMetadata
   | LlmSessionTurnThesisFeedbackMetadata
-  | LlmSessionTurnParagraphEvaluationMetadata;
+  | LlmSessionTurnParagraphEvaluationMetadata
+  | LlmSessionTurnConclusionFeedbackMetadata;
 
 export interface LlmSessionTurn {
   role: 'teacher' | 'assistant' | 'system';
@@ -197,7 +206,10 @@ export class LlmChatSessionRepository {
         typeof parsed === 'object' &&
         parsed !== null &&
         ((parsed as { feedbackType?: unknown }).feedbackType === 'thesis-statement-feedback' ||
-          (parsed as { feedbackType?: unknown }).feedbackType === 'paragraph-evaluation')
+          (parsed as { feedbackType?: unknown }).feedbackType === 'paragraph-evaluation' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'thesis-restatement-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'summary-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'conclusion-final-comment')
       ) {
         const inlineComment = (parsed as { inlineComment?: unknown }).inlineComment;
         if (

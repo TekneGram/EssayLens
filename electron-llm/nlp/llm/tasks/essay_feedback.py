@@ -315,3 +315,154 @@ def run_paragraph_evaluation(
         schema=_paragraph_evaluation_schema(),
         sanitizer=_sanitize_paragraph_evaluation,
     )
+
+
+def _conclusion_feedback_schema(verdicts: list[str]) -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "verdict": {
+                "type": "string",
+                "enum": verdicts,
+            },
+            "comments": {"type": "string"},
+        },
+        "required": ["verdict", "comments"],
+        "additionalProperties": False,
+    }
+
+
+def _sanitize_conclusion_feedback(*, obj: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
+    verdict = obj.get("verdict")
+    comments = obj.get("comments")
+
+    if not isinstance(verdict, str) or not verdict.strip():
+        raise RuntimeError("Conclusion feedback response missing verdict.")
+    if not isinstance(comments, str) or not comments.strip():
+        raise RuntimeError("Conclusion feedback response missing comments.")
+
+    return {
+        "verdict": verdict.strip(),
+        "comments": comments.strip(),
+    }
+
+
+def run_thesis_restatement_feedback(
+    *,
+    llm_service: "LlmService",
+    app_cfg: "AppConfig",
+    thesis_statement_text: str,
+    conclusion_first_sentence_text: str,
+    on_status: StatusCallback | None = None,
+) -> dict[str, Any]:
+    normalized_thesis_statement = thesis_statement_text.strip()
+    normalized_conclusion_first_sentence = conclusion_first_sentence_text.strip()
+    if not normalized_thesis_statement:
+        raise RuntimeError("Thesis statement text is required for thesis-restatement-feedback.")
+    if not normalized_conclusion_first_sentence:
+        raise RuntimeError("Conclusion first sentence text is required for thesis-restatement-feedback.")
+
+    system = "You are a paraphrase judge."
+    task = _load_prompt("essay_conclusion_thesis_restatement.md")
+    user_prompt = (
+        "Here is a restated thesis statement from the conclusion of an essay:"
+        + normalized_conclusion_first_sentence
+        + "\nHere is the original thesis statement:"
+        + normalized_thesis_statement
+        + "\n"
+        + task
+    )
+
+    if on_status is not None:
+        on_status("Evaluating how well the conclusion restates the thesis...")
+
+    return _run_json_schema_chat(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        system=system,
+        user=user_prompt,
+        name="thesis_restatement_feedback",
+        schema=_conclusion_feedback_schema(
+            [
+                "strong paraphrase that includes other details from the essay",
+                "strong paraphrase",
+                "too similar, needs more paraphrasing",
+                "unrelated to the original",
+            ]
+        ),
+        sanitizer=_sanitize_conclusion_feedback,
+    )
+
+
+def run_summary_feedback(
+    *,
+    llm_service: "LlmService",
+    app_cfg: "AppConfig",
+    essay_text: str,
+    on_status: StatusCallback | None = None,
+) -> dict[str, Any]:
+    normalized_essay = essay_text.strip()
+    if not normalized_essay:
+        raise RuntimeError("Essay text is required for summary-feedback.")
+
+    system = "Here is an essay: \n" + normalized_essay
+    user_prompt = _load_prompt("essay_conclusion_summary.md")
+
+    if on_status is not None:
+        on_status("Evaluating how effectively the conclusion summarizes the essay...")
+
+    return _run_json_schema_chat(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        system=system,
+        user=user_prompt,
+        name="summary_feedback",
+        schema=_conclusion_feedback_schema(
+            [
+                "summarizes key points effectively",
+                "summary misses some points from the essay",
+                "no clear summary present",
+            ]
+        ),
+        sanitizer=_sanitize_conclusion_feedback,
+    )
+
+
+def run_conclusion_final_comment(
+    *,
+    llm_service: "LlmService",
+    app_cfg: "AppConfig",
+    essay_text: str,
+    final_sentence_text: str,
+    on_status: StatusCallback | None = None,
+) -> dict[str, Any]:
+    normalized_essay = essay_text.strip()
+    normalized_final_sentence = final_sentence_text.strip()
+    if not normalized_essay:
+        raise RuntimeError("Essay text is required for conclusion-final-comment.")
+    if not normalized_final_sentence:
+        raise RuntimeError("Final sentence text is required for conclusion-final-comment.")
+
+    system = "Here is an essay: \n" + normalized_essay
+    task = _load_prompt("essay_conclusion_final_sentence.md")
+    user_prompt = "Here is the final sentence of the whole essay in the conclusion:" + normalized_final_sentence + "\n" + task
+
+    if on_status is not None:
+        on_status("Evaluating the final sentence of the conclusion...")
+
+    return _run_json_schema_chat(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        system=system,
+        user=user_prompt,
+        name="conclusion_final_comment",
+        schema=_conclusion_feedback_schema(
+            [
+                "hedges an idea",
+                "is a call to action",
+                "gives a confident suggestion",
+                "ending could be better",
+            ]
+        ),
+        sanitizer=_sanitize_conclusion_feedback,
+    )

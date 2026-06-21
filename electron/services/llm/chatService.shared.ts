@@ -118,6 +118,41 @@ export interface LlmEssayFeedbackParagraphEvaluationResult {
   comments: string;
 }
 
+export interface LlmEssayFeedbackThesisRestatementPayload {
+  settings: LlmRuntimeSettings;
+  thesisStatement: string;
+  conclusionFirstSentence: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackThesisRestatementResult {
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackSummaryFeedbackPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackSummaryFeedbackResult {
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackConclusionFinalCommentPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  finalSentence: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackConclusionFinalCommentResult {
+  verdict: string;
+  comments: string;
+}
+
 export interface RuntimeReadyResult {
   settings: LlmRuntimeSettings;
   notReadyDetails: LlmNotReadyErrorDetails | null;
