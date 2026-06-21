@@ -6,17 +6,21 @@ import { useActiveLlmModelQuery } from '@/features/llm-manager/hooks/useActiveLl
 interface AssessmentWindowProps {
   activeTab: AssessmentTopTab;
   onTabChange: (tab: AssessmentTopTab) => void;
+  isEssayFeedbackMode: boolean;
   assessmentPanel: ReactNode;
   rubricPanel: ReactNode;
   llmPanel: ReactNode;
+  essayFeedbackPanel: ReactNode;
 }
 
 export function AssessmentWindow({
   activeTab,
   onTabChange,
+  isEssayFeedbackMode,
   assessmentPanel,
   rubricPanel,
-  llmPanel
+  llmPanel,
+  essayFeedbackPanel
 }: AssessmentWindowProps) {
   const { llmManager } = usePorts();
   const hasLlmManagerApi = llmManager.isAvailable();
@@ -61,6 +65,19 @@ export function AssessmentWindow({
             >
               Your LLM
             </button>
+            {isEssayFeedbackMode ? (
+              <button
+                id="essay-feedback-tab"
+                role="tab"
+                type="button"
+                aria-selected={activeTab === 'essay-feedback'}
+                aria-controls="essay-feedback-panel"
+                className={activeTab === 'essay-feedback' ? 'tab active is-active' : 'tab'}
+                onClick={() => onTabChange('essay-feedback')}
+              >
+                Essay Feedback
+              </button>
+            ) : null}
           </div>
 
           <h3 className="assessment-window-title">AssessmentWindow</h3>
@@ -103,6 +120,18 @@ export function AssessmentWindow({
       >
         {llmPanel}
       </div>
+      {isEssayFeedbackMode ? (
+        <div
+          id="essay-feedback-panel"
+          className="workspace-panel"
+          role="tabpanel"
+          aria-labelledby="essay-feedback-tab"
+          data-testid="essay-feedback-panel"
+          hidden={activeTab !== 'essay-feedback'}
+        >
+          {essayFeedbackPanel}
+        </div>
+      ) : null}
     </section>
   );
 }

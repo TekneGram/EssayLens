@@ -382,7 +382,7 @@ describe('ChatInterface submit workflow', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-simple');
+      expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-essay-bulk');
     });
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {

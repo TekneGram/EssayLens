@@ -198,7 +198,7 @@ describe('Assessment tab file selection routing', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-simple');
+      expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-essay-bulk');
     });
     expect(screen.getByRole('button', { name: 'Switch to comment mode' }).getAttribute('disabled')).not.toBeNull();
 

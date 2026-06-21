@@ -12,7 +12,7 @@ describe('ChatInterface toggle lock rules', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
 
     expect(onCommandSelected).toHaveBeenCalledWith({
-      id: 'evaluate-simple',
+      id: 'evaluate-essay-bulk',
       label: 'Overview Comments',
       source: 'chat-dropdown'
     });

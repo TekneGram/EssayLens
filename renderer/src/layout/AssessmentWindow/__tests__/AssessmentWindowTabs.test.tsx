@@ -38,6 +38,7 @@ describe('AssessmentWindow tabs', () => {
     const assessmentTab = screen.getByRole('tab', { name: 'Assessment' });
     const rubricTab = screen.getByRole('tab', { name: 'Rubric' });
     const llmTab = screen.getByRole('tab', { name: 'Your LLM' });
+    const essayFeedbackTab = screen.queryByRole('tab', { name: 'Essay Feedback' });
     const assessmentPanel = screen.getByTestId('assessment-panel');
     const rubricPanel = screen.getByTestId('rubric-panel');
     const llmPanel = screen.getByTestId('llm-panel');
@@ -49,10 +50,71 @@ describe('AssessmentWindow tabs', () => {
     expect(assessmentTab.className).toContain('active');
     expect(rubricTab.className).toBe('tab');
     expect(llmTab.className).toBe('tab');
+    expect(essayFeedbackTab).toBeNull();
     expect(llmStatus.textContent).toBe('Currently using: No LLM installed.');
     expect(assessmentPanel.hasAttribute('hidden')).toBe(false);
     expect(rubricPanel.hasAttribute('hidden')).toBe(true);
     expect(llmPanel.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('auto-selects essay feedback on command activation while keeping other tabs usable', async () => {
+    setWindowApi();
+    const queryClient = createAppQueryClient();
+    render(
+      <AppProviders queryClient={queryClient}>
+        <App />
+      </AppProviders>
+    );
+
+    expect(screen.queryByRole('tab', { name: 'Essay Feedback' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Essay Feedback' })).toBeTruthy();
+      expect(screen.getByRole('tab', { name: 'Essay Feedback' }).getAttribute('aria-selected')).toBe('true');
+      expect(screen.getByTestId('essay-feedback-manager')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Rubric' }));
+    expect(screen.getByRole('tab', { name: 'Rubric' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Essay Feedback' })).toBeTruthy();
+    expect(screen.getByTestId('rubric-panel').hasAttribute('hidden')).toBe(false);
+    expect(screen.getByTestId('essay-feedback-panel').hasAttribute('hidden')).toBe(true);
+    expect(screen.getByTestId('essay-feedback-manager')).toBeTruthy();
+  });
+
+  it('returns to assessment when essay feedback is active and the command is cleared', async () => {
+    setWindowApi();
+    const queryClient = createAppQueryClient();
+    render(
+      <AppProviders queryClient={queryClient}>
+        <App />
+      </AppProviders>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Essay Feedback' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Essay Feedback' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Essay Feedback' }).getAttribute('aria-selected')).toBe('true');
+      expect(screen.getByTestId('essay-feedback-manager')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selected command' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('tab', { name: 'Essay Feedback' })).toBeNull();
+      expect(screen.queryByTestId('essay-feedback-manager')).toBeNull();
+      expect(screen.getByRole('tab', { name: 'Assessment' }).getAttribute('aria-selected')).toBe('true');
+    });
   });
 
   it('switches panels and aria-selected on tab click', () => {

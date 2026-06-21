@@ -13,6 +13,15 @@ describe('uiReducer', () => {
     expect(initialUiState.activeTopTab).toBe('assessment');
   });
 
+  it('accepts essay feedback as an active top tab', () => {
+    const next = uiReducer(initialUiState, {
+      type: 'ui/setTopTab',
+      payload: 'essay-feedback'
+    });
+
+    expect(next.activeTopTab).toBe('essay-feedback');
+  });
+
   it('changes comments tab', () => {
     const next = uiReducer(initialUiState, {
       type: 'ui/setCommentsTab',
