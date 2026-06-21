@@ -4,8 +4,8 @@ import subprocess
 import argparse
 import time
 from pathlib import Path
-from essay_paragraphs import identify_paragraphs
-from essay_introductions import get_thesis_statement_feedback
+from essay_paragraphs import identify_paragraphs, essay_overall_idea, get_thesis_statement_feedback, judge_develop_thesis, judge_restate_thesis, judge_final_sentence, judge_conclusion_summary
+from essay_coherence import judge_paragraph_details
 
 import requests
 
@@ -100,10 +100,82 @@ def main() -> None:
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
+        
+        # Introduction
         introduction = essay_paragraphs["introduction_paragraph"]
 
+        # Body paragraphs
+        body_paragraphs = essay_paragraphs["body_paragraphs"]["items"]
+
+        # Conclusion paragraph
+        conclusion = essay_paragraphs["conclusion_paragraph"]
+
+
+        ## Overview analysis
+        # Essay thesis statement
         thesis_statement_feedback = get_thesis_statement_feedback("experiments/system_prompts_v3/essay_knowledge.md", writing_path, "experiments/system_prompts_v3/introduction_thesis.md", introduction, base_url, args.max_tokens, args.temp)
         print(json.dumps(thesis_statement_feedback, indent=2))
+        thesis_statement_fb = thesis_statement_feedback["choices"][0]["message"]["content"]
+        thesis_statement_fb = json.loads(thesis_statement_fb)
+        thesis_statement = thesis_statement_fb["thesis_statement"]
+        
+
+        # Essay main idea
+        full_essay = introduction
+        for bp in body_paragraphs:
+            full_essay = full_essay + "\n" +  bp["body_paragraph"]
+        
+        full_essay = full_essay + "\n" + conclusion
+
+        # DETAILS
+        for bp in body_paragraphs:
+            details_judgement = judge_paragraph_details(bp["body_paragraph"], "experiments/system_prompts_v3/coherence_details.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps((details_judgement)))
+
+        # Summarize overall main idea
+        main_idea = essay_overall_idea("experiments/system_prompts_v3/essay_knowledge.md", full_essay, "experiments/system_prompts_v3/essay_main_idea.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(main_idea, indent=2))
+
+        # Get the main idea
+        essay_main_idea = main_idea["choices"][0]["message"]["content"]
+        essay_main_idea = json.loads(essay_main_idea)
+
+        # Evaluate the body paragraphs
+        for bp in body_paragraphs:
+            body = bp["body_paragraph"]
+            judgement = judge_develop_thesis("experiments/system_prompts_v3/essay_knowledge.md", introduction, body, essay_main_idea["main_idea"], "experiments/system_prompts_v3/body_judge_development.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(judgement, indent=2))
+
+        # Evaluate the conclusion
+
+        # First get the first sentence of the conclusion
+        print(conclusion)
+        period_index = conclusion.find(".")
+        if period_index != -1:
+            first_sentence = conclusion[:period_index + 1]
+            thesis_restatement_judgement = judge_restate_thesis(thesis_statement, first_sentence, "experiments/system_prompts_v3/essay_conclusion_thesis_restatement.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(thesis_restatement_judgement, indent=2))
+
+        final_sentence = ""
+        last_period = conclusion.rfind(".")
+        if last_period != -1:
+            previous_period = conclusion.rfind(".", 0, last_period)
+
+            if previous_period != -1:
+                final_sentence = conclusion[previous_period + 1:last_period + 1].strip()
+            else:
+                final_sentence = conclusion[:last_period + 1].strip()
+        else:
+            final_sentence = conclusion.strip()
+        
+        final_sentence_judgement = judge_final_sentence(full_essay, final_sentence, "experiments/system_prompts_v3/essay_conclusion_final_sentence.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(final_sentence_judgement))
+
+        conclusion_summary_judgement = judge_conclusion_summary(full_essay, "experiments/system_prompts_v3/essay_conclusion_summary.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(conclusion_summary_judgement))
+
+        
+
 
     finally:
         proc.terminate()
