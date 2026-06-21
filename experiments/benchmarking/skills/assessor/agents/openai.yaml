@@ -1,0 +1,7 @@
+interface:
+  display_name: "Assessor"
+  short_description: "Run isolated EssayLens frontier sweeps"
+  default_prompt: "Use $assessor to run the full EssayLens benchmark sweep as Codex/GPT-5.4. Follow the benchmark flow and row layout references, isolate each question, and write the frontier CSV."
+
+policy:
+  allow_implicit_invocation: true

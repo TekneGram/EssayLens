@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_9|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_9",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Some tests are printed on both sides of the paper.",
+    "Reason": "The sentence \"Some tests are printed on both sides of the paper.\" does not support the controlling idea that a bad test score can make students stop trying. It introduces a new detail about the physical format of tests, but it does not explain motivation, effort, confidence, or the effects of a low score. Because of that, it breaks the unity of your paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_9\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"Some tests are printed on both sides of the paper.\", \"details\": \"The sentence \\\"Some tests are printed on both sides of the paper.\\\" does not support the controlling idea that a bad test score can make students stop trying. It introduces a new detail about the physical format of tests, but it does not explain motivation, effort, confidence, or the effects of a low score. Because of that, it breaks the unity of your paragraph.\"}}"
+  },
+  {
+    "Row ID": "D2_9|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_9",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Some tests are printed on both sides of the paper.",
+    "Reason": "The sentence \"Some tests are printed on both sides of the paper.\" does not develop the main idea of the paragraph. Your paragraph is about how a bad test score can cause students to lose motivation, but this sentence is about how tests are printed. That idea is unrelated, so it distracts from the focus of the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_9\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"Some tests are printed on both sides of the paper.\", \"details\": \"The sentence \\\"Some tests are printed on both sides of the paper.\\\" does not develop the main idea of the paragraph. Your paragraph is about how a bad test score can cause students to lose motivation, but this sentence is about how tests are printed. That idea is unrelated, so it distracts from the focus of the paragraph.\"}}"
+  }
+]

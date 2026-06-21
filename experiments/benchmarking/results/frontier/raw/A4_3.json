@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_3|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_3",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "The topic sentence has a clear topic and controlling idea, but it is a bit too narrow for this paragraph. Your paragraph also discusses effects of nervousness and a takeaway about the classroom, so the topic sentence should better match that full focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_3\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"The topic sentence has a clear topic and controlling idea, but it is a bit too narrow for this paragraph. Your paragraph also discusses effects of nervousness and a takeaway about the classroom, so the topic sentence should better match that full focus.\"}}"
+  },
+  {
+    "Row ID": "A4_3|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_3",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "This topic sentence is clear, but it does not fully match the whole paragraph. The paragraph talks not only about why students feel nervous, but also about the effects of that nervousness and what teachers should do.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_3\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"This topic sentence is clear, but it does not fully match the whole paragraph. The paragraph talks not only about why students feel nervous, but also about the effects of that nervousness and what teachers should do.\"}}"
+  }
+]

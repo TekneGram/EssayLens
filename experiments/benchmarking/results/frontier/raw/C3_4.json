@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C3_4|yes|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "On the other hand, some students may copy AI answers without thinking carefully.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_4\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"On the other hand, some students may copy AI answers without thinking carefully.\"}}"
+  },
+  {
+    "Row ID": "C3_4|no|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "On the other hand, some students may copy AI answers without thinking carefully.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_4\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"On the other hand, some students may copy AI answers without thinking carefully.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A3_4|yes|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Learning simple money management habits can help students avoid money problems.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_4\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Learning simple money management habits can help students avoid money problems.\"}}"
+  },
+  {
+    "Row ID": "A3_4|no|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Students should learn money management early.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_4\", \"knowledge\": \"no\", \"content\": {\"content\": \"Students should learn money management early.\"}}"
+  }
+]

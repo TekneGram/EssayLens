@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_8|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "Your topic sentence needs improving because it does not match the paragraph closely enough. The paragraph describes the atmosphere of a busy train station in the evening, but your sentence talks broadly about Japan and says \"places,\" which does not connect clearly to the controlling idea.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_8\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"Your topic sentence needs improving because it does not match the paragraph closely enough. The paragraph describes the atmosphere of a busy train station in the evening, but your sentence talks broadly about Japan and says \\\"places,\\\" which does not connect clearly to the controlling idea.\"}}"
+  },
+  {
+    "Row ID": "A4_8|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "Your topic sentence needs improving because it is too broad and does not clearly match the paragraph. The paragraph is about the scene and activity in a busy evening train station, not about Japan’s best places or trains in general.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_8\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"Your topic sentence needs improving because it is too broad and does not clearly match the paragraph. The paragraph is about the scene and activity in a busy evening train station, not about Japan’s best places or trains in general.\"}}"
+  }
+]

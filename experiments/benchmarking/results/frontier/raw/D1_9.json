@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_9|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_9",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "The sentences support the claim effectively because they explain how screen time can keep students up late, delay bedtime, make it harder to relax, and lead to less sleep and tiredness the next day. This gives a clear cause-and-effect explanation that develops the claim.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_9\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"yes\", \"details\": \"The sentences support the claim effectively because they explain how screen time can keep students up late, delay bedtime, make it harder to relax, and lead to less sleep and tiredness the next day. This gives a clear cause-and-effect explanation that develops the claim.\"}}"
+  },
+  {
+    "Row ID": "D1_9|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_9",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "Yes, the sentences support the claim because they give reasons why too much screen time can hurt sleep. They explain that students may stay up late using screens, go to bed later, and feel tired the next day.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_9\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"yes\", \"details\": \"Yes, the sentences support the claim because they give reasons why too much screen time can hurt sleep. They explain that students may stay up late using screens, go to bed later, and feel tired the next day.\"}}"
+  }
+]

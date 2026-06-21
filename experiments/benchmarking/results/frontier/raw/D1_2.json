@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_2|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_2",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively because they mostly give general statements about reading, such as students enjoying novels and reading being relaxing. They do not explain how reading improves students' English writing, and they do not provide examples, definitions, or reasons connecting reading to better writing.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_2\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively because they mostly give general statements about reading, such as students enjoying novels and reading being relaxing. They do not explain how reading improves students' English writing, and they do not provide examples, definitions, or reasons connecting reading to better writing.\"}}"
+  },
+  {
+    "Row ID": "D1_2|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_2",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively. They talk about reading in general, but they do not show how regular reading improves students' English writing. The ideas are related to reading, not to the effect on writing.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_2\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively. They talk about reading in general, but they do not show how regular reading improves students' English writing. The ideas are related to reading, not to the effect on writing.\"}}"
+  }
+]

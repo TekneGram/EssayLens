@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C4_3|yes|gpt-5.4|C4_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C4_3",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C4_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "This pressure",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C4_3\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_summary_noun_phrase\": \"Yes\", \"summary_noun_phrase\": \"This pressure\"}}"
+  },
+  {
+    "Row ID": "C4_3|no|gpt-5.4|C4_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C4_3",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C4_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "This pressure",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C4_3\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_summary_noun_phrase\": \"Yes\", \"summary_noun_phrase\": \"This pressure\"}}"
+  }
+]

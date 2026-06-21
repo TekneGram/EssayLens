@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_9|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_9",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "Your topic sentence is suitable because it clearly gives the topic, smartphone distraction, and the controlling idea, that it repeatedly breaks students’ concentration. The supporting sentences stay focused on explaining and giving examples of that idea.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_9\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"Your topic sentence is suitable because it clearly gives the topic, smartphone distraction, and the controlling idea, that it repeatedly breaks students’ concentration. The supporting sentences stay focused on explaining and giving examples of that idea.\"}}"
+  },
+  {
+    "Row ID": "A4_9|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_9",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "This topic sentence is suitable because it clearly introduces the main idea of the paragraph, and the rest of the paragraph supports it with explanation and examples about lost concentration during study.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_9\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"This topic sentence is suitable because it clearly introduces the main idea of the paragraph, and the rest of the paragraph supports it with explanation and examples about lost concentration during study.\"}}"
+  }
+]

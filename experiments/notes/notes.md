@@ -16,3 +16,23 @@ It then suggests reconfiguring the organization so that an example becomes part 
 
 ## Feedback type: paragraph_feedback_topic_sentence.md
 This prompt has the LLM determine whether the supporting sentences develop the controlling idea in the topic sentence. It offers praise if so or offers suggestions for changes if not.
+
+# ESSAYS
+
+## Word counts
+- Identify the introduction paragraph and the body paragraphs and count the words.
+- Check the word count for the introduction. Is it short? If so, recommend it for improvement.
+    - Determine what could be improved: hook, background, thesis
+    - Recommend ways of improving it
+    - Make this process inline feedback
+
+- Check the word count for the body paragraphs. For any short body paragraph:
+    - Determine what could be improved: topic sentence, supporting sentences
+    - Recommend ways of improving it
+    - Make this process inline
+
+- Check the word count for the conclusion paragraph. For any short conclusion paragraph:
+    - Determine what could be improved: is the thesis statement paraphrased? are the main points summarized? is there a final comment?
+    - Recommend ways of improving it
+    - Make this process inline
+

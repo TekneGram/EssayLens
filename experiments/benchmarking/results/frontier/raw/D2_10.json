@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_10|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_10",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "\"Group work is sometimes done with large sheets of paper and colored pens.\"",
+    "Reason": "This sentence does not support the controlling idea that feeling left out can stop students from participating and learning with others. In a unified paragraph, each supporting sentence should develop that main idea. The sentence about paper and colored pens only describes materials used in group work, so it does not explain exclusion, participation, or learning. Because of that, it feels unrelated to the paragraph’s main focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_10\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"\\\"Group work is sometimes done with large sheets of paper and colored pens.\\\"\", \"details\": \"This sentence does not support the controlling idea that feeling left out can stop students from participating and learning with others. In a unified paragraph, each supporting sentence should develop that main idea. The sentence about paper and colored pens only describes materials used in group work, so it does not explain exclusion, participation, or learning. Because of that, it feels unrelated to the paragraph’s main focus.\"}}"
+  },
+  {
+    "Row ID": "D2_10|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_10",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "\"Group work is sometimes done with large sheets of paper and colored pens.\"",
+    "Reason": "This sentence does not fit the main idea of the paragraph. The paragraph is about how feeling left out affects students’ participation and learning, but this sentence only talks about classroom materials. It does not explain the problem of being left out, so it does not develop the controlling idea.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_10\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"\\\"Group work is sometimes done with large sheets of paper and colored pens.\\\"\", \"details\": \"This sentence does not fit the main idea of the paragraph. The paragraph is about how feeling left out affects students’ participation and learning, but this sentence only talks about classroom materials. It does not explain the problem of being left out, so it does not develop the controlling idea.\"}}"
+  }
+]

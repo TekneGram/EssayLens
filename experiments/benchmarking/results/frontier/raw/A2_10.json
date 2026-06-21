@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_10|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_10",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C best matches the paragraph’s main idea and controlling idea: presentation skills help students communicate ideas clearly, with support from school, future work, and confidence-building details. A is too narrow and adds enjoyment, and B focuses too much on improving English, which is not the main focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_10\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"C\", \"reason\": \"C best matches the paragraph’s main idea and controlling idea: presentation skills help students communicate ideas clearly, with support from school, future work, and confidence-building details. A is too narrow and adds enjoyment, and B focuses too much on improving English, which is not the main focus.\"}}"
+  },
+  {
+    "Row ID": "A2_10|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_10",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C is the best choice because the paragraph explains that presentation skills are important for sharing ideas clearly and useful in school and future work. A adds enjoyment, which the paragraph does not discuss, and B focuses mainly on English improvement, which is not the paragraph’s main point.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_10\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"C\", \"reason\": \"C is the best choice because the paragraph explains that presentation skills are important for sharing ideas clearly and useful in school and future work. A adds enjoyment, which the paragraph does not discuss, and B focuses mainly on English improvement, which is not the paragraph’s main point.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_1|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_1",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Many students enjoy watching movies at home on weekends.",
+    "Reason": "This sentence does not support the controlling idea of different study environments for students. Your paragraph is about how a library and home affect studying, but watching movies is a leisure activity, not a point that develops study environment. It weakens unity because it shifts away from studying.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_1\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"Many students enjoy watching movies at home on weekends.\", \"details\": \"This sentence does not support the controlling idea of different study environments for students. Your paragraph is about how a library and home affect studying, but watching movies is a leisure activity, not a point that develops study environment. It weakens unity because it shifts away from studying.\"}}"
+  },
+  {
+    "Row ID": "D2_1|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_1",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Many students enjoy watching movies at home on weekends.",
+    "Reason": "This sentence does not support the controlling idea. The paragraph is about studying in a library and studying at home, but this sentence talks about watching movies for fun. It does not help explain or develop the idea of study environments.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_1\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"Many students enjoy watching movies at home on weekends.\", \"details\": \"This sentence does not support the controlling idea. The paragraph is about studying in a library and studying at home, but this sentence talks about watching movies for fun. It does not help explain or develop the idea of study environments.\"}}"
+  }
+]

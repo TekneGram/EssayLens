@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A1_5|yes|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Part-time jobs can teach students important life skills outside the classroom.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_5\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Part-time jobs can teach students important life skills outside the classroom.\"}}"
+  },
+  {
+    "Row ID": "A1_5|no|gpt-5.4|A1_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A1_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A1_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Part-time jobs can teach students important life skills outside the classroom.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A1_5\", \"knowledge\": \"no\", \"content\": {\"content\": \"Part-time jobs can teach students important life skills outside the classroom.\"}}"
+  }
+]

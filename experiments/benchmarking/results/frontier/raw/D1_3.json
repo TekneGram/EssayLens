@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_3|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_3",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "The sentences support the claim effectively because they explain what responsibility looks like in a part-time job. They give clear examples such as arriving on time, following rules, and completing tasks carefully. They also explain why these actions matter, since customers and coworkers depend on the students. This expands the claim and shows how real work experiences teach responsible behavior.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_3\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"yes\", \"details\": \"The sentences support the claim effectively because they explain what responsibility looks like in a part-time job. They give clear examples such as arriving on time, following rules, and completing tasks carefully. They also explain why these actions matter, since customers and coworkers depend on the students. This expands the claim and shows how real work experiences teach responsible behavior.\"}}"
+  },
+  {
+    "Row ID": "D1_3|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_3",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "Yes, the sentences support the claim because they show specific responsibilities students have in part-time jobs, like being punctual, following rules, and doing tasks carefully. These examples connect clearly to the idea that students develop responsibility through work experience.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_3\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"yes\", \"details\": \"Yes, the sentences support the claim because they show specific responsibilities students have in part-time jobs, like being punctual, following rules, and doing tasks carefully. These examples connect clearly to the idea that students develop responsibility through work experience.\"}}"
+  }
+]

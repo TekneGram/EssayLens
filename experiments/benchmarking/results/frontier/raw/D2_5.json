@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_5|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "\"Convenience stores often sell concert tickets and accept bill payments.\"",
+    "Reason": "This sentence does not clearly support the controlling idea of a calm and ordinary morning atmosphere before the busy day begins. It gives general information about convenience stores, but it does not describe the quiet morning mood, the peaceful scene, or how the store feels at that time. Because of that, it weakens the paragraph’s unity.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_5\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"\\\"Convenience stores often sell concert tickets and accept bill payments.\\\"\", \"details\": \"This sentence does not clearly support the controlling idea of a calm and ordinary morning atmosphere before the busy day begins. It gives general information about convenience stores, but it does not describe the quiet morning mood, the peaceful scene, or how the store feels at that time. Because of that, it weakens the paragraph’s unity.\"}}"
+  },
+  {
+    "Row ID": "D2_5|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "\"Convenience stores often sell concert tickets and accept bill payments.\"",
+    "Reason": "This sentence does not develop the main idea. The paragraph is about the calm atmosphere of the store in the morning, but this sentence talks about store services in general. That idea is not closely connected to the quiet morning scene, so it feels unrelated.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_5\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"\\\"Convenience stores often sell concert tickets and accept bill payments.\\\"\", \"details\": \"This sentence does not develop the main idea. The paragraph is about the calm atmosphere of the store in the morning, but this sentence talks about store services in general. That idea is not closely connected to the quiet morning scene, so it feels unrelated.\"}}"
+  }
+]

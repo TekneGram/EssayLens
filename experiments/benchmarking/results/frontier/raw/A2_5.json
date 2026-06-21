@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_5|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C is best because it clearly states the topic, living near a train station, and the controlling idea, convenience in practical daily life. The paragraph then supports this with examples about saving time, easy access to useful places, and reduced stress.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_5\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"C\", \"reason\": \"C is best because it clearly states the topic, living near a train station, and the controlling idea, convenience in practical daily life. The paragraph then supports this with examples about saving time, easy access to useful places, and reduced stress.\"}}"
+  },
+  {
+    "Row ID": "A2_5|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C is the best match because the paragraph focuses on practical convenience: saving time, reaching useful places easily, and making daily life less stressful. A is too informal and broad, and B adds an unrelated personal detail and comparison.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_5\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"C\", \"reason\": \"C is the best match because the paragraph focuses on practical convenience: saving time, reaching useful places easily, and making daily life less stressful. A is too informal and broad, and B adds an unrelated personal detail and comparison.\"}}"
+  }
+]

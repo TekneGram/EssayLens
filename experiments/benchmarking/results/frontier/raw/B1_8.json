@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "B1_8|yes|gpt-5.4|B1_v.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "B1_8",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "B1_v.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "{\"simple_vocabulary\": \"by themselves\", \"text_context\": \"Students may use AI too much and stop thinking by themselves.\", \"precise_vocabulary\": \"independently; autonomously; without relying on external assistance\"}",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"B1_8\", \"knowledge\": \"yes\", \"content\": {\"items\": [{\"simple_vocabulary\": \"by themselves\", \"text_context\": \"Students may use AI too much and stop thinking by themselves.\", \"precise_vocabulary\": \"independently; autonomously; without relying on external assistance\"}]}}"
+  },
+  {
+    "Row ID": "B1_8|no|gpt-5.4|B1_v.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "B1_8",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "B1_v.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "{\"simple_vocabulary\": \"by themselves\", \"text_context\": \"Students may use AI too much and stop thinking by themselves.\", \"precise_vocabulary\": \"independently; on their own; without help from others\"}",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"B1_8\", \"knowledge\": \"no\", \"content\": {\"items\": [{\"simple_vocabulary\": \"by themselves\", \"text_context\": \"Students may use AI too much and stop thinking by themselves.\", \"precise_vocabulary\": \"independently; on their own; without help from others\"}]}}"
+  }
+]

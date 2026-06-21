@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_3|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_3",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "B is the best topic sentence because it includes the topic, music and learning English, and a clear controlling idea: it makes practice enjoyable and memorable. The supporting sentences develop this idea by explaining vocabulary, pronunciation, singing practice, and enjoyment. A is too broad with 'hundreds of reasons,' and C is too personal and informal for an academic paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_3\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"B\", \"reason\": \"B is the best topic sentence because it includes the topic, music and learning English, and a clear controlling idea: it makes practice enjoyable and memorable. The supporting sentences develop this idea by explaining vocabulary, pronunciation, singing practice, and enjoyment. A is too broad with 'hundreds of reasons,' and C is too personal and informal for an academic paragraph.\"}}"
+  },
+  {
+    "Row ID": "A2_3|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_3",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "B",
+    "Reason": "B fits best because it clearly introduces the main idea of the paragraph: music helps students learn English in a fun and memorable way. The rest of the paragraph supports that idea with examples about phrases, rhythm, pronunciation, and singing. A is too broad, and C is too informal and unrelated to the paragraph’s focus.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_3\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"B\", \"reason\": \"B fits best because it clearly introduces the main idea of the paragraph: music helps students learn English in a fun and memorable way. The rest of the paragraph supports that idea with examples about phrases, rhythm, pronunciation, and singing. A is too broad, and C is too informal and unrelated to the paragraph’s focus.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A4_5|yes|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "The topic sentence is suitable because it clearly states the topic, studying English alone and with a teacher, and gives a controlling idea, that they are useful in different ways. The supporting sentences stay unified by explaining those different benefits and limits, and the conclusion reinforces the same idea.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_5\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"The topic sentence is suitable because it clearly states the topic, studying English alone and with a teacher, and gives a controlling idea, that they are useful in different ways. The supporting sentences stay unified by explaining those different benefits and limits, and the conclusion reinforces the same idea.\"}}"
+  },
+  {
+    "Row ID": "A4_5|no|gpt-5.4|A4_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A4_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A4_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "The topic sentence is suitable because it clearly introduces the main idea of the paragraph and matches the details that follow. The paragraph explains how each study method helps students differently, so the topic sentence fits well.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A4_5\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"The topic sentence is suitable because it clearly introduces the main idea of the paragraph and matches the details that follow. The paragraph explains how each study method helps students differently, so the topic sentence fits well.\"}}"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_4|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The sentences do not support the claim effectively. They list places students work and how they spend money, but they do not explain how part-time jobs develop responsibility. There is no definition, example, or explanation connecting the jobs to being responsible.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_4\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"no\", \"details\": \"The sentences do not support the claim effectively. They list places students work and how they spend money, but they do not explain how part-time jobs develop responsibility. There is no definition, example, or explanation connecting the jobs to being responsible.\"}}"
+  },
+  {
+    "Row ID": "D1_4|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "no",
+    "Reason": "The support is weak. The sentences mention student jobs and money use, but they do not show why these jobs help students become responsible. The connection to the claim is missing.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_4\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"no\", \"details\": \"The support is weak. The sentences mention student jobs and money use, but they do not show why these jobs help students become responsible. The connection to the claim is missing.\"}}"
+  }
+]

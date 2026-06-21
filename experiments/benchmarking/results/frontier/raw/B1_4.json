@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "B1_4|yes|gpt-5.4|B1_v.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "B1_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "B1_v.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "{\"simple_vocabulary\": \"ask\", \"text_context\": \"they can ask AI about grammar, vocabulary, or the meaning of a sentence\", \"precise_vocabulary\": \"consult, query, seek guidance from\"}",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"B1_4\", \"knowledge\": \"yes\", \"content\": {\"items\": [{\"simple_vocabulary\": \"ask\", \"text_context\": \"they can ask AI about grammar, vocabulary, or the meaning of a sentence\", \"precise_vocabulary\": \"consult, query, seek guidance from\"}]}}"
+  },
+  {
+    "Row ID": "B1_4|no|gpt-5.4|B1_v.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "B1_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "B1_v.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "{\"simple_vocabulary\": \"ask\", \"text_context\": \"they can ask AI about grammar, vocabulary, or the meaning of a sentence\", \"precise_vocabulary\": \"consult, query, request information from\"}",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"B1_4\", \"knowledge\": \"no\", \"content\": {\"items\": [{\"simple_vocabulary\": \"ask\", \"text_context\": \"they can ask AI about grammar, vocabulary, or the meaning of a sentence\", \"precise_vocabulary\": \"consult, query, request information from\"}]}}"
+  }
+]

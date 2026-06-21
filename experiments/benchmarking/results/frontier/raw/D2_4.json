@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_4|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_4",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "School uniforms are common in many Japanese junior high schools.",
+    "Reason": "This sentence does not clearly support the controlling idea that moving to a new school changes a student’s social and academic environment, affecting confidence. It gives a general fact about Japanese junior high schools, but it does not explain how uniforms change a student's confidence or help develop the main idea. To improve unity, you should replace it with a sentence that directly connects to confidence or adjustment at the new school.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_4\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"School uniforms are common in many Japanese junior high schools.\", \"details\": \"This sentence does not clearly support the controlling idea that moving to a new school changes a student’s social and academic environment, affecting confidence. It gives a general fact about Japanese junior high schools, but it does not explain how uniforms change a student's confidence or help develop the main idea. To improve unity, you should replace it with a sentence that directly connects to confidence or adjustment at the new school.\"}}"
+  },
+  {
+    "Row ID": "D2_4|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_4",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "School uniforms are common in many Japanese junior high schools.",
+    "Reason": "This sentence does not support the controlling idea well. The paragraph is about how moving to a new school affects a student’s confidence, but this sentence only gives a general fact about school uniforms. It does not explain how confidence changes, so it feels unrelated to the main point.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_4\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"School uniforms are common in many Japanese junior high schools.\", \"details\": \"This sentence does not support the controlling idea well. The paragraph is about how moving to a new school affects a student’s confidence, but this sentence only gives a general fact about school uniforms. It does not explain how confidence changes, so it feels unrelated to the main point.\"}}"
+  }
+]

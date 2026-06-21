@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "C3_1|yes|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_1",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Despite the advantages of getting information quickly and studying anywhere, there are some disadvantages related to attention when using a smartphone.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_1\", \"knowledge\": \"yes\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Despite the advantages of getting information quickly and studying anywhere, there are some disadvantages related to attention when using a smartphone.\"}}"
+  },
+  {
+    "Row ID": "C3_1|no|gpt-5.4|C3_1_coh.md|detect|1",
+    "Parent Row ID": "",
+    "Paragraph": "C3_1",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "C3_1_coh.md",
+    "Stage": "detect",
+    "Item Index": "1",
+    "Answer": "Yes",
+    "Reason": "Despite the advantages of getting information quickly and studying anywhere, there are some disadvantages related to attention when using a smartphone.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"C3_1\", \"knowledge\": \"no\", \"stage\": \"detect\", \"content\": {\"has_transition_sentence\": \"Yes\", \"detected_transition_sentence\": \"Despite the advantages of getting information quickly and studying anywhere, there are some disadvantages related to attention when using a smartphone.\"}}"
+  }
+]

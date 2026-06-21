@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A3_2|yes|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_2",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Festivals help people feel connected to their community by bringing them together for a shared experience.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_2\", \"knowledge\": \"yes\", \"content\": {\"content\": \"Festivals help people feel connected to their community by bringing them together for a shared experience.\"}}"
+  },
+  {
+    "Row ID": "A3_2|no|gpt-5.4|A3_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A3_2",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A3_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Festivals help people feel connected to their community by bringing them together for a shared experience.",
+    "Reason": "",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A3_2\", \"knowledge\": \"no\", \"content\": {\"content\": \"Festivals help people feel connected to their community by bringing them together for a shared experience.\"}}"
+  }
+]

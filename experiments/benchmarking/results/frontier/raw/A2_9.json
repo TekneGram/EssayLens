@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_9|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_9",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A is the best match because it clearly states the topic, pets, and the controlling idea, that they improve life through comfort, routine, and emotional connection. The supporting sentences develop all three points, so the paragraph has strong unity.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_9\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"A\", \"reason\": \"A is the best match because it clearly states the topic, pets, and the controlling idea, that they improve life through comfort, routine, and emotional connection. The supporting sentences develop all three points, so the paragraph has strong unity.\"}}"
+  },
+  {
+    "Row ID": "A2_9|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_9",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "A",
+    "Reason": "A is the best choice because it matches the paragraph’s main ideas: comfort, daily routine, and emotional connection. B is too general, and C is too opinion-based and not supported by the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_9\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"A\", \"reason\": \"A is the best choice because it matches the paragraph’s main ideas: comfort, daily routine, and emotional connection. B is too general, and C is too opinion-based and not supported by the paragraph.\"}}"
+  }
+]

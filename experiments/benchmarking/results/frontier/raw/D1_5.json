@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D1_5|yes|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_5",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "The sentences support the claim effectively because they explain how classmates help build speaking confidence. They give a clear reason by saying students get regular chances to practice short conversations, and they explain that learning together can make students less afraid of making mistakes. The paragraph also expands the idea by showing the result: students speak more often and become more confident.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_5\", \"knowledge\": \"yes\", \"content\": {\"has_support\": \"yes\", \"details\": \"The sentences support the claim effectively because they explain how classmates help build speaking confidence. They give a clear reason by saying students get regular chances to practice short conversations, and they explain that learning together can make students less afraid of making mistakes. The paragraph also expands the idea by showing the result: students speak more often and become more confident.\"}}"
+  },
+  {
+    "Row ID": "D1_5|no|gpt-5.4|D1_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D1_5",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D1_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "yes",
+    "Reason": "Yes, the sentences support the claim because they give reasons why learning with classmates can increase speaking confidence. They explain that classmates provide chances to practice and help students feel less afraid of making mistakes. This shows how a supportive environment can improve confidence.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D1_5\", \"knowledge\": \"no\", \"content\": {\"has_support\": \"yes\", \"details\": \"Yes, the sentences support the claim because they give reasons why learning with classmates can increase speaking confidence. They explain that classmates provide chances to practice and help students feel less afraid of making mistakes. This shows how a supportive environment can improve confidence.\"}}"
+  }
+]

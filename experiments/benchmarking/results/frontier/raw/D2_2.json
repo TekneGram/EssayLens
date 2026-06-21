@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "D2_2|yes|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_2",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Some students like wearing fashionable clothes to school.",
+    "Reason": "The sentence \"Some students like wearing fashionable clothes to school.\" does not support the controlling idea, which is \"different kinds of learning experiences.\" Your paragraph is comparing how online and in-person classes create different learning experiences, such as convenience, comfort, and face-to-face interaction. Wearing fashionable clothes is not really part of the learning experience in this comparison, so it breaks the unity of the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_2\", \"knowledge\": \"yes\", \"content\": {\"weak_support\": \"Some students like wearing fashionable clothes to school.\", \"details\": \"The sentence \\\"Some students like wearing fashionable clothes to school.\\\" does not support the controlling idea, which is \\\"different kinds of learning experiences.\\\" Your paragraph is comparing how online and in-person classes create different learning experiences, such as convenience, comfort, and face-to-face interaction. Wearing fashionable clothes is not really part of the learning experience in this comparison, so it breaks the unity of the paragraph.\"}}"
+  },
+  {
+    "Row ID": "D2_2|no|gpt-5.4|D2_ss.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "D2_2",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "D2_ss.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "Some students like wearing fashionable clothes to school.",
+    "Reason": "The sentence \"Some students like wearing fashionable clothes to school.\" does not fit the controlling idea of \"different kinds of learning experiences.\" The paragraph is supposed to compare the learning experience in online and in-person English classes, but this sentence introduces a different idea about clothing preference. Because of that, it does not help develop the main point.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"D2_2\", \"knowledge\": \"no\", \"content\": {\"weak_support\": \"Some students like wearing fashionable clothes to school.\", \"details\": \"The sentence \\\"Some students like wearing fashionable clothes to school.\\\" does not fit the controlling idea of \\\"different kinds of learning experiences.\\\" The paragraph is supposed to compare the learning experience in online and in-person English classes, but this sentence introduces a different idea about clothing preference. Because of that, it does not help develop the main point.\"}}"
+  }
+]

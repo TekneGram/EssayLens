@@ -1,0 +1,38 @@
+[
+  {
+    "Row ID": "A2_2|yes|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_2",
+    "Enhanced Knowledge": "yes",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C is best because it matches both the topic and the controlling idea of the paragraph: reading English books helps students improve language through vocabulary, grammar, phrases, and cultural understanding in a natural way. A is too general, and B focuses on confidence, which the supporting sentences do not develop.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_2\", \"knowledge\": \"yes\", \"content\": {\"verdict\": \"C\", \"reason\": \"C is best because it matches both the topic and the controlling idea of the paragraph: reading English books helps students improve language through vocabulary, grammar, phrases, and cultural understanding in a natural way. A is too general, and B focuses on confidence, which the supporting sentences do not develop.\"}}"
+  },
+  {
+    "Row ID": "A2_2|no|gpt-5.4|A2_ts.md|primary|1",
+    "Parent Row ID": "",
+    "Paragraph": "A2_2",
+    "Enhanced Knowledge": "no",
+    "LLM": "gpt-5.4",
+    "Model Path": "frontier/gpt-5.4",
+    "Task": "A2_ts.md",
+    "Stage": "primary",
+    "Item Index": "1",
+    "Answer": "C",
+    "Reason": "C is the best match because the paragraph explains several ways reading English books improves language knowledge and skills, such as grammar, phrases, vocabulary, and cultural understanding. A is too vague, and B introduces confidence, which is not the main focus of the paragraph.",
+    "First Sentence": "",
+    "Second Sentence": "",
+    "Judgement": "pending",
+    "Reason Judgement": "pending",
+    "Raw Response": "{\"model\": \"gpt-5.4\", \"question\": \"A2_2\", \"knowledge\": \"no\", \"content\": {\"verdict\": \"C\", \"reason\": \"C is the best match because the paragraph explains several ways reading English books improves language knowledge and skills, such as grammar, phrases, vocabulary, and cultural understanding. A is too vague, and B introduces confidence, which is not the main focus of the paragraph.\"}}"
+  }
+]

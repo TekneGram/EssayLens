@@ -58,3 +58,7 @@ vendor/python/
 vendor/python-worker/**
 vendor/llama-server/**
 !vendor/python-worker/README.md
+
+
+# Experimental essays
+experiments/essay_examples
