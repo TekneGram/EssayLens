@@ -73,17 +73,24 @@ export function useChatViewController() {
       return;
     }
 
+    if ((chatStatus === 'sending' || activeSessionSendPhase) && !activeSessionId) {
+      setSessionTurnsError(undefined);
+      setActiveScreen('chat');
+      return;
+    }
+
     void handleLoadSessionsForFile(fileEntityUuid, activeSessionId ?? undefined);
+    if (chatStatus === 'sending' || activeSessionSendPhase) {
+      setActiveScreen('chat');
+      return;
+    }
     setActiveScreen('list');
     // Only reload full session index when selected file changes.
     // TODO: fix exhaustive-deps
-  }, [fileEntityUuid, handleLoadSessionsForFile]);
+  }, [activeSessionId, activeSessionSendPhase, chatStatus, fileEntityUuid, handleLoadSessionsForFile]);
 
   useEffect(() => {
     if (!fileEntityUuid || !activeSessionId || activeScreen !== 'chat') {
-      return;
-    }
-    if (chatStatus === 'sending' || activeSessionSendPhase) {
       return;
     }
 

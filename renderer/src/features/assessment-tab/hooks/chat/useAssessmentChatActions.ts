@@ -285,6 +285,7 @@ export function useAssessmentChatActions({
 
         const completedFileIds = new Set(completionCheck.data.completions.map((completion) => completion.fileId));
         let bulkFileIds = workspaceEssayFeedbackFileIds;
+        let redoCompletedFileIds: string[] | undefined;
         if (completionCheck.data.activeModel && completionCheck.data.completions.length > 0) {
           const choice = resolveBulkFeedbackDuplicateChoice({
             completions: completionCheck.data.completions,
@@ -300,23 +301,24 @@ export function useAssessmentChatActions({
               toast.info('All essays already have essay feedback from the current LLM.');
               return;
             }
+          } else {
+            redoCompletedFileIds = completionCheck.data.completions.map((completion) => completion.fileId);
           }
         }
 
-        for (const fileId of bulkFileIds) {
-          await submitChatMessageWorkflow({
-            chatApi,
-            dispatch: appDispatch,
-            kind: 'essay-feedback',
-            selectedFileId: fileId,
-            essayFeedbackTypes: selectedEssayFeedbackTypes,
-            pendingSelection: null,
-            streamMessageByClientRequestId: streamMessageByClientRequestId.current,
-            streamSeqByClientRequestId: streamSeqByClientRequestId.current,
-            streamSessionByClientRequestId: streamSessionByClientRequestId.current
-          });
-          appDispatch(bumpSessionSyncForFile({ fileId }));
-        }
+        await submitChatMessageWorkflow({
+          chatApi,
+          dispatch: appDispatch,
+          kind: 'essay-feedback-bulk',
+          selectedFileId,
+          bulkFileIds,
+          redoCompletedFileIds,
+          essayFeedbackTypes: selectedEssayFeedbackTypes,
+          pendingSelection: null,
+          streamMessageByClientRequestId: streamMessageByClientRequestId.current,
+          streamSeqByClientRequestId: streamSeqByClientRequestId.current,
+          streamSessionByClientRequestId: streamSessionByClientRequestId.current
+        });
       } else if (isRubricFeedbackCommand) {
         if (!selectedFileId) {
           const errorMessage = 'Select a file before sending rubric feedback.';
@@ -420,7 +422,9 @@ export function useAssessmentChatActions({
           appDispatch(bumpSessionSyncForFile({ fileId }));
         });
       } else if (isEssayBulkCommand) {
-        // Per-file sync is bumped within the frontend essay feedback loop above.
+        workspaceEssayFeedbackFileIds.forEach((fileId) => {
+          appDispatch(bumpSessionSyncForFile({ fileId }));
+        });
       } else if (selectedFileId) {
         appDispatch(bumpSessionSyncForFile({ fileId: selectedFileId }));
       }

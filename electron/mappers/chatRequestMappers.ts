@@ -15,6 +15,7 @@ import type {
   LlmEssayFeedbackThesisStatementResult,
   LlmParagraphFeedbackBulkPayload,
   LlmRubricEvaluationPayload,
+  EssayFeedbackBulkRequest,
   EssayFeedbackRequest,
   ParagraphFeedbackBulkRequest,
   RubricFeedbackCategorySection,
@@ -34,6 +35,16 @@ export function isEssayFeedbackRequest(request: SendChatMessageRequest): request
     request.kind === 'essay-feedback' &&
     typeof request.fileId === 'string' &&
     !!request.fileId.trim() &&
+    Array.isArray(request.selectedFeedbackTypes) &&
+    request.selectedFeedbackTypes.length > 0
+  );
+}
+
+export function isEssayFeedbackBulkRequest(request: SendChatMessageRequest): request is EssayFeedbackBulkRequest {
+  return (
+    request.kind === 'essay-feedback-bulk' &&
+    Array.isArray(request.fileIds) &&
+    request.fileIds.length > 0 &&
     Array.isArray(request.selectedFeedbackTypes) &&
     request.selectedFeedbackTypes.length > 0
   );

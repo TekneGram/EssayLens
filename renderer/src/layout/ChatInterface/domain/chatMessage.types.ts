@@ -1,6 +1,8 @@
 import type { ChatRole, EntityId, ISODateString } from '@/app/types';
 import type { ChatFeedbackType, ChatInlineCommentPayload, ChatVocabularyFeedback } from '@/app/ports/chat.port';
 
+export type ChatMessageSource = 'local' | 'persisted' | 'stream-status' | 'stream-reply';
+
 export interface ChatMessage {
   id: EntityId;
   role: ChatRole;
@@ -8,6 +10,7 @@ export interface ChatMessage {
   relatedFileId?: EntityId;
   sessionId?: string;
   createdAt: ISODateString;
+  messageSource?: ChatMessageSource;
   canCreateComment?: boolean;
   feedbackType?: ChatFeedbackType;
   vocabulary?: ChatVocabularyFeedback;

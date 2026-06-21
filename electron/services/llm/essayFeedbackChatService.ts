@@ -61,6 +61,11 @@ interface EssayPreflightContext {
   identifyClientRequestId: string;
 }
 
+interface EssayFeedbackStageResult {
+  replies: EssayFeedbackReply[];
+  statusMessageId: string;
+}
+
 const ESSAY_FEEDBACK_TYPE_LABELS: Record<EssayFeedbackType, string> = {
   'thesis-statement-feedback': 'Thesis statement feedback',
   'summarize-main-idea': 'Summarize main idea',
@@ -146,7 +151,7 @@ export class EssayFeedbackChatService {
       const clientRequestId = `${baseClientRequestId}:essay:${index + 1}:${essayFeedbackType}`;
 
       try {
-        const stageReplies =
+        const stageResult =
           essayFeedbackType === 'thesis-statement-feedback'
             ? await this.runThesisStatementFeedback({
                 fileId: request.fileId,
@@ -167,7 +172,19 @@ export class EssayFeedbackChatService {
                 emitToRenderer
               });
 
-        replies.push(...stageReplies);
+        await this.persistStageReplies({
+          fileId: request.fileId,
+          sessionId,
+          replies: stageResult.replies
+        });
+        this.emitPersistedStageReplies({
+          fileId: request.fileId,
+          sessionId,
+          essayFeedbackType,
+          stageResult,
+          emitToRenderer
+        });
+        replies.push(...stageResult.replies);
       } catch (error) {
         const reason = error instanceof Error ? error.message : 'Essay feedback stage failed.';
         const messageId = randomUUID();
@@ -200,32 +217,19 @@ export class EssayFeedbackChatService {
             details: error
           }
         });
+        break;
       }
     }
 
-    try {
-      const turns: LlmSessionTurn[] = replies.map((reply) => ({
-        role: 'assistant',
-        content: reply.reply,
-        metadata: reply.inlineComment
-          ? {
-              feedbackType: 'thesis-statement-feedback',
-              inlineComment: reply.inlineComment
-            }
-          : undefined
-      }));
-      await this.deps.llmChatSessionRepository.appendTurns(sessionId, turns, request.fileId);
+    if (replies.length === 0) {
+      return {
+        reply: '',
+        essayFeedback: { replies, failures }
+      };
+    }
 
-      for (const reply of replies) {
-        await this.deps.repository.addMessage({
-          id: reply.messageId,
-          role: 'assistant',
-          content: reply.reply,
-          relatedFileId: request.fileId,
-          createdAt: new Date().toISOString()
-        });
-      }
-      if (activeModel && replies.length > 0) {
+    if (activeModel && failures.length === 0) {
+      try {
         await this.deps.llmFeedbackCompletionRepository.addCompletion({
           fileId: request.fileId,
           workflowKey: 'essay_feedback',
@@ -233,13 +237,26 @@ export class EssayFeedbackChatService {
           modelDisplayName: activeModel.displayName,
           sessionId
         });
+      } catch (error) {
+        emitToRenderer({
+          requestId: `${baseClientRequestId}:completion:error`,
+          clientRequestId: `${baseClientRequestId}:completion`,
+          fileId: request.fileId,
+          sessionId,
+          messageId: randomUUID(),
+          workflow: 'essay-feedback',
+          type: 'error',
+          seq: 1002,
+          channel: 'meta',
+          text: '',
+          done: true,
+          error: {
+            code: 'ESSAY_FEEDBACK_COMPLETION_PERSIST_FAILED',
+            message: 'Essay feedback was generated, but completion tracking could not be saved.',
+            details: error
+          }
+        });
       }
-    } catch (error) {
-      throw new AppException({
-        code: 'CHAT_SEND_PERSIST_FAILED',
-        userMessage: 'Essay feedback responses were generated but could not be persisted.',
-        details: error
-      });
     }
 
     return {
@@ -465,7 +482,7 @@ export class EssayFeedbackChatService {
     settings: LlmRuntimeSettings;
     emitToRenderer: EmitChatEvent;
     identifiedEssayContext: IdentifiedEssayContext;
-  }): Promise<EssayFeedbackReply[]> {
+  }): Promise<EssayFeedbackStageResult> {
     const statusMessageId = randomUUID();
     args.emitToRenderer({
       requestId: `${args.clientRequestId}:start`,
@@ -555,42 +572,10 @@ export class EssayFeedbackChatService {
       })
     ];
 
-    replies.forEach((reply, index) => {
-      args.emitToRenderer({
-        requestId: `${reply.clientRequestId}:chunk`,
-        clientRequestId: reply.clientRequestId,
-        fileId: reply.fileId,
-        sessionId: reply.sessionId,
-        messageId: reply.messageId,
-        workflow: 'essay-feedback',
-        essayFeedbackType: reply.essayFeedbackType,
-        essayFeedbackSection: reply.essayFeedbackSection,
-        feedbackType: reply.feedbackType,
-        inlineComment: reply.inlineComment,
-        type: 'chunk',
-        seq: index + 10,
-        channel: 'content',
-        text: reply.reply,
-        done: false
-      });
-    });
-
-    args.emitToRenderer({
-      requestId: `${args.clientRequestId}:done`,
-      clientRequestId: args.clientRequestId,
-      fileId: args.fileId,
-      sessionId: args.sessionId,
-      messageId: statusMessageId,
-      workflow: 'essay-feedback',
-      essayFeedbackType: 'thesis-statement-feedback',
-      type: 'done',
-      seq: 1000,
-      channel: 'meta',
-      text: '',
-      done: true
-    });
-
-    return replies;
+    return {
+      replies,
+      statusMessageId
+    };
   }
 
   private runEssayFeedbackStub(args: {
@@ -602,7 +587,7 @@ export class EssayFeedbackChatService {
     format: string;
     identifiedParagraphs: LlmEssayFeedbackIdentifyResult;
     emitToRenderer: EmitChatEvent;
-  }): EssayFeedbackReply[] {
+  }): EssayFeedbackStageResult {
     const reply = (() => {
       switch (args.essayFeedbackType) {
         case 'thesis-statement-feedback':
@@ -644,36 +629,82 @@ export class EssayFeedbackChatService {
       text: '',
       done: false
     });
-    args.emitToRenderer({
-      requestId: `${args.clientRequestId}:chunk`,
-      clientRequestId: args.clientRequestId,
-      fileId: args.fileId,
-      sessionId: args.sessionId,
-      messageId: builtReply.messageId,
-      workflow: 'essay-feedback',
-      essayFeedbackType: args.essayFeedbackType,
-      type: 'chunk',
-      seq: 2,
-      channel: 'content',
-      text: builtReply.reply,
-      done: false
+
+    return {
+      replies: [builtReply],
+      statusMessageId: builtReply.messageId
+    };
+  }
+
+  private async persistStageReplies(args: {
+    fileId: string;
+    sessionId: string;
+    replies: EssayFeedbackReply[];
+  }): Promise<void> {
+    const turns: LlmSessionTurn[] = args.replies.map((reply) => ({
+      role: 'assistant',
+      content: reply.reply,
+      metadata: reply.inlineComment
+        ? {
+            feedbackType: 'thesis-statement-feedback',
+            inlineComment: reply.inlineComment
+          }
+        : undefined
+    }));
+    await this.deps.llmChatSessionRepository.appendTurns(args.sessionId, turns, args.fileId);
+
+    for (const reply of args.replies) {
+      await this.deps.repository.addMessage({
+        id: reply.messageId,
+        role: 'assistant',
+        content: reply.reply,
+        relatedFileId: args.fileId,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+
+  private emitPersistedStageReplies(args: {
+    fileId: string;
+    sessionId: string;
+    essayFeedbackType: EssayFeedbackType;
+    stageResult: EssayFeedbackStageResult;
+    emitToRenderer: EmitChatEvent;
+  }): void {
+    args.stageResult.replies.forEach((reply, index) => {
+      args.emitToRenderer({
+        requestId: `${reply.clientRequestId}:chunk`,
+        clientRequestId: reply.clientRequestId,
+        fileId: reply.fileId,
+        sessionId: reply.sessionId,
+        messageId: reply.messageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: reply.essayFeedbackType,
+        essayFeedbackSection: reply.essayFeedbackSection,
+        feedbackType: reply.feedbackType,
+        inlineComment: reply.inlineComment,
+        type: 'chunk',
+        seq: index + 10,
+        channel: 'content',
+        text: reply.reply,
+        done: false
+      });
     });
+
     args.emitToRenderer({
-      requestId: `${args.clientRequestId}:done`,
-      clientRequestId: args.clientRequestId,
+      requestId: `${args.stageResult.replies[0]?.clientRequestId ?? `${args.fileId}:done`}:done`,
+      clientRequestId: args.stageResult.replies[0]?.clientRequestId ?? `${args.fileId}:done`,
       fileId: args.fileId,
       sessionId: args.sessionId,
-      messageId: builtReply.messageId,
+      messageId: args.stageResult.statusMessageId,
       workflow: 'essay-feedback',
       essayFeedbackType: args.essayFeedbackType,
       type: 'done',
-      seq: 3,
+      seq: 1000,
       channel: 'meta',
       text: '',
       done: true
     });
-
-    return [builtReply];
   }
 
   private buildEssayFeedbackReply(args: {

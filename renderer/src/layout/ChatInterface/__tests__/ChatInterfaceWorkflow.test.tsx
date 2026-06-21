@@ -458,8 +458,8 @@ describe('ChatInterface submit workflow', () => {
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          kind: 'essay-feedback',
-          fileId: '/workspace/essays/draft.docx',
+          kind: 'essay-feedback-bulk',
+          fileIds: ['/workspace/essays/draft.docx'],
           selectedFeedbackTypes: [
             'thesis-statement-feedback',
             'summarize-main-idea',
@@ -605,7 +605,7 @@ describe('ChatInterface submit workflow', () => {
     confirmSpy.mockRestore();
   });
 
-  it('loops through only DOCX files for essay feedback bulk and sends selected feedback types per file', async () => {
+  it('sends one DOCX-only bulk essay feedback request with selected feedback types', async () => {
     const selectFolder = vi.fn().mockResolvedValue({
       ok: true,
       data: {
@@ -688,8 +688,8 @@ describe('ChatInterface submit workflow', () => {
     expect(sendMessage.mock.calls).toEqual([
       [
         expect.objectContaining({
-          kind: 'essay-feedback',
-          fileId: '/workspace/essays/draft-1.docx',
+          kind: 'essay-feedback-bulk',
+          fileIds: ['/workspace/essays/draft-1.docx'],
           selectedFeedbackTypes: [
             'thesis-statement-feedback',
             'summarize-main-idea',
@@ -758,6 +758,7 @@ describe('ChatInterface submit workflow', () => {
 
     confirmSpy.mockRestore();
   });
+
 
   it('updates assistant message from stream chunks before sendMessage resolves', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
@@ -850,5 +851,138 @@ describe('ChatInterface submit workflow', () => {
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('loads persisted chat sessions during essay bulk streaming once a persisted essay reply arrives', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const llmSession = createLlmSessionMocks();
+    llmSession.listByFile.mockResolvedValue({
+      ok: true,
+      data: {
+        fileEntityUuid: '/workspace/essays/draft.docx',
+        sessions: [
+          {
+            sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+            fileEntityUuid: '/workspace/essays/draft.docx',
+            createdAt: '2026-02-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+            lastUsedAt: '2026-02-01T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    llmSession.getTurns.mockResolvedValue({
+      ok: true,
+      data: {
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        fileEntityUuid: '/workspace/essays/draft.docx',
+        turns: []
+      }
+    });
+    let streamListener: ((event: unknown) => void) | undefined;
+    let resolveSend: ((value: unknown) => void) | undefined;
+    const sendMessage = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
+      }
+    });
+    const onStreamChunk = vi.fn().mockImplementation((listener: (event: unknown) => void) => {
+      streamListener = listener;
+      return () => {
+        streamListener = undefined;
+      };
+    });
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { sendMessage, onStreamChunk, checkParagraphFeedbackCompletions },
+        llmManager: createLlmManagerMocks(),
+        llmSession
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = sendMessage.mock.calls[0]?.[0] as { clientRequestId?: string } | undefined;
+    const clientRequestId = payload?.clientRequestId;
+    const currentStreamListener = streamListener;
+    expect(clientRequestId).toBeTypeOf('string');
+
+    if (typeof currentStreamListener === 'function') {
+      currentStreamListener({
+        requestId: 'essay-bulk-start-1',
+        clientRequestId: `${clientRequestId}:identify`,
+        fileId: '/workspace/essays/draft.docx',
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        messageId: 'progress-1',
+        workflow: 'essay-feedback',
+        essayFeedbackStage: 'identify-paragraphs',
+        type: 'start',
+        seq: 1,
+        channel: 'meta',
+        text: '',
+        done: false
+      });
+      currentStreamListener({
+        requestId: 'essay-bulk-chunk-1',
+        clientRequestId: `${clientRequestId}:essay:1:summary-feedback`,
+        fileId: '/workspace/essays/draft.docx',
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        messageId: 'reply-1',
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'summary-feedback',
+        type: 'chunk',
+        seq: 2,
+        channel: 'content',
+        text: 'Persisted essay feedback reply',
+        done: false
+      });
+    }
+
+    await waitFor(() => {
+      expect(llmSession.listByFile).toHaveBeenCalledWith({ fileEntityUuid: '/workspace/essays/draft.docx' });
+      expect(llmSession.getTurns).toHaveBeenCalledWith({
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        fileEntityUuid: '/workspace/essays/draft.docx'
+      });
+    });
+
+    const currentResolveSend = resolveSend;
+    if (typeof currentResolveSend === 'function') {
+      currentResolveSend({
+        ok: true,
+        data: {
+          reply: '',
+          essayFeedback: {
+            replies: [],
+            failures: []
+          }
+        }
+      });
+    }
   });
 });

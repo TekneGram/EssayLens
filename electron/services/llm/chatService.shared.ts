@@ -121,6 +121,13 @@ export type EssayFeedbackRequest = SendChatMessageRequest & {
   selectedFeedbackTypes: EssayFeedbackType[];
 };
 
+export type EssayFeedbackBulkRequest = SendChatMessageRequest & {
+  kind: 'essay-feedback-bulk';
+  fileIds: string[];
+  selectedFeedbackTypes: EssayFeedbackType[];
+  redoCompletedFileIds?: string[];
+};
+
 export type ChatSendResult = Promise<SendChatMessageResponse>;
 
 export type RubricMatrix = GetRubricMatrixResponse;

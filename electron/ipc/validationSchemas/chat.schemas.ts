@@ -74,6 +74,31 @@ const sendChatMessageSchema = z.discriminatedUnion('kind', [
     sessionId: z.string().optional(),
     rubricId: z.string().optional(),
     systemPrompt: z.string().optional()
+  }),
+  z.object({
+    kind: z.literal('essay-feedback-bulk'),
+    fileIds: z.array(z.string().trim().min(1)).min(1, 'essay feedback bulk payload must include at least one fileId'),
+    selectedFeedbackTypes: z
+      .array(
+        z.enum([
+          'thesis-statement-feedback',
+          'summarize-main-idea',
+          'paragraph-evaluation',
+          'thesis-restatement-feedback',
+          'summary-feedback',
+          'conclusion-final-comment'
+        ])
+      )
+      .min(1, 'essay feedback bulk payload must include at least one selected feedback type'),
+    redoCompletedFileIds: z.array(z.string().trim().min(1)).optional(),
+    fileId: z.string().optional(),
+    message: z.string().optional(),
+    essay: z.string().optional(),
+    contextText: z.string().optional(),
+    clientRequestId: z.string().optional(),
+    sessionId: z.string().optional(),
+    rubricId: z.string().optional(),
+    systemPrompt: z.string().optional()
   })
 ]);
 
@@ -90,6 +115,8 @@ export const SendChatMessageSchema = z.preprocess(
           ? 'paragraph-feedback-bulk'
           : recordVal.kind === 'essay-feedback'
             ? 'essay-feedback'
+            : recordVal.kind === 'essay-feedback-bulk'
+              ? 'essay-feedback-bulk'
           : 'chat';
     if (!recordVal.message && typeof recordVal.content === 'string') {
       return { ...recordVal, kind, message: recordVal.content };

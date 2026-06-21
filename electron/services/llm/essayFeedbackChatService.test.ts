@@ -231,14 +231,22 @@ describe('EssayFeedbackChatService', () => {
       modelDisplayName: 'Essay Model',
       sessionId: expect.stringContaining('essay-feedback:file-1:')
     });
-    expect(appendTurns).toHaveBeenCalledWith(
+    expect(appendTurns).toHaveBeenNthCalledWith(
+      1,
       expect.stringContaining('essay-feedback:file-1:'),
       [
         {
           role: 'assistant',
           content:
             'Stub: Summary feedback is queued for essay.docx (docx) using the identified conclusion paragraph.'
-        },
+        }
+      ],
+      'file-1'
+    );
+    expect(appendTurns).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('essay-feedback:file-1:'),
+      [
         {
           role: 'assistant',
           content:
@@ -428,5 +436,63 @@ describe('EssayFeedbackChatService', () => {
     expect(createSession).not.toHaveBeenCalled();
     expect(upsertIdentifiedParagraphs).not.toHaveBeenCalled();
     expect(result.essayFeedback?.replies).toEqual([]);
+  });
+
+  it('does not throw when completion tracking fails after replies are persisted', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, addCompletion } = await createEssayFeedbackService();
+    addCompletion.mockRejectedValueOnce(new Error('CHECK constraint failed'));
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-completion-failure',
+        selectedFeedbackTypes: ['summary-feedback']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(result.essayFeedback?.replies).toHaveLength(1);
+    expect(result.essayFeedback?.failures).toEqual([]);
+    expect(
+      emittedEvents.some(
+        (event) =>
+          event.type === 'error' &&
+          event.error &&
+          (event.error as { code?: string }).code === 'ESSAY_FEEDBACK_COMPLETION_PERSIST_FAILED'
+      )
+    ).toBe(true);
+  });
+
+  it('returns a per-file failure instead of throwing when reply persistence fails', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, addCompletion } = await createEssayFeedbackService();
+    appendTurns.mockRejectedValueOnce(new Error('disk full'));
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-persist-failure',
+        selectedFeedbackTypes: ['summary-feedback']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(result.essayFeedback?.replies).toHaveLength(0);
+    expect(result.essayFeedback?.failures).toHaveLength(1);
+    expect(result.essayFeedback?.failures?.[0]?.reason).toBe(
+      'disk full'
+    );
+    expect(addCompletion).not.toHaveBeenCalled();
+    expect(
+      emittedEvents.some(
+        (event) =>
+          event.type === 'error' &&
+          event.error &&
+          (event.error as { code?: string }).code === 'ESSAY_FEEDBACK_STAGE_FAILED'
+      )
+    ).toBe(true);
   });
 });

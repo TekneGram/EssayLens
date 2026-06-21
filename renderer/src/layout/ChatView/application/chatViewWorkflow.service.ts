@@ -35,6 +35,11 @@ export async function loadTurnsForSession({
   setIsSessionTurnsLoading,
   setSessionTurnsError
 }: LoadTurnsInput): Promise<void> {
+  if (!sessionId.trim() || !fileEntityUuid.trim()) {
+    setSessionTurnsError('Could not load chat turns.');
+    return;
+  }
+
   setIsSessionTurnsLoading(true);
   setSessionTurnsError(undefined);
   try {
@@ -71,6 +76,10 @@ export async function loadSessionsForFile({
   setIsSessionTurnsLoading,
   setSessionTurnsError
 }: LoadSessionsInput): Promise<string | undefined> {
+  if (!fileEntityUuid.trim()) {
+    return 'Could not load chat sessions.';
+  }
+
   appDispatch(setSessionListStatusForFile({ fileId: fileEntityUuid, status: 'loading' }));
   appDispatch(setSessionListErrorForFile({ fileId: fileEntityUuid, error: undefined }));
 

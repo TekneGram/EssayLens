@@ -39,7 +39,7 @@ export interface ListMessagesResponse {
 }
 
 export interface SendChatMessageRequest {
-  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback' | 'essay-feedback-bulk';
   fileId?: string;
   fileIds?: string[];
   redoCompletedFileIds?: string[];
