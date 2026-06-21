@@ -1,0 +1,73 @@
+.essay-feedback-manager {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.essay-feedback-manager__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.essay-feedback-manager__table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-surface);
+}
+
+.essay-feedback-manager__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.essay-feedback-manager__table th,
+.essay-feedback-manager__table td {
+  border-top: 1px solid var(--divider-color);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.essay-feedback-manager__table thead th {
+  border-top: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-surface) 92%, var(--border-subtle) 8%);
+}
+
+.essay-feedback-manager__table tbody th {
+  width: 22%;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+}
+
+.essay-feedback-manager__table tbody td {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.essay-feedback-manager__row--locked {
+  background: color-mix(in srgb, var(--bg-surface) 88%, var(--border-subtle) 12%);
+}
+
+.essay-feedback-manager__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.essay-feedback-manager__checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .essay-feedback-manager__table {
+    min-width: 720px;
+  }
+}
