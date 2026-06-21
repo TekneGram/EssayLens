@@ -3,19 +3,29 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AppException } from '../../core/appException';
 import type { LlmRuntimeSettings } from '../../ipc/contracts/llmManager.contracts';
+import type {
+  ChatFeedbackType,
+  ChatInlineCommentPayload,
+  EssayFeedbackSection,
+  EssayFeedbackType,
+  SendChatMessageResponse
+} from '../../ipc/contracts/chat.contracts';
 import { extractDocxTextFromBuffer } from '../documents/docxTextExtractor';
-import type { EssayFeedbackType, SendChatMessageResponse } from '../../ipc/contracts/chat.contracts';
 import {
   buildLlmEssayFeedbackIdentifyPayload,
   buildLlmEssayFeedbackStubPayload,
-  isEssayFeedbackIdentifyResult
+  buildLlmEssayFeedbackThesisStatementPayload,
+  isEssayFeedbackIdentifyResult,
+  isEssayFeedbackThesisStatementResult
 } from '../../mappers/chatRequestMappers';
 import { LlmRuntimeService } from '../../runtime/llmRuntimeService';
+import type { LlmSessionTurn } from '../../db/repositories/llmChatSessionRepository';
 import type {
   ChatServiceDeps,
   EmitChatEvent,
   EssayFeedbackRequest,
-  LlmEssayFeedbackIdentifyResult
+  LlmEssayFeedbackIdentifyResult,
+  LlmEssayFeedbackThesisStatementResult
 } from './chatService.shared';
 
 interface EssayFeedbackReply {
@@ -25,6 +35,9 @@ interface EssayFeedbackReply {
   reply: string;
   clientRequestId: string;
   essayFeedbackType: EssayFeedbackType;
+  essayFeedbackSection?: EssayFeedbackSection;
+  feedbackType?: ChatFeedbackType;
+  inlineComment?: ChatInlineCommentPayload;
 }
 
 interface EssayFeedbackFailure {
@@ -35,6 +48,17 @@ interface EssayFeedbackFailure {
   clientRequestId: string;
   details?: unknown;
   essayFeedbackType?: EssayFeedbackType;
+}
+
+interface IdentifiedEssayContext {
+  essayText: string;
+  identifiedParagraphs: LlmEssayFeedbackIdentifyResult;
+}
+
+interface EssayPreflightContext {
+  essayText: string;
+  progressMessageId: string;
+  identifyClientRequestId: string;
 }
 
 const ESSAY_FEEDBACK_TYPE_LABELS: Record<EssayFeedbackType, string> = {
@@ -70,7 +94,6 @@ export class EssayFeedbackChatService {
       fileId: request.fileId,
       selectedFeedbackTypes: request.selectedFeedbackTypes
     });
-
     if (normalizedSelection.selectedFeedbackTypes.length === 0) {
       throw new AppException({
         code: 'CHAT_INVALID_REQUEST',
@@ -90,96 +113,64 @@ export class EssayFeedbackChatService {
     const baseClientRequestId = request.clientRequestId ?? randomUUID();
     const replies: EssayFeedbackReply[] = [];
     const failures: EssayFeedbackFailure[] = [];
+    const activeModel = await this.deps.llmSelectionRepository.getActiveModel();
 
-    await this.deps.llmChatSessionRepository.createSession(sessionId, request.fileId);
-
-    const identifiedParagraphs = await this.identifyParagraphs({
+    const preflightContext = await this.preflightEssayFile({
       fileId: request.fileId,
       filePath: sourceFile.path,
       sessionId,
       baseClientRequestId,
-      settings,
       emitToRenderer
     });
+    if (!preflightContext) {
+      return { reply: '', essayFeedback: { replies, failures } };
+    }
 
-    if (!identifiedParagraphs) {
-      return {
-        reply: '',
-        essayFeedback: {
-          replies,
-          failures
-        }
-      };
+    await this.deps.llmChatSessionRepository.createSession(sessionId, request.fileId);
+
+    const identifiedEssayContext = await this.identifyParagraphs({
+      fileId: request.fileId,
+      sessionId,
+      settings,
+      emitToRenderer,
+      essayText: preflightContext.essayText,
+      identifyClientRequestId: preflightContext.identifyClientRequestId,
+      progressMessageId: preflightContext.progressMessageId
+    });
+    if (!identifiedEssayContext) {
+      return { reply: '', essayFeedback: { replies, failures } };
     }
 
     for (let index = 0; index < normalizedSelection.selectedFeedbackTypes.length; index += 1) {
       const essayFeedbackType = normalizedSelection.selectedFeedbackTypes[index];
-      const messageId = randomUUID();
       const clientRequestId = `${baseClientRequestId}:essay:${index + 1}:${essayFeedbackType}`;
 
-      emitToRenderer({
-        requestId: `${clientRequestId}:start`,
-        clientRequestId,
-        fileId: request.fileId,
-        sessionId,
-        messageId,
-        workflow: 'essay-feedback',
-        essayFeedbackType,
-        type: 'start',
-        seq: 1,
-        channel: 'meta',
-        text: '',
-        done: false
-      });
-
       try {
-        const reply = this.runEssayFeedbackStub({
-          essayFeedbackType,
-          fileName: sourceFile.name,
-          format: path.extname(sourceFile.path).toLowerCase().slice(1) || 'other',
-          identifiedParagraphs
-        });
+        const stageReplies =
+          essayFeedbackType === 'thesis-statement-feedback'
+            ? await this.runThesisStatementFeedback({
+                fileId: request.fileId,
+                sessionId,
+                clientRequestId,
+                settings,
+                emitToRenderer,
+                identifiedEssayContext
+              })
+            : this.runEssayFeedbackStub({
+                fileId: request.fileId,
+                sessionId,
+                clientRequestId,
+                essayFeedbackType,
+                fileName: sourceFile.name,
+                format: path.extname(sourceFile.path).toLowerCase().slice(1) || 'other',
+                identifiedParagraphs: identifiedEssayContext.identifiedParagraphs,
+                emitToRenderer
+              });
 
-        replies.push({
-          fileId: request.fileId,
-          sessionId,
-          messageId,
-          reply,
-          clientRequestId,
-          essayFeedbackType
-        });
-
-        emitToRenderer({
-          requestId: `${clientRequestId}:chunk`,
-          clientRequestId,
-          fileId: request.fileId,
-          sessionId,
-          messageId,
-          workflow: 'essay-feedback',
-          essayFeedbackType,
-          type: 'chunk',
-          seq: 2,
-          channel: 'content',
-          text: reply,
-          done: false
-        });
-
-        emitToRenderer({
-          requestId: `${clientRequestId}:done`,
-          clientRequestId,
-          fileId: request.fileId,
-          sessionId,
-          messageId,
-          workflow: 'essay-feedback',
-          essayFeedbackType,
-          type: 'done',
-          seq: 3,
-          channel: 'meta',
-          text: '',
-          done: true
-        });
+        replies.push(...stageReplies);
       } catch (error) {
-        const reason = error instanceof Error ? error.message : 'Essay feedback stub failed.';
+        const reason = error instanceof Error ? error.message : 'Essay feedback stage failed.';
+        const messageId = randomUUID();
         failures.push({
           fileId: request.fileId,
           sessionId,
@@ -199,12 +190,12 @@ export class EssayFeedbackChatService {
           workflow: 'essay-feedback',
           essayFeedbackType,
           type: 'error',
-          seq: 2,
+          seq: 999,
           channel: 'meta',
           text: '',
           done: true,
           error: {
-            code: 'ESSAY_FEEDBACK_STUB_FAILED',
+            code: 'ESSAY_FEEDBACK_STAGE_FAILED',
             message: reason,
             details: error
           }
@@ -213,14 +204,18 @@ export class EssayFeedbackChatService {
     }
 
     try {
-      await this.deps.llmChatSessionRepository.appendTurns(
-        sessionId,
-        replies.map((reply) => ({
-          role: 'assistant' as const,
-          content: reply.reply
-        })),
-        request.fileId
-      );
+      const turns: LlmSessionTurn[] = replies.map((reply) => ({
+        role: 'assistant',
+        content: reply.reply,
+        metadata: reply.inlineComment
+          ? {
+              feedbackType: 'thesis-statement-feedback',
+              inlineComment: reply.inlineComment
+            }
+          : undefined
+      }));
+      await this.deps.llmChatSessionRepository.appendTurns(sessionId, turns, request.fileId);
+
       for (const reply of replies) {
         await this.deps.repository.addMessage({
           id: reply.messageId,
@@ -228,6 +223,15 @@ export class EssayFeedbackChatService {
           content: reply.reply,
           relatedFileId: request.fileId,
           createdAt: new Date().toISOString()
+        });
+      }
+      if (activeModel && replies.length > 0) {
+        await this.deps.llmFeedbackCompletionRepository.addCompletion({
+          fileId: request.fileId,
+          workflowKey: 'essay_feedback',
+          modelKey: activeModel.key,
+          modelDisplayName: activeModel.displayName,
+          sessionId
         });
       }
     } catch (error) {
@@ -240,21 +244,17 @@ export class EssayFeedbackChatService {
 
     return {
       reply: replies[replies.length - 1]?.reply ?? '',
-      essayFeedback: {
-        replies,
-        failures
-      }
+      essayFeedback: { replies, failures }
     };
   }
 
-  private async identifyParagraphs(args: {
+  private async preflightEssayFile(args: {
     fileId: string;
     filePath: string;
     sessionId: string;
     baseClientRequestId: string;
-    settings: LlmRuntimeSettings;
     emitToRenderer: EmitChatEvent;
-  }): Promise<LlmEssayFeedbackIdentifyResult | null> {
+  }): Promise<EssayPreflightContext | null> {
     const identifyClientRequestId = `${args.baseClientRequestId}:identify`;
     const progressMessageId = randomUUID();
 
@@ -344,10 +344,26 @@ export class EssayFeedbackChatService {
       return null;
     }
 
+    return {
+      essayText,
+      identifyClientRequestId,
+      progressMessageId
+    };
+  }
+
+  private async identifyParagraphs(args: {
+    fileId: string;
+    sessionId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    essayText: string;
+    identifyClientRequestId: string;
+    progressMessageId: string;
+  }): Promise<IdentifiedEssayContext | null> {
     const llmPayload = buildLlmEssayFeedbackIdentifyPayload({
-      essay: essayText,
+      essay: args.essayText,
       settings: args.settings,
-      clientRequestId: identifyClientRequestId
+      clientRequestId: args.identifyClientRequestId
     });
 
     const llmResult = await this.deps.llmOrchestrator.requestActionStream<
@@ -359,10 +375,10 @@ export class EssayFeedbackChatService {
       }
       args.emitToRenderer({
         requestId: streamEvent.requestId,
-        clientRequestId: identifyClientRequestId,
+        clientRequestId: args.identifyClientRequestId,
         fileId: args.fileId,
         sessionId: args.sessionId,
-        messageId: progressMessageId,
+        messageId: args.progressMessageId,
         workflow: 'essay-feedback',
         essayFeedbackStage: 'identify-paragraphs',
         type: 'status',
@@ -376,10 +392,10 @@ export class EssayFeedbackChatService {
     if (!llmResult.ok) {
       args.emitToRenderer({
         requestId: llmResult.requestId,
-        clientRequestId: identifyClientRequestId,
+        clientRequestId: args.identifyClientRequestId,
         fileId: args.fileId,
         sessionId: args.sessionId,
-        messageId: progressMessageId,
+        messageId: args.progressMessageId,
         workflow: 'essay-feedback',
         essayFeedbackStage: 'identify-paragraphs',
         type: 'error',
@@ -395,10 +411,10 @@ export class EssayFeedbackChatService {
     if (!isEssayFeedbackIdentifyResult(llmResult.data)) {
       args.emitToRenderer({
         requestId: llmResult.requestId,
-        clientRequestId: identifyClientRequestId,
+        clientRequestId: args.identifyClientRequestId,
         fileId: args.fileId,
         sessionId: args.sessionId,
-        messageId: progressMessageId,
+        messageId: args.progressMessageId,
         workflow: 'essay-feedback',
         essayFeedbackStage: 'identify-paragraphs',
         type: 'error',
@@ -415,22 +431,18 @@ export class EssayFeedbackChatService {
       return null;
     }
 
-    await this.deps.essayFeedbackAnalysisRepository.upsertIdentifiedParagraphs(
-      args.sessionId,
-      args.fileId,
-      {
-        introductionParagraph: llmResult.data.introduction_paragraph,
-        bodyParagraphs: llmResult.data.body_paragraphs.items,
-        conclusionParagraph: llmResult.data.conclusion_paragraph
-      }
-    );
+    await this.deps.essayFeedbackAnalysisRepository.upsertIdentifiedParagraphs(args.sessionId, args.fileId, {
+      introductionParagraph: llmResult.data.introduction_paragraph,
+      bodyParagraphs: llmResult.data.body_paragraphs.items,
+      conclusionParagraph: llmResult.data.conclusion_paragraph
+    });
 
     args.emitToRenderer({
-      requestId: `${identifyClientRequestId}:done`,
-      clientRequestId: identifyClientRequestId,
+      requestId: `${args.identifyClientRequestId}:done`,
+      clientRequestId: args.identifyClientRequestId,
       fileId: args.fileId,
       sessionId: args.sessionId,
-      messageId: progressMessageId,
+      messageId: args.progressMessageId,
       workflow: 'essay-feedback',
       essayFeedbackStage: 'identify-paragraphs',
       type: 'done',
@@ -440,31 +452,262 @@ export class EssayFeedbackChatService {
       done: true
     });
 
-    return llmResult.data;
+    return {
+      essayText: args.essayText,
+      identifiedParagraphs: llmResult.data
+    };
+  }
+
+  private async runThesisStatementFeedback(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackReply[]> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'thesis-statement-feedback',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const payload = buildLlmEssayFeedbackThesisStatementPayload({
+      essay: args.identifiedEssayContext.essayText,
+      introduction: args.identifiedEssayContext.identifiedParagraphs.introduction_paragraph,
+      settings: args.settings,
+      clientRequestId: args.clientRequestId
+    });
+
+    const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+      typeof payload,
+      LlmEssayFeedbackThesisStatementResult
+    >('llm.essay.feedback.thesisStatement', payload, (streamEvent) => {
+      if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+        return;
+      }
+      args.emitToRenderer({
+        requestId: streamEvent.requestId,
+        clientRequestId: args.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'thesis-statement-feedback',
+        type: 'status',
+        seq: streamEvent.data.seq + 1,
+        channel: 'meta',
+        text: streamEvent.data.text,
+        done: false
+      });
+    });
+
+    if (!llmResult.ok) {
+      throw new Error(llmResult.error.message);
+    }
+    if (!isEssayFeedbackThesisStatementResult(llmResult.data)) {
+      throw new Error('Python worker returned an invalid thesis-statement response.');
+    }
+
+    await this.deps.essayFeedbackAnalysisRepository.saveThesisStatement(
+      args.sessionId,
+      args.fileId,
+      llmResult.data.thesis_statement
+    );
+
+    const replies = [
+      this.buildEssayFeedbackReply({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: `${args.clientRequestId}:verdict`,
+        essayFeedbackType: 'thesis-statement-feedback',
+        essayFeedbackSection: 'verdict',
+        feedbackType: 'thesis-statement-feedback',
+        reply: this.formatEssayFeedbackSectionReply('Thesis Statement Feedback', 'Verdict', llmResult.data.verdict),
+        inlineComment: this.buildInlineCommentPayload(llmResult.data.thesis_statement, llmResult.data.verdict)
+      }),
+      this.buildEssayFeedbackReply({
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        clientRequestId: `${args.clientRequestId}:improvements`,
+        essayFeedbackType: 'thesis-statement-feedback',
+        essayFeedbackSection: 'improvements',
+        feedbackType: 'thesis-statement-feedback',
+        reply: this.formatEssayFeedbackSectionReply(
+          'Thesis Statement Feedback',
+          'Improvements',
+          llmResult.data.improvements
+        ),
+        inlineComment: this.buildInlineCommentPayload(
+          llmResult.data.thesis_statement,
+          llmResult.data.improvements
+        )
+      })
+    ];
+
+    replies.forEach((reply, index) => {
+      args.emitToRenderer({
+        requestId: `${reply.clientRequestId}:chunk`,
+        clientRequestId: reply.clientRequestId,
+        fileId: reply.fileId,
+        sessionId: reply.sessionId,
+        messageId: reply.messageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: reply.essayFeedbackType,
+        essayFeedbackSection: reply.essayFeedbackSection,
+        feedbackType: reply.feedbackType,
+        inlineComment: reply.inlineComment,
+        type: 'chunk',
+        seq: index + 10,
+        channel: 'content',
+        text: reply.reply,
+        done: false
+      });
+    });
+
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:done`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'thesis-statement-feedback',
+      type: 'done',
+      seq: 1000,
+      channel: 'meta',
+      text: '',
+      done: true
+    });
+
+    return replies;
   }
 
   private runEssayFeedbackStub(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
     essayFeedbackType: EssayFeedbackType;
     fileName: string;
     format: string;
     identifiedParagraphs: LlmEssayFeedbackIdentifyResult;
-  }): string {
-    switch (args.essayFeedbackType) {
-      case 'thesis-statement-feedback':
-        return this.stubThesisStatementFeedback(args);
-      case 'summarize-main-idea':
-        return this.stubSummarizeMainIdea(args);
-      case 'paragraph-evaluation':
-        return this.stubParagraphEvaluation(args);
-      case 'thesis-restatement-feedback':
-        return this.stubThesisRestatementFeedback(args);
-      case 'summary-feedback':
-        return this.stubSummaryFeedback(args);
-      case 'conclusion-final-comment':
-        return this.stubConclusionFinalComment(args);
-      default:
-        return `Stub essay feedback response for ${args.fileName}.`;
-    }
+    emitToRenderer: EmitChatEvent;
+  }): EssayFeedbackReply[] {
+    const reply = (() => {
+      switch (args.essayFeedbackType) {
+        case 'thesis-statement-feedback':
+          return this.stubThesisStatementFeedback(args);
+        case 'summarize-main-idea':
+          return this.stubSummarizeMainIdea(args);
+        case 'paragraph-evaluation':
+          return this.stubParagraphEvaluation(args);
+        case 'thesis-restatement-feedback':
+          return this.stubThesisRestatementFeedback(args);
+        case 'summary-feedback':
+          return this.stubSummaryFeedback(args);
+        case 'conclusion-final-comment':
+          return this.stubConclusionFinalComment(args);
+        default:
+          return `Stub essay feedback response for ${args.fileName}.`;
+      }
+    })();
+
+    const builtReply = this.buildEssayFeedbackReply({
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      clientRequestId: args.clientRequestId,
+      essayFeedbackType: args.essayFeedbackType,
+      reply
+    });
+
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: builtReply.messageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: args.essayFeedbackType,
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:chunk`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: builtReply.messageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: args.essayFeedbackType,
+      type: 'chunk',
+      seq: 2,
+      channel: 'content',
+      text: builtReply.reply,
+      done: false
+    });
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:done`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: builtReply.messageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: args.essayFeedbackType,
+      type: 'done',
+      seq: 3,
+      channel: 'meta',
+      text: '',
+      done: true
+    });
+
+    return [builtReply];
+  }
+
+  private buildEssayFeedbackReply(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    essayFeedbackType: EssayFeedbackType;
+    reply: string;
+    essayFeedbackSection?: EssayFeedbackSection;
+    feedbackType?: ChatFeedbackType;
+    inlineComment?: ChatInlineCommentPayload;
+  }): EssayFeedbackReply {
+    return {
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: randomUUID(),
+      reply: args.reply,
+      clientRequestId: args.clientRequestId,
+      essayFeedbackType: args.essayFeedbackType,
+      essayFeedbackSection: args.essayFeedbackSection,
+      feedbackType: args.feedbackType,
+      inlineComment: args.inlineComment
+    };
+  }
+
+  private buildInlineCommentPayload(searchText: string, commentText: string): ChatInlineCommentPayload {
+    return {
+      searchText: searchText.trim(),
+      commentText: commentText.trim()
+    };
+  }
+
+  private formatEssayFeedbackSectionReply(title: string, section: string, text: string): string {
+    return `### ${title}\n${section}: ${text}`;
   }
 
   private stubThesisStatementFeedback(args: {

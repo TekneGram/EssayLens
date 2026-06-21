@@ -11,6 +11,8 @@ import type {
   LlmEssayFeedbackIdentifyPayload,
   LlmEssayFeedbackStubPayload,
   LlmEssayFeedbackIdentifyResult,
+  LlmEssayFeedbackThesisStatementPayload,
+  LlmEssayFeedbackThesisStatementResult,
   LlmParagraphFeedbackBulkPayload,
   LlmRubricEvaluationPayload,
   EssayFeedbackRequest,
@@ -113,6 +115,20 @@ export function buildLlmEssayFeedbackIdentifyPayload(args: {
   };
 }
 
+export function buildLlmEssayFeedbackThesisStatementPayload(args: {
+  essay: string;
+  introduction: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackThesisStatementPayload {
+  return {
+    essay: args.essay,
+    introduction: args.introduction,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
 export function isEssayFeedbackIdentifyResult(data: unknown): data is LlmEssayFeedbackIdentifyResult {
   if (typeof data !== 'object' || data === null) {
     return false;
@@ -135,6 +151,20 @@ export function isEssayFeedbackIdentifyResult(data: unknown): data is LlmEssayFe
       typeof item === 'object' &&
       item !== null &&
       typeof (item as Record<string, unknown>).body_paragraph === 'string'
+  );
+}
+
+export function isEssayFeedbackThesisStatementResult(
+  data: unknown
+): data is LlmEssayFeedbackThesisStatementResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return (
+    typeof value.thesis_statement === 'string' &&
+    typeof value.verdict === 'string' &&
+    typeof value.improvements === 'string'
   );
 }
 

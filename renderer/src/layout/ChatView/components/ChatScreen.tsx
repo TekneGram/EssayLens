@@ -1,4 +1,4 @@
-import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
+import type { ChatInlineCommentPayload } from '@/app/ports/chat.port';
 import type { ChatViewMessageItem } from '../application/chatView.service';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,7 +10,7 @@ interface ChatScreenProps {
   showLlmLoading?: boolean;
   showThinking?: boolean;
   onCreateCommentFromChatMessage?: (text: string) => void | Promise<void>;
-  onCreateInlineCommentFromVocabulary?: (vocabulary: ChatVocabularyFeedback) => void | Promise<void>;
+  onCreateInlineCommentFromChatMessage?: (payload: ChatInlineCommentPayload) => void | Promise<void>;
 }
 
 export function ChatScreen({
@@ -20,7 +20,7 @@ export function ChatScreen({
   showLlmLoading = false,
   showThinking = false,
   onCreateCommentFromChatMessage,
-  onCreateInlineCommentFromVocabulary
+  onCreateInlineCommentFromChatMessage
 }: ChatScreenProps) {
   if (isLoading) {
     return <p className="content-block">Loading chat messages...</p>;
@@ -49,13 +49,13 @@ export function ChatScreen({
             <div className="msg-role">{item.roleLabel}</div>
             {item.roleClassName === 'assistant' ? (
               <>
-                {item.feedbackType === 'vocabulary' && item.vocabulary ? (
-                  onCreateInlineCommentFromVocabulary ? (
+                {item.inlineComment ? (
+                  onCreateInlineCommentFromChatMessage ? (
                     <div className="msg-actions">
                       <button
                         type="button"
                         className="msg-action-button"
-                        onClick={() => void onCreateInlineCommentFromVocabulary(item.vocabulary!)}
+                        onClick={() => void onCreateInlineCommentFromChatMessage(item.inlineComment!)}
                       >
                         Add inline comment
                       </button>

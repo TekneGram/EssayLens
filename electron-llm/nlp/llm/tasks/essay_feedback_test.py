@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from nlp.llm.tasks.essay_feedback import run_identify_paragraphs
+from nlp.llm.tasks.essay_feedback import run_identify_paragraphs, run_thesis_statement_feedback
 from nlp.llm.llm_types import ChatResponse
 
 
@@ -65,4 +65,36 @@ def test_run_identify_paragraphs_returns_expected_structure_and_status() -> None
         "conclusion_paragraph": "Conclusion.",
     }
     assert statuses == ["Identifying introduction, body paragraphs, and conclusion..."]
+    assert service.calls[0]["system"]
+
+
+def test_run_thesis_statement_feedback_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"thesis_statement":"Students should read more.","verdict":"Clear and focused thesis.","improvements":"Add one concrete reason to make the claim more specific."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_thesis_statement_feedback(
+        llm_service=service,
+        app_cfg=app_cfg,
+        essay_text="Introduction.\nBody.\nConclusion.",
+        introduction_text="Introduction.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "thesis_statement": "Students should read more.",
+        "verdict": "Clear and focused thesis.",
+        "improvements": "Add one concrete reason to make the claim more specific.",
+    }
+    assert statuses == ["Extracting and evaluating the thesis statement..."]
     assert service.calls[0]["system"]

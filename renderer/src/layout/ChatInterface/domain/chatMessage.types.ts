@@ -1,5 +1,5 @@
 import type { ChatRole, EntityId, ISODateString } from '@/app/types';
-import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
+import type { ChatFeedbackType, ChatInlineCommentPayload, ChatVocabularyFeedback } from '@/app/ports/chat.port';
 
 export interface ChatMessage {
   id: EntityId;
@@ -9,8 +9,9 @@ export interface ChatMessage {
   sessionId?: string;
   createdAt: ISODateString;
   canCreateComment?: boolean;
-  feedbackType?: 'vocabulary';
+  feedbackType?: ChatFeedbackType;
   vocabulary?: ChatVocabularyFeedback;
+  inlineComment?: ChatInlineCommentPayload;
 }
 
 export type ChatDataArray = ChatMessage[];

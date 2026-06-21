@@ -10,7 +10,8 @@ export const ListMessagesSchema = z.object({
 }) as z.ZodSchema<ListMessagesRequest>;
 
 export const CheckParagraphFeedbackCompletionsSchema = z.object({
-  fileIds: z.array(z.string().trim().min(1)).min(1, 'completion check payload must include at least one fileId')
+  fileIds: z.array(z.string().trim().min(1)).min(1, 'completion check payload must include at least one fileId'),
+  workflowKey: z.enum(['paragraph_feedback', 'essay_feedback']).optional()
 }) as z.ZodSchema<CheckParagraphFeedbackCompletionsRequest>;
 
 const sendChatMessageSchema = z.discriminatedUnion('kind', [

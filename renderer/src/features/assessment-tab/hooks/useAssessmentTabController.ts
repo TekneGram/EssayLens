@@ -76,7 +76,7 @@ export function useAssessmentTabController({
     onGenerateFeedbackDocument,
     onCommentsTabChange,
     onCreateCommentFromChatMessage,
-    onCreateInlineCommentFromVocabulary
+    onCreateInlineCommentFromChatMessage
   } = useAssessmentCommentsController({
     appState,
     appDispatch,
@@ -102,7 +102,7 @@ export function useAssessmentTabController({
     onChatBindingsChange,
     setActiveCommandWithModeRule,
     onCreateCommentFromChatMessage,
-    onCreateInlineCommentFromVocabulary
+    onCreateInlineCommentFromChatMessage
   });
 
   const originalText =

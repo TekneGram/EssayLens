@@ -212,7 +212,9 @@ export async function submitChatMessageWorkflow({
               relatedFileId: reply.fileId,
               sessionId: responseSessionId,
               createdAt,
-              canCreateComment: !reply.diagnosticType
+              canCreateComment: !reply.diagnosticType,
+              feedbackType: reply.feedbackType,
+              inlineComment: reply.inlineComment
             })
           );
         } else {
@@ -284,7 +286,9 @@ export async function submitChatMessageWorkflow({
               relatedFileId: reply.fileId,
               sessionId: reply.sessionId,
               createdAt,
-              canCreateComment: false
+              canCreateComment: false,
+              feedbackType: reply.feedbackType,
+              inlineComment: reply.inlineComment
             })
           );
         }
@@ -395,8 +399,9 @@ function ensureStreamAssistantMessage(args: HandleChatStreamChunkWorkflowParams)
       sessionId: event.sessionId,
       createdAt: new Date().toISOString(),
       canCreateComment: false,
-      feedbackType: event.feedbackType === 'vocabulary' ? 'vocabulary' : undefined,
-      vocabulary: event.vocabulary
+      feedbackType: event.feedbackType,
+      vocabulary: event.vocabulary,
+      inlineComment: event.inlineComment
     })
   );
 

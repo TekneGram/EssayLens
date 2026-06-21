@@ -74,14 +74,44 @@ async function createEssayFeedbackService() {
   const appendTurns = vi.fn().mockResolvedValue(undefined);
   const addMessage = vi.fn().mockResolvedValue(undefined);
   const upsertIdentifiedParagraphs = vi.fn().mockResolvedValue(undefined);
-  const requestActionStream = vi.fn().mockImplementation(async (_action, _payload, onStreamEvent) => {
+  const saveThesisStatement = vi.fn().mockResolvedValue(undefined);
+  const addCompletion = vi.fn().mockResolvedValue(undefined);
+  const requestActionStream = vi.fn().mockImplementation(async (action, _payload, onStreamEvent) => {
+    if (action === 'llm.essay.feedback.identifyParagraphs') {
+      onStreamEvent({
+        requestId: 'llm-identify-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: 'essay-client-1:identify',
+          channel: 'meta',
+          text: 'Identifying introduction, body paragraphs, and conclusion...',
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-identify-1',
+        ok: true,
+        data: {
+          introduction_paragraph: 'Introduction paragraph.',
+          body_paragraphs: {
+            items: [{ body_paragraph: 'Body paragraph one.' }]
+          },
+          conclusion_paragraph: 'Conclusion paragraph.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
     onStreamEvent({
-      requestId: 'llm-identify-status-1',
+      requestId: 'llm-thesis-status-1',
       type: 'stream_chunk',
       data: {
-        clientRequestId: 'essay-client-1:identify',
+        clientRequestId: 'essay-client-1:essay:1:thesis-statement-feedback',
         channel: 'meta',
-        text: 'Identifying introduction, body paragraphs, and conclusion...',
+        text: 'Extracting and evaluating the thesis statement...',
         done: false,
         seq: 1
       },
@@ -89,14 +119,12 @@ async function createEssayFeedbackService() {
     });
 
     return {
-      requestId: 'llm-identify-1',
+      requestId: 'llm-thesis-1',
       ok: true,
       data: {
-        introduction_paragraph: 'Introduction paragraph.',
-        body_paragraphs: {
-          items: [{ body_paragraph: 'Body paragraph one.' }]
-        },
-        conclusion_paragraph: 'Conclusion paragraph.'
+        thesis_statement: 'Students should read more books.',
+        verdict: 'Clear thesis, but it would be stronger with one concrete reason.',
+        improvements: 'Add a specific reason students benefit from reading more books.'
       },
       timestamp: '2026-06-21T00:00:00.000Z'
     };
@@ -111,12 +139,15 @@ async function createEssayFeedbackService() {
     } as any,
     llmSelectionRepository: {
       listCatalogModels: vi.fn().mockResolvedValue([]),
-      getActiveModel: vi.fn().mockResolvedValue(null),
+      getActiveModel: vi.fn().mockResolvedValue({ key: 'essay-model', displayName: 'Essay Model' }),
       resetSettingsToDefaults: vi.fn().mockResolvedValue(null)
     } as any,
-    llmFeedbackCompletionRepository: {} as any,
+    llmFeedbackCompletionRepository: {
+      addCompletion
+    } as any,
     essayFeedbackAnalysisRepository: {
       upsertIdentifiedParagraphs,
+      saveThesisStatement,
       getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
     } as any,
     rubricRepository: {} as any,
@@ -147,7 +178,9 @@ async function createEssayFeedbackService() {
     appendTurns,
     addMessage,
     requestActionStream,
-    upsertIdentifiedParagraphs
+    upsertIdentifiedParagraphs,
+    saveThesisStatement,
+    addCompletion
   };
 }
 
@@ -160,7 +193,8 @@ describe('EssayFeedbackChatService', () => {
       appendTurns,
       addMessage,
       requestActionStream,
-      upsertIdentifiedParagraphs
+      upsertIdentifiedParagraphs,
+      addCompletion
     } = await createEssayFeedbackService();
 
     const result = await service.sendMessage(
@@ -180,6 +214,7 @@ describe('EssayFeedbackChatService', () => {
       'conclusion-final-comment'
     ]);
     expect(createSession).toHaveBeenCalledTimes(1);
+    expect(createSession.mock.invocationCallOrder[0]).toBeLessThan(upsertIdentifiedParagraphs.mock.invocationCallOrder[0]);
     expect(upsertIdentifiedParagraphs).toHaveBeenCalledWith(
       expect.stringContaining('essay-feedback:file-1:'),
       'file-1',
@@ -189,6 +224,13 @@ describe('EssayFeedbackChatService', () => {
         conclusionParagraph: 'Conclusion paragraph.'
       }
     );
+    expect(addCompletion).toHaveBeenCalledWith({
+      fileId: 'file-1',
+      workflowKey: 'essay_feedback',
+      modelKey: 'essay-model',
+      modelDisplayName: 'Essay Model',
+      sessionId: expect.stringContaining('essay-feedback:file-1:')
+    });
     expect(appendTurns).toHaveBeenCalledWith(
       expect.stringContaining('essay-feedback:file-1:'),
       [
@@ -224,5 +266,167 @@ describe('EssayFeedbackChatService', () => {
       { type: 'chunk', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'content' },
       { type: 'done', stage: undefined, feedbackType: 'conclusion-final-comment', channel: 'meta' }
     ]);
+  });
+
+  it('emits verdict and improvements bubbles for thesis statement feedback with inline comment payloads', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, requestActionStream, saveThesisStatement, addCompletion } = await createEssayFeedbackService();
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-1',
+        selectedFeedbackTypes: ['thesis-statement-feedback']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(requestActionStream).toHaveBeenCalledTimes(2);
+    expect(result.essayFeedback?.replies).toHaveLength(2);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.essayFeedbackSection)).toEqual([
+      'verdict',
+      'improvements'
+    ]);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.inlineComment)).toEqual([
+      {
+        searchText: 'Students should read more books.',
+        commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+      },
+      {
+        searchText: 'Students should read more books.',
+        commentText: 'Add a specific reason students benefit from reading more books.'
+      }
+    ]);
+    expect(saveThesisStatement).toHaveBeenCalledWith(
+      expect.stringContaining('essay-feedback:file-1:'),
+      'file-1',
+      'Students should read more books.'
+    );
+    expect(addCompletion).toHaveBeenCalledWith({
+      fileId: 'file-1',
+      workflowKey: 'essay_feedback',
+      modelKey: 'essay-model',
+      modelDisplayName: 'Essay Model',
+      sessionId: expect.stringContaining('essay-feedback:file-1:')
+    });
+    expect(appendTurns).toHaveBeenCalledWith(
+      expect.stringContaining('essay-feedback:file-1:'),
+      [
+        {
+          role: 'assistant',
+          content:
+            '### Thesis Statement Feedback\nVerdict: Clear thesis, but it would be stronger with one concrete reason.',
+          metadata: {
+            feedbackType: 'thesis-statement-feedback',
+            inlineComment: {
+              searchText: 'Students should read more books.',
+              commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+            }
+          }
+        },
+        {
+          role: 'assistant',
+          content:
+            '### Thesis Statement Feedback\nImprovements: Add a specific reason students benefit from reading more books.',
+          metadata: {
+            feedbackType: 'thesis-statement-feedback',
+            inlineComment: {
+              searchText: 'Students should read more books.',
+              commentText: 'Add a specific reason students benefit from reading more books.'
+            }
+          }
+        }
+      ],
+      'file-1'
+    );
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'chunk')
+        .map((event) => ({
+          section: event.essayFeedbackSection,
+          inlineComment: event.inlineComment
+        }))
+    ).toEqual([
+      {
+        section: 'verdict',
+        inlineComment: {
+          searchText: 'Students should read more books.',
+          commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+        }
+      },
+      {
+        section: 'improvements',
+        inlineComment: {
+          searchText: 'Students should read more books.',
+          commentText: 'Add a specific reason students benefit from reading more books.'
+        }
+      }
+    ]);
+  });
+
+  it('does not create a session for unsupported non-docx files', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'essaylens-essay-feedback-pdf-'));
+    const sourcePath = path.join(tempDir, 'essay.pdf');
+    await fs.writeFile(sourcePath, Buffer.from('fake'));
+
+    const createSession = vi.fn().mockResolvedValue({
+      sessionId: 'essay-feedback:file-1:1',
+      fileEntityUuid: 'file-1'
+    });
+    const upsertIdentifiedParagraphs = vi.fn();
+    const service = new EssayFeedbackChatService({
+      llmOrchestrator: { requestActionStream: vi.fn() } as any,
+      llmSettingsRepository: {
+        getRuntimeSettings: vi.fn().mockResolvedValue(buildRuntimeSettings())
+      } as any,
+      llmSelectionRepository: {
+        listCatalogModels: vi.fn().mockResolvedValue([]),
+        getActiveModel: vi.fn().mockResolvedValue({ key: 'essay-model', displayName: 'Essay Model' }),
+        resetSettingsToDefaults: vi.fn().mockResolvedValue(null)
+      } as any,
+      llmFeedbackCompletionRepository: {
+        addCompletion: vi.fn()
+      } as any,
+      essayFeedbackAnalysisRepository: {
+        upsertIdentifiedParagraphs,
+        saveThesisStatement: vi.fn(),
+        getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
+      } as any,
+      rubricRepository: {} as any,
+      workspaceRepository: {
+        resolveFileById: vi.fn().mockResolvedValue({
+          id: 'file-1',
+          path: sourcePath,
+          name: 'essay.pdf',
+          kind: 'pdf'
+        })
+      } as any,
+      llmChatSessionRepository: {
+        createSession,
+        appendTurns: vi.fn()
+      } as any,
+      repository: {
+        addMessage: vi.fn()
+      } as any,
+      fileExists: vi.fn().mockResolvedValue(true),
+      isFile: vi.fn().mockResolvedValue(true),
+      isExecutable: vi.fn().mockResolvedValue(true),
+      resolveLlmServerPath: vi.fn().mockReturnValue('/tmp/llama-server')
+    });
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-unsupported',
+        selectedFeedbackTypes: ['summary-feedback']
+      },
+      () => {}
+    );
+
+    expect(createSession).not.toHaveBeenCalled();
+    expect(upsertIdentifiedParagraphs).not.toHaveBeenCalled();
+    expect(result.essayFeedback?.replies).toEqual([]);
   });
 });

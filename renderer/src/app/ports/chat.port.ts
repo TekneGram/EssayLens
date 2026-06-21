@@ -8,6 +8,11 @@ export interface ChatVocabularyFeedback {
   preciseVocabulary: string;
 }
 
+export interface ChatInlineCommentPayload {
+  searchText: string;
+  commentText: string;
+}
+
 export interface ChatMessageDto {
   id: string;
   role: 'system' | 'teacher' | 'assistant';
@@ -26,6 +31,8 @@ export type EssayFeedbackType =
   | 'conclusion-final-comment';
 
 export type EssayFeedbackStage = 'identify-paragraphs';
+export type EssayFeedbackSection = 'verdict' | 'improvements';
+export type ChatFeedbackType = 'topic_sentence' | 'coherence' | 'vocabulary' | 'thesis-statement-feedback';
 
 export interface ListMessagesResponse {
   messages: ChatMessageDto[];
@@ -68,6 +75,7 @@ export interface SendChatMessageResponse {
       feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
       feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
       vocabulary?: ChatVocabularyFeedback;
+      inlineComment?: ChatInlineCommentPayload;
       diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
@@ -91,6 +99,9 @@ export interface SendChatMessageResponse {
       reply: string;
       clientRequestId: string;
       essayFeedbackType: EssayFeedbackType;
+      essayFeedbackSection?: EssayFeedbackSection;
+      feedbackType?: ChatFeedbackType;
+      inlineComment?: ChatInlineCommentPayload;
     }>;
     failures?: Array<{
       fileId: string;
@@ -114,6 +125,7 @@ export interface ParagraphFeedbackCompletionDto {
 
 export interface CheckParagraphFeedbackCompletionsRequest {
   fileIds: string[];
+  workflowKey?: 'paragraph_feedback' | 'essay_feedback';
 }
 
 export interface CheckParagraphFeedbackCompletionsResponse {
@@ -133,12 +145,14 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
-  feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
+  feedbackType?: ChatFeedbackType;
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   vocabulary?: ChatVocabularyFeedback;
+  inlineComment?: ChatInlineCommentPayload;
   workflow?: 'paragraph-feedback-bulk' | 'essay-feedback';
   essayFeedbackType?: EssayFeedbackType;
   essayFeedbackStage?: EssayFeedbackStage;
+  essayFeedbackSection?: EssayFeedbackSection;
   type: ChatStreamEventType;
   seq: number;
   channel?: 'content' | 'reasoning' | 'meta';

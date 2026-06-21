@@ -24,7 +24,7 @@ interface UseAssessmentChatControllerParams {
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
   onCreateCommentFromChatMessage?: AssessmentTabChatBindings['onCreateCommentFromChatMessage'];
-  onCreateInlineCommentFromVocabulary?: AssessmentTabChatBindings['onCreateInlineCommentFromVocabulary'];
+  onCreateInlineCommentFromChatMessage?: AssessmentTabChatBindings['onCreateInlineCommentFromChatMessage'];
 }
 
 interface UseAssessmentChatControllerResult {
@@ -44,7 +44,7 @@ export function useAssessmentChatController({
   onChatBindingsChange,
   setActiveCommandWithModeRule,
   onCreateCommentFromChatMessage,
-  onCreateInlineCommentFromVocabulary
+  onCreateInlineCommentFromChatMessage
 }: UseAssessmentChatControllerParams): UseAssessmentChatControllerResult {
   const { handleModeChange, handleSubmit, setDraftText, isModeLockedToChat, isChatSendDisabled } = useAssessmentChatActions({
     appDispatch,
@@ -65,7 +65,7 @@ export function useAssessmentChatController({
     handleModeChange,
     setActiveCommandWithModeRule,
     onCreateCommentFromChatMessage,
-    onCreateInlineCommentFromVocabulary,
+    onCreateInlineCommentFromChatMessage,
     onChatBindingsChange
   });
 

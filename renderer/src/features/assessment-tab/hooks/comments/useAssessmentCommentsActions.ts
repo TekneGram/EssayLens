@@ -6,11 +6,11 @@ import type {
   AddBlockFeedbackRequest,
   AddInlineFeedbackRequest
 } from '@/app/ports/assessment.port';
-import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
+import type { ChatInlineCommentPayload } from '@/app/ports/chat.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
 import { resolveInlineSelectionFromText, type WordTextMap } from '@/features/text-view-window';
-import { buildVocabularyFeedbackDraft } from '../../domain/vocabularyInlineComment';
+import { buildChatInlineCommentDraft } from '../../domain/chatInlineComment';
 import {
   applyAssessmentFeedback,
   deleteAssessmentFeedback,
@@ -232,11 +232,11 @@ export function useAssessmentCommentsActions({
     [addFeedback, appDispatch, comments, localDispatch]
   );
 
-  const onCreateInlineCommentFromVocabulary = useCallback(
-    async (vocabulary: ChatVocabularyFeedback) => {
+  const onCreateInlineCommentFromChatMessage = useCallback(
+    async (payload: ChatInlineCommentPayload) => {
       const textMap = textMapRef.current;
-      const selection = textMap ? resolveInlineSelectionFromText(textMap, vocabulary.textContext) : null;
-      const draft = buildVocabularyFeedbackDraft(vocabulary, selection);
+      const selection = textMap ? resolveInlineSelectionFromText(textMap, payload.searchText) : null;
+      const draft = buildChatInlineCommentDraft(payload, selection);
 
       if (!selection) {
         toast.warn('Could not locate that text in the document. Added it as a general comment instead.');
@@ -267,6 +267,6 @@ export function useAssessmentCommentsActions({
     onGenerateFeedbackDocument,
     onCommentsTabChange,
     onCreateCommentFromChatMessage,
-    onCreateInlineCommentFromVocabulary
+    onCreateInlineCommentFromChatMessage
   };
 }

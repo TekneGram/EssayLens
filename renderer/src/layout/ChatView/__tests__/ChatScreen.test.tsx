@@ -49,8 +49,12 @@ describe('ChatScreen comment actions', () => {
 
   it('renders an inline-comment button for vocabulary bubbles and passes the payload', () => {
     const onCreateCommentFromChatMessage = vi.fn();
-    const onCreateInlineCommentFromVocabulary = vi.fn();
+    const onCreateInlineCommentFromChatMessage = vi.fn();
     const vocabulary = { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' };
+    const inlineComment = {
+      searchText: 'It was good.',
+      commentText: "Here you used the word 'good'. To improve, you could use: 'exemplary'."
+    };
 
     render(
       <ChatScreen
@@ -62,19 +66,49 @@ describe('ChatScreen comment actions', () => {
             content: "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'.",
             canCreateComment: true,
             feedbackType: 'vocabulary',
-            vocabulary
+            vocabulary,
+            inlineComment
           }
         ]}
         isLoading={false}
         onCreateCommentFromChatMessage={onCreateCommentFromChatMessage}
-        onCreateInlineCommentFromVocabulary={onCreateInlineCommentFromVocabulary}
+        onCreateInlineCommentFromChatMessage={onCreateInlineCommentFromChatMessage}
       />
     );
 
     // Vocabulary bubbles get the inline button, not the generic "Add to comments" one.
     expect(screen.queryByRole('button', { name: 'Add to comments' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
-    expect(onCreateInlineCommentFromVocabulary).toHaveBeenCalledWith(vocabulary);
+    expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
     expect(onCreateCommentFromChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('renders an inline-comment button for thesis feedback bubbles', () => {
+    const onCreateInlineCommentFromChatMessage = vi.fn();
+    const inlineComment = {
+      searchText: 'Students should read more books.',
+      commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+    };
+
+    render(
+      <ChatScreen
+        items={[
+          {
+            id: 'thesis-1',
+            roleClassName: 'assistant',
+            roleLabel: 'Assistant',
+            content: '### Thesis Statement Feedback\nVerdict: Clear thesis, but it would be stronger with one concrete reason.',
+            canCreateComment: false,
+            feedbackType: 'thesis-statement-feedback',
+            inlineComment
+          }
+        ]}
+        isLoading={false}
+        onCreateInlineCommentFromChatMessage={onCreateInlineCommentFromChatMessage}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
+    expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
   });
 });

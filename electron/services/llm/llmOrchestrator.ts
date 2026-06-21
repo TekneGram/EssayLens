@@ -15,6 +15,7 @@ const SUPPORTED_ACTIONS = new Set<LlmAction>([
   'llm.evaluate.simple',
   'llm.evaluate.withRubric',
   'llm.essay.feedback.identifyParagraphs',
+  'llm.essay.feedback.thesisStatement',
   'llm.paragraph.feedback.bulk',
   'llm.session.create',
   'llm.session.clear',
@@ -80,6 +81,7 @@ export class LlmOrchestrator {
       defaultTimeoutMs: 180_000,
       actionTimeoutMs: {
         'llm.essay.feedback.identifyParagraphs': 600_000,
+        'llm.essay.feedback.thesisStatement': 600_000,
         'llm.paragraph.feedback.bulk': 600_000
       },
       ...deps

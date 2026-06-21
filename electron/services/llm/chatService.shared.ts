@@ -82,6 +82,19 @@ export interface LlmEssayFeedbackIdentifyResult {
   conclusion_paragraph: string;
 }
 
+export interface LlmEssayFeedbackThesisStatementPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  introduction: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackThesisStatementResult {
+  thesis_statement: string;
+  verdict: string;
+  improvements: string;
+}
+
 export interface RuntimeReadyResult {
   settings: LlmRuntimeSettings;
   notReadyDetails: LlmNotReadyErrorDetails | null;

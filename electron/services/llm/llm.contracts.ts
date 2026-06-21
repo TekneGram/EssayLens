@@ -6,6 +6,7 @@ export type LlmAction =
   | 'llm.evaluate.simple'
   | 'llm.evaluate.withRubric'
   | 'llm.essay.feedback.identifyParagraphs'
+  | 'llm.essay.feedback.thesisStatement'
   | 'llm.paragraph.feedback.bulk'
   | 'llm.session.create'
   | 'llm.session.clear'

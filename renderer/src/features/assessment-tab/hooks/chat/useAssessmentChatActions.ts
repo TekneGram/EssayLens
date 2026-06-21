@@ -32,19 +32,20 @@ type AddFeedbackDraft = Omit<AddInlineFeedbackRequest, 'fileId'> | Omit<AddBlock
 const MAX_ESSAY_WORD_COUNT = 2000;
 const ESSAY_TRUNCATION_WARNING = 'Only the first 2000 words of the essay are currently being considered.';
 
-function resolveParagraphFeedbackDuplicateChoice(args: {
+function resolveBulkFeedbackDuplicateChoice(args: {
   completions: ParagraphFeedbackCompletionDto[];
   modelDisplayName: string;
+  feedbackLabel: string;
 }): 'skip' | 'redo' | 'cancel' {
   const count = args.completions.length;
   const plural = count === 1 ? 'essay already has' : 'essays already have';
   const redo = window.confirm(
-    `${count} ${plural} paragraph feedback from ${args.modelDisplayName}.\n\nSelect OK to redo completed essays in new chat sessions. Select Cancel to choose whether to skip them.`
+    `${count} ${plural} ${args.feedbackLabel} from ${args.modelDisplayName}.\n\nSelect OK to redo completed essays in new chat sessions. Select Cancel to choose whether to skip them.`
   );
   if (redo) {
     return 'redo';
   }
-  const skip = window.confirm('Skip completed essays and run feedback only for essays without existing feedback?');
+  const skip = window.confirm(`Skip completed essays and run ${args.feedbackLabel} only for essays without existing feedback?`);
   return skip ? 'skip' : 'cancel';
 }
 
@@ -126,8 +127,8 @@ export function useAssessmentChatActions({
     () => appState.workspace.files.filter((file) => file.kind === 'docx').map((file) => file.id),
     [appState.workspace.files]
   );
-  const workspaceFileIds = useMemo(
-    () => appState.workspace.files.map((file) => file.id),
+  const workspaceEssayFeedbackFileIds = useMemo(
+    () => appState.workspace.files.filter((file) => file.kind === 'docx').map((file) => file.id),
     [appState.workspace.files]
   );
   const selectedEssayFeedbackTypes = useMemo(
@@ -140,7 +141,7 @@ export function useAssessmentChatActions({
   const isChatSendDisabled = isParagraphFeedbackBulkCommand
     ? workspaceDocxFileIds.length === 0
     : isEssayFeedbackBulkCommand
-      ? workspaceFileIds.length === 0 || selectedEssayFeedbackTypes.length === 0
+      ? workspaceEssayFeedbackFileIds.length === 0 || selectedEssayFeedbackTypes.length === 0
       : !selectedFileId;
 
   const streamMessageByClientRequestId = useRef(new Map<string, string>());
@@ -229,9 +230,10 @@ export function useAssessmentChatActions({
         let bulkFileIds = workspaceDocxFileIds;
         let redoCompletedFileIds: string[] | undefined;
         if (completionCheck.data.activeModel && completionCheck.data.completions.length > 0) {
-          const choice = resolveParagraphFeedbackDuplicateChoice({
+          const choice = resolveBulkFeedbackDuplicateChoice({
             completions: completionCheck.data.completions,
-            modelDisplayName: completionCheck.data.activeModel.displayName
+            modelDisplayName: completionCheck.data.activeModel.displayName,
+            feedbackLabel: 'paragraph feedback'
           });
           if (choice === 'cancel') {
             return;
@@ -260,8 +262,8 @@ export function useAssessmentChatActions({
           streamSessionByClientRequestId: streamSessionByClientRequestId.current
         });
       } else if (isEssayBulkCommand) {
-        if (workspaceFileIds.length === 0) {
-          const errorMessage = 'No files are available for essay feedback.';
+        if (workspaceEssayFeedbackFileIds.length === 0) {
+          const errorMessage = 'No DOCX files are available for essay feedback.';
           appDispatch(setChatError(errorMessage));
           toast.error(errorMessage);
           return;
@@ -273,7 +275,35 @@ export function useAssessmentChatActions({
           return;
         }
 
-        for (const fileId of workspaceFileIds) {
+        const completionCheck = await chatApi.checkParagraphFeedbackCompletions({
+          fileIds: workspaceEssayFeedbackFileIds,
+          workflowKey: 'essay_feedback'
+        });
+        if (!completionCheck.ok) {
+          throw new Error(completionCheck.error.message || 'Unable to check existing essay feedback.');
+        }
+
+        const completedFileIds = new Set(completionCheck.data.completions.map((completion) => completion.fileId));
+        let bulkFileIds = workspaceEssayFeedbackFileIds;
+        if (completionCheck.data.activeModel && completionCheck.data.completions.length > 0) {
+          const choice = resolveBulkFeedbackDuplicateChoice({
+            completions: completionCheck.data.completions,
+            modelDisplayName: completionCheck.data.activeModel.displayName,
+            feedbackLabel: 'essay feedback'
+          });
+          if (choice === 'cancel') {
+            return;
+          }
+          if (choice === 'skip') {
+            bulkFileIds = workspaceEssayFeedbackFileIds.filter((fileId) => !completedFileIds.has(fileId));
+            if (bulkFileIds.length === 0) {
+              toast.info('All essays already have essay feedback from the current LLM.');
+              return;
+            }
+          }
+        }
+
+        for (const fileId of bulkFileIds) {
           await submitChatMessageWorkflow({
             chatApi,
             dispatch: appDispatch,
@@ -421,7 +451,7 @@ export function useAssessmentChatActions({
     selectedEssayText,
     selectedFileId,
     selectedEssayFeedbackTypes,
-    workspaceFileIds,
+    workspaceEssayFeedbackFileIds,
     workspaceDocxFileIds,
     rubricApi,
     appState

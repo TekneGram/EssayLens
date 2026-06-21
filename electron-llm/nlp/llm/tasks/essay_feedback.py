@@ -112,3 +112,76 @@ def run_identify_paragraphs(
         schema=_identify_paragraphs_schema(),
         sanitizer=_sanitize_identified_paragraphs,
     )
+
+
+def _thesis_statement_feedback_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "thesis_statement": {"type": "string"},
+            "verdict": {"type": "string"},
+            "improvements": {"type": "string"},
+        },
+        "required": ["thesis_statement", "verdict", "improvements"],
+        "additionalProperties": False,
+    }
+
+
+def _sanitize_thesis_statement_feedback(*, obj: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
+    thesis_statement = obj.get("thesis_statement")
+    verdict = obj.get("verdict")
+    improvements = obj.get("improvements")
+
+    if not isinstance(thesis_statement, str) or not thesis_statement.strip():
+        raise RuntimeError("Thesis-statement feedback response missing thesis_statement.")
+    if not isinstance(verdict, str) or not verdict.strip():
+        raise RuntimeError("Thesis-statement feedback response missing verdict.")
+    if not isinstance(improvements, str) or not improvements.strip():
+        raise RuntimeError("Thesis-statement feedback response missing improvements.")
+
+    return {
+        "thesis_statement": thesis_statement.strip(),
+        "verdict": verdict.strip(),
+        "improvements": improvements.strip(),
+    }
+
+
+def run_thesis_statement_feedback(
+    *,
+    llm_service: "LlmService",
+    app_cfg: "AppConfig",
+    essay_text: str,
+    introduction_text: str,
+    on_status: StatusCallback | None = None,
+) -> dict[str, Any]:
+    normalized_essay = essay_text.strip()
+    normalized_introduction = introduction_text.strip()
+    if not normalized_essay:
+        raise RuntimeError("Essay text is required for thesis-statement feedback.")
+    if not normalized_introduction:
+        raise RuntimeError("Introduction text is required for thesis-statement feedback.")
+
+    knowledge = _load_prompt("essay_knowledge.md")
+    task = _load_prompt("introduction_thesis.md")
+    user_prompt = (
+        "\n Here is an essay: \n"
+        + normalized_essay
+        + "\n"
+        + "The introduction is: \n"
+        + normalized_introduction
+        + "\n"
+        + task
+    )
+
+    if on_status is not None:
+        on_status("Extracting and evaluating the thesis statement...")
+
+    return _run_json_schema_chat(
+        llm_service=llm_service,
+        app_cfg=app_cfg,
+        system=knowledge,
+        user=user_prompt,
+        name="thesis_statement_feedback",
+        schema=_thesis_statement_feedback_schema(),
+        sanitizer=_sanitize_thesis_statement_feedback,
+    )

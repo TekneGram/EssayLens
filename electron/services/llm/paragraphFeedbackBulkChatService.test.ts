@@ -275,6 +275,16 @@ describe('ParagraphFeedbackBulkChatService', () => {
       { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' },
       { simpleVocabulary: 'thing', textContext: 'a useful thing', preciseVocabulary: 'instrument' }
     ]);
+    expect(vocabularyReplies.map((reply) => reply.inlineComment)).toEqual([
+      {
+        searchText: 'It was good.',
+        commentText: "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'."
+      },
+      {
+        searchText: 'a useful thing',
+        commentText: "You used 'thing' when you wrote 'a useful thing'. You can improve this with: 'instrument'."
+      }
+    ]);
     expect(new Set(vocabularyReplies.map((reply) => reply.messageId)).size).toBe(2);
     expect(new Set(vocabularyReplies.map((reply) => reply.clientRequestId)).size).toBe(2);
     // 6 section bubbles + 2 vocabulary bubbles
@@ -291,6 +301,10 @@ describe('ParagraphFeedbackBulkChatService', () => {
       textContext: 'It was good.',
       preciseVocabulary: 'exemplary'
     });
+    expect(vocabularyChunks[0].inlineComment).toEqual({
+      searchText: 'It was good.',
+      commentText: "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'."
+    });
 
     // And persisted as turn metadata so the inline button survives a session reload.
     const persistedTurns = appendTurns.mock.calls[0][1] as Array<{ metadata?: unknown }>;
@@ -298,8 +312,22 @@ describe('ParagraphFeedbackBulkChatService', () => {
       .map((turn) => turn.metadata)
       .filter((metadata): metadata is { feedbackType: string } => Boolean(metadata));
     expect(vocabularyMetadata).toEqual([
-      { feedbackType: 'vocabulary', vocabulary: { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' } },
-      { feedbackType: 'vocabulary', vocabulary: { simpleVocabulary: 'thing', textContext: 'a useful thing', preciseVocabulary: 'instrument' } }
+      {
+        feedbackType: 'vocabulary',
+        vocabulary: { simpleVocabulary: 'good', textContext: 'It was good.', preciseVocabulary: 'exemplary' },
+        inlineComment: {
+          searchText: 'It was good.',
+          commentText: "You used 'good' when you wrote 'It was good.'. You can improve this with: 'exemplary'."
+        }
+      },
+      {
+        feedbackType: 'vocabulary',
+        vocabulary: { simpleVocabulary: 'thing', textContext: 'a useful thing', preciseVocabulary: 'instrument' },
+        inlineComment: {
+          searchText: 'a useful thing',
+          commentText: "You used 'thing' when you wrote 'a useful thing'. You can improve this with: 'instrument'."
+        }
+      }
     ]);
   });
 
