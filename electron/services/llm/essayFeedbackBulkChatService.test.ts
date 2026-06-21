@@ -53,7 +53,7 @@ async function createMinimalDocx(filePath: string, intro: string): Promise<void>
 <w:document xmlns:w="${W_NS}">
   <w:body>
     <w:p><w:r><w:t>${intro}</w:t></w:r></w:p>
-    <w:p><w:r><w:t>Body paragraph one.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Body paragraph one. More detail here.</w:t></w:r></w:p>
     <w:p><w:r><w:t>Conclusion paragraph.</w:t></w:r></w:p>
   </w:body>
 </w:document>`
@@ -69,6 +69,7 @@ async function createBulkService() {
   await createMinimalDocx(firstPath, 'Introduction one.');
   await createMinimalDocx(secondPath, 'Introduction two.');
 
+  const saveMainIdea = vi.fn().mockResolvedValue(undefined);
   const requestActionStream = vi.fn().mockImplementation(async (action, payload, onStreamEvent) => {
     if (action === 'llm.essay.feedback.identifyParagraphs') {
       onStreamEvent({
@@ -90,9 +91,32 @@ async function createBulkService() {
         data: {
           introduction_paragraph: payload.essay.includes('Introduction two.') ? 'Introduction two.' : 'Introduction one.',
           body_paragraphs: {
-            items: [{ body_paragraph: 'Body paragraph one.' }]
+            items: [{ body_paragraph: 'Body paragraph one. More detail here.' }]
           },
           conclusion_paragraph: 'Conclusion paragraph.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.summarizeMainIdea') {
+      return {
+        requestId: `${payload.clientRequestId}:ok`,
+        ok: true,
+        data: {
+          main_idea: 'Reading helps students grow by expanding knowledge and imagination.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.paragraphEvaluation') {
+      return {
+        requestId: `${payload.clientRequestId}:ok`,
+        ok: true,
+        data: {
+          verdict: 'contributes to the main idea well',
+          comments: "The paragraph stays focused and develops the essay's central point."
         },
         timestamp: '2026-06-21T00:00:00.000Z'
       };
@@ -133,6 +157,7 @@ async function createBulkService() {
     essayFeedbackAnalysisRepository: {
       upsertIdentifiedParagraphs: vi.fn().mockResolvedValue(undefined),
       saveThesisStatement: vi.fn().mockResolvedValue(undefined),
+      saveMainIdea,
       getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
     } as any,
     rubricRepository: {} as any,
@@ -157,7 +182,7 @@ async function createBulkService() {
     resolveLlmServerPath: vi.fn().mockReturnValue('/tmp/llama-server')
   });
 
-  return { service, requestAction, requestActionStream };
+  return { service, requestAction, requestActionStream, saveMainIdea };
 }
 
 describe('EssayFeedbackBulkChatService', () => {
@@ -178,5 +203,77 @@ describe('EssayFeedbackBulkChatService', () => {
     expect(requestAction).toHaveBeenNthCalledWith(1, 'llm.server.stop', {});
     expect(requestAction).toHaveBeenNthCalledWith(2, 'llm.server.stop', {});
     expect(requestAction).toHaveBeenNthCalledWith(3, 'llm.server.stop', {});
+  });
+
+  it('processes summarize-main-idea and paragraph-evaluation after thesis feedback', async () => {
+    const { service, requestActionStream } = await createBulkService();
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback-bulk',
+        fileIds: ['file-1'],
+        selectedFeedbackTypes: [
+          'thesis-statement-feedback',
+          'summarize-main-idea',
+          'paragraph-evaluation'
+        ]
+      },
+      () => {}
+    );
+
+    expect(requestActionStream.mock.calls.map((call) => call[0])).toEqual([
+      'llm.essay.feedback.identifyParagraphs',
+      'llm.essay.feedback.thesisStatement',
+      'llm.essay.feedback.summarizeMainIdea',
+      'llm.essay.feedback.paragraphEvaluation'
+    ]);
+    expect(result.essayFeedback?.failures).toEqual([]);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.essayFeedbackType)).toEqual([
+      'thesis-statement-feedback',
+      'thesis-statement-feedback',
+      'paragraph-evaluation',
+      'paragraph-evaluation'
+    ]);
+  });
+
+  it('continues to the next file when summarize-main-idea fails after thesis on one document', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, requestActionStream, saveMainIdea } = await createBulkService();
+    saveMainIdea.mockRejectedValueOnce(new Error('no such column: main_idea'));
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback-bulk',
+        fileIds: ['file-1', 'file-2'],
+        selectedFeedbackTypes: [
+          'thesis-statement-feedback',
+          'summarize-main-idea',
+          'paragraph-evaluation'
+        ]
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(requestActionStream.mock.calls.map((call) => call[0])).toEqual([
+      'llm.essay.feedback.identifyParagraphs',
+      'llm.essay.feedback.thesisStatement',
+      'llm.essay.feedback.summarizeMainIdea',
+      'llm.essay.feedback.identifyParagraphs',
+      'llm.essay.feedback.thesisStatement',
+      'llm.essay.feedback.summarizeMainIdea',
+      'llm.essay.feedback.paragraphEvaluation'
+    ]);
+    expect(result.essayFeedback?.failures).toHaveLength(1);
+    expect(result.essayFeedback?.failures?.[0]?.reason).toBe('no such column: main_idea');
+    expect(result.essayFeedback?.replies?.some((reply) => reply.fileId === 'file-2' && reply.essayFeedbackType === 'paragraph-evaluation')).toBe(true);
+    expect(
+      emittedEvents.some(
+        (event) =>
+          event.type === 'error' &&
+          event.fileId === 'file-1' &&
+          event.error &&
+          (event.error as { code?: string }).code === 'ESSAY_FEEDBACK_STAGE_FAILED'
+      )
+    ).toBe(true);
   });
 });

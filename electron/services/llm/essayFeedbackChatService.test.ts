@@ -53,7 +53,7 @@ async function createMinimalDocx(filePath: string): Promise<void> {
 <w:document xmlns:w="${W_NS}">
   <w:body>
     <w:p><w:r><w:t>Introduction paragraph.</w:t></w:r></w:p>
-    <w:p><w:r><w:t>Body paragraph one.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Body paragraph one. More detail here.</w:t></w:r></w:p>
     <w:p><w:r><w:t>Conclusion paragraph.</w:t></w:r></w:p>
   </w:body>
 </w:document>`
@@ -75,6 +75,7 @@ async function createEssayFeedbackService() {
   const addMessage = vi.fn().mockResolvedValue(undefined);
   const upsertIdentifiedParagraphs = vi.fn().mockResolvedValue(undefined);
   const saveThesisStatement = vi.fn().mockResolvedValue(undefined);
+  const saveMainIdea = vi.fn().mockResolvedValue(undefined);
   const addCompletion = vi.fn().mockResolvedValue(undefined);
   const requestActionStream = vi.fn().mockImplementation(async (action, _payload, onStreamEvent) => {
     if (action === 'llm.essay.feedback.identifyParagraphs') {
@@ -97,9 +98,58 @@ async function createEssayFeedbackService() {
         data: {
           introduction_paragraph: 'Introduction paragraph.',
           body_paragraphs: {
-            items: [{ body_paragraph: 'Body paragraph one.' }]
+            items: [{ body_paragraph: 'Body paragraph one. More detail here.' }]
           },
           conclusion_paragraph: 'Conclusion paragraph.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.summarizeMainIdea') {
+      onStreamEvent({
+        requestId: 'llm-main-idea-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: 'essay-client-1:essay:1:summarize-main-idea',
+          channel: 'meta',
+          text: "Summarizing the essay's main idea...",
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-main-idea-1',
+        ok: true,
+        data: {
+          main_idea: 'Reading helps students grow by expanding knowledge and imagination.'
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      };
+    }
+
+    if (action === 'llm.essay.feedback.paragraphEvaluation') {
+      onStreamEvent({
+        requestId: 'llm-paragraph-status-1',
+        type: 'stream_chunk',
+        data: {
+          clientRequestId: 'essay-client-1:essay:2:paragraph-evaluation:paragraph:1',
+          channel: 'meta',
+          text: 'Evaluating how the body paragraph supports the main idea...',
+          done: false,
+          seq: 1
+        },
+        timestamp: '2026-06-21T00:00:00.000Z'
+      });
+
+      return {
+        requestId: 'llm-paragraph-1',
+        ok: true,
+        data: {
+          verdict: 'contributes to the main idea well',
+          comments: "The paragraph stays focused and develops the essay's central point with relevant support."
         },
         timestamp: '2026-06-21T00:00:00.000Z'
       };
@@ -148,6 +198,7 @@ async function createEssayFeedbackService() {
     essayFeedbackAnalysisRepository: {
       upsertIdentifiedParagraphs,
       saveThesisStatement,
+      saveMainIdea,
       getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
     } as any,
     rubricRepository: {} as any,
@@ -180,6 +231,7 @@ async function createEssayFeedbackService() {
     requestActionStream,
     upsertIdentifiedParagraphs,
     saveThesisStatement,
+    saveMainIdea,
     addCompletion
   };
 }
@@ -220,7 +272,7 @@ describe('EssayFeedbackChatService', () => {
       'file-1',
       {
         introductionParagraph: 'Introduction paragraph.',
-        bodyParagraphs: [{ body_paragraph: 'Body paragraph one.' }],
+        bodyParagraphs: [{ body_paragraph: 'Body paragraph one. More detail here.' }],
         conclusionParagraph: 'Conclusion paragraph.'
       }
     );
@@ -371,6 +423,169 @@ describe('EssayFeedbackChatService', () => {
         }
       }
     ]);
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'done')
+        .map((event) => event.clientRequestId)
+    ).toEqual([
+      'essay-client-1:identify',
+      'essay-client-1:essay:1:thesis-statement-feedback'
+    ]);
+  });
+
+  it('runs summarize-main-idea without persisting a chat bubble and still records completion', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, addMessage, requestActionStream, saveMainIdea, addCompletion } =
+      await createEssayFeedbackService();
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-1',
+        selectedFeedbackTypes: ['summarize-main-idea']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(requestActionStream).toHaveBeenCalledTimes(2);
+    expect(saveMainIdea).toHaveBeenCalledWith(
+      expect.stringContaining('essay-feedback:file-1:'),
+      'file-1',
+      'Reading helps students grow by expanding knowledge and imagination.'
+    );
+    expect(result.essayFeedback?.replies).toEqual([]);
+    expect(appendTurns).not.toHaveBeenCalled();
+    expect(addMessage).not.toHaveBeenCalled();
+    expect(addCompletion).toHaveBeenCalledWith({
+      fileId: 'file-1',
+      workflowKey: 'essay_feedback',
+      modelKey: 'essay-model',
+      modelDisplayName: 'Essay Model',
+      sessionId: expect.stringContaining('essay-feedback:file-1:')
+    });
+    expect(
+      emittedEvents.map((event) => ({
+        type: event.type,
+        feedbackType: event.essayFeedbackType,
+        channel: event.channel
+      }))
+    ).toEqual([
+      { type: 'start', feedbackType: undefined, channel: 'meta' },
+      { type: 'status', feedbackType: undefined, channel: 'meta' },
+      { type: 'done', feedbackType: undefined, channel: 'meta' },
+      { type: 'start', feedbackType: 'summarize-main-idea', channel: 'meta' },
+      { type: 'status', feedbackType: 'summarize-main-idea', channel: 'meta' },
+      { type: 'done', feedbackType: 'summarize-main-idea', channel: 'meta' }
+    ]);
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'done')
+        .map((event) => event.clientRequestId)
+    ).toEqual(['essay-client-1:identify', 'essay-client-1:essay:1:summarize-main-idea']);
+  });
+
+  it('emits verdict and comments bubbles for paragraph evaluation with inline comments on the first sentence', async () => {
+    const emittedEvents: Array<Record<string, unknown>> = [];
+    const { service, appendTurns, requestActionStream, saveMainIdea } = await createEssayFeedbackService();
+
+    const result = await service.sendMessage(
+      {
+        kind: 'essay-feedback',
+        fileId: 'file-1',
+        clientRequestId: 'essay-client-1',
+        selectedFeedbackTypes: ['summarize-main-idea', 'paragraph-evaluation']
+      },
+      (event) => emittedEvents.push(event as unknown as Record<string, unknown>)
+    );
+
+    expect(requestActionStream).toHaveBeenCalledTimes(3);
+    expect(saveMainIdea).toHaveBeenCalled();
+    expect(result.essayFeedback?.replies).toHaveLength(2);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.essayFeedbackSection)).toEqual([
+      'verdict',
+      'comments'
+    ]);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.paragraphFirstSentence)).toEqual([
+      'Body paragraph one.',
+      'Body paragraph one.'
+    ]);
+    expect(result.essayFeedback?.replies?.map((reply) => reply.inlineComment)).toEqual([
+      {
+        searchText: 'Body paragraph one.',
+        commentText: 'contributes to the main idea well'
+      },
+      {
+        searchText: 'Body paragraph one.',
+        commentText: "The paragraph stays focused and develops the essay's central point with relevant support."
+      }
+    ]);
+    expect(appendTurns).toHaveBeenCalledWith(
+      expect.stringContaining('essay-feedback:file-1:'),
+      [
+        {
+          role: 'assistant',
+          content: '### Paragraph Evaluation 1\nVerdict: contributes to the main idea well',
+          metadata: {
+            feedbackType: 'paragraph-evaluation',
+            inlineComment: {
+              searchText: 'Body paragraph one.',
+              commentText: 'contributes to the main idea well'
+            }
+          }
+        },
+        {
+          role: 'assistant',
+          content:
+            "### Paragraph Evaluation 1\nComments: The paragraph stays focused and develops the essay's central point with relevant support.",
+          metadata: {
+            feedbackType: 'paragraph-evaluation',
+            inlineComment: {
+              searchText: 'Body paragraph one.',
+              commentText:
+                "The paragraph stays focused and develops the essay's central point with relevant support."
+            }
+          }
+        }
+      ],
+      'file-1'
+    );
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'chunk')
+        .map((event) => ({
+          section: event.essayFeedbackSection,
+          paragraphFirstSentence: event.paragraphFirstSentence,
+          inlineComment: event.inlineComment
+        }))
+    ).toEqual([
+      {
+        section: 'verdict',
+        paragraphFirstSentence: 'Body paragraph one.',
+        inlineComment: {
+          searchText: 'Body paragraph one.',
+          commentText: 'contributes to the main idea well'
+        }
+      },
+      {
+        section: 'comments',
+        paragraphFirstSentence: 'Body paragraph one.',
+        inlineComment: {
+          searchText: 'Body paragraph one.',
+          commentText:
+            "The paragraph stays focused and develops the essay's central point with relevant support."
+        }
+      }
+    ]);
+    expect(
+      emittedEvents
+        .filter((event) => event.type === 'done')
+        .map((event) => event.clientRequestId)
+    ).toEqual([
+      'essay-client-1:identify',
+      'essay-client-1:essay:1:summarize-main-idea',
+      'essay-client-1:essay:2:paragraph-evaluation'
+    ]);
   });
 
   it('does not create a session for unsupported non-docx files', async () => {
@@ -399,6 +614,7 @@ describe('EssayFeedbackChatService', () => {
       essayFeedbackAnalysisRepository: {
         upsertIdentifiedParagraphs,
         saveThesisStatement: vi.fn(),
+        saveMainIdea: vi.fn(),
         getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
       } as any,
       rubricRepository: {} as any,

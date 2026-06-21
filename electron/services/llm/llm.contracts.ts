@@ -7,6 +7,8 @@ export type LlmAction =
   | 'llm.evaluate.withRubric'
   | 'llm.essay.feedback.identifyParagraphs'
   | 'llm.essay.feedback.thesisStatement'
+  | 'llm.essay.feedback.summarizeMainIdea'
+  | 'llm.essay.feedback.paragraphEvaluation'
   | 'llm.paragraph.feedback.bulk'
   | 'llm.session.create'
   | 'llm.session.clear'

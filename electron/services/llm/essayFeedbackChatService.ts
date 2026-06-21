@@ -13,9 +13,13 @@ import type {
 import { extractDocxTextFromBuffer } from '../documents/docxTextExtractor';
 import {
   buildLlmEssayFeedbackIdentifyPayload,
+  buildLlmEssayFeedbackParagraphEvaluationPayload,
   buildLlmEssayFeedbackStubPayload,
+  buildLlmEssayFeedbackSummarizeMainIdeaPayload,
   buildLlmEssayFeedbackThesisStatementPayload,
   isEssayFeedbackIdentifyResult,
+  isEssayFeedbackParagraphEvaluationResult,
+  isEssayFeedbackSummarizeMainIdeaResult,
   isEssayFeedbackThesisStatementResult
 } from '../../mappers/chatRequestMappers';
 import { LlmRuntimeService } from '../../runtime/llmRuntimeService';
@@ -25,6 +29,8 @@ import type {
   EmitChatEvent,
   EssayFeedbackRequest,
   LlmEssayFeedbackIdentifyResult,
+  LlmEssayFeedbackParagraphEvaluationResult,
+  LlmEssayFeedbackSummarizeMainIdeaResult,
   LlmEssayFeedbackThesisStatementResult
 } from './chatService.shared';
 
@@ -38,6 +44,7 @@ interface EssayFeedbackReply {
   essayFeedbackSection?: EssayFeedbackSection;
   feedbackType?: ChatFeedbackType;
   inlineComment?: ChatInlineCommentPayload;
+  paragraphFirstSentence?: string;
 }
 
 interface EssayFeedbackFailure {
@@ -53,6 +60,7 @@ interface EssayFeedbackFailure {
 interface IdentifiedEssayContext {
   essayText: string;
   identifiedParagraphs: LlmEssayFeedbackIdentifyResult;
+  mainIdea?: string;
 }
 
 interface EssayPreflightContext {
@@ -62,8 +70,10 @@ interface EssayPreflightContext {
 }
 
 interface EssayFeedbackStageResult {
+  clientRequestId: string;
   replies: EssayFeedbackReply[];
   statusMessageId: string;
+  persistReplies?: boolean;
 }
 
 const ESSAY_FEEDBACK_TYPE_LABELS: Record<EssayFeedbackType, string> = {
@@ -151,32 +161,25 @@ export class EssayFeedbackChatService {
       const clientRequestId = `${baseClientRequestId}:essay:${index + 1}:${essayFeedbackType}`;
 
       try {
-        const stageResult =
-          essayFeedbackType === 'thesis-statement-feedback'
-            ? await this.runThesisStatementFeedback({
-                fileId: request.fileId,
-                sessionId,
-                clientRequestId,
-                settings,
-                emitToRenderer,
-                identifiedEssayContext
-              })
-            : this.runEssayFeedbackStub({
-                fileId: request.fileId,
-                sessionId,
-                clientRequestId,
-                essayFeedbackType,
-                fileName: sourceFile.name,
-                format: path.extname(sourceFile.path).toLowerCase().slice(1) || 'other',
-                identifiedParagraphs: identifiedEssayContext.identifiedParagraphs,
-                emitToRenderer
-              });
-
-        await this.persistStageReplies({
+        const stageResult = await this.runEssayFeedbackStage({
           fileId: request.fileId,
           sessionId,
-          replies: stageResult.replies
+          clientRequestId,
+          settings,
+          emitToRenderer,
+          essayFeedbackType,
+          identifiedEssayContext,
+          sourceFileName: sourceFile.name,
+          sourceFormat: path.extname(sourceFile.path).toLowerCase().slice(1) || 'other'
         });
+
+        if (stageResult.persistReplies !== false) {
+          await this.persistStageReplies({
+            fileId: request.fileId,
+            sessionId,
+            replies: stageResult.replies
+          });
+        }
         this.emitPersistedStageReplies({
           fileId: request.fileId,
           sessionId,
@@ -221,13 +224,6 @@ export class EssayFeedbackChatService {
       }
     }
 
-    if (replies.length === 0) {
-      return {
-        reply: '',
-        essayFeedback: { replies, failures }
-      };
-    }
-
     if (activeModel && failures.length === 0) {
       try {
         await this.deps.llmFeedbackCompletionRepository.addCompletion({
@@ -263,6 +259,38 @@ export class EssayFeedbackChatService {
       reply: replies[replies.length - 1]?.reply ?? '',
       essayFeedback: { replies, failures }
     };
+  }
+
+  private async runEssayFeedbackStage(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    essayFeedbackType: EssayFeedbackType;
+    identifiedEssayContext: IdentifiedEssayContext;
+    sourceFileName: string;
+    sourceFormat: string;
+  }): Promise<EssayFeedbackStageResult> {
+    switch (args.essayFeedbackType) {
+      case 'thesis-statement-feedback':
+        return this.runThesisStatementFeedback(args);
+      case 'summarize-main-idea':
+        return this.runSummarizeMainIdea(args);
+      case 'paragraph-evaluation':
+        return this.runParagraphEvaluation(args);
+      default:
+        return this.runEssayFeedbackStub({
+          fileId: args.fileId,
+          sessionId: args.sessionId,
+          clientRequestId: args.clientRequestId,
+          essayFeedbackType: args.essayFeedbackType,
+          fileName: args.sourceFileName,
+          format: args.sourceFormat,
+          identifiedParagraphs: args.identifiedEssayContext.identifiedParagraphs,
+          emitToRenderer: args.emitToRenderer
+        });
+    }
   }
 
   private async preflightEssayFile(args: {
@@ -573,6 +601,203 @@ export class EssayFeedbackChatService {
     ];
 
     return {
+      clientRequestId: args.clientRequestId,
+      replies,
+      statusMessageId
+    };
+  }
+
+  private async runSummarizeMainIdea(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    essayFeedbackType: EssayFeedbackType;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackStageResult> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'summarize-main-idea',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const payload = buildLlmEssayFeedbackSummarizeMainIdeaPayload({
+      essay: args.identifiedEssayContext.essayText,
+      settings: args.settings,
+      clientRequestId: args.clientRequestId
+    });
+
+    const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+      typeof payload,
+      LlmEssayFeedbackSummarizeMainIdeaResult
+    >('llm.essay.feedback.summarizeMainIdea', payload, (streamEvent) => {
+      if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+        return;
+      }
+      args.emitToRenderer({
+        requestId: streamEvent.requestId,
+        clientRequestId: args.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'summarize-main-idea',
+        type: 'status',
+        seq: streamEvent.data.seq + 1,
+        channel: 'meta',
+        text: streamEvent.data.text,
+        done: false
+      });
+    });
+
+    if (!llmResult.ok) {
+      throw new Error(llmResult.error.message);
+    }
+    if (!isEssayFeedbackSummarizeMainIdeaResult(llmResult.data)) {
+      throw new Error('Python worker returned an invalid summarize-main-idea response.');
+    }
+
+    args.identifiedEssayContext.mainIdea = llmResult.data.main_idea;
+    await this.deps.essayFeedbackAnalysisRepository.saveMainIdea(
+      args.sessionId,
+      args.fileId,
+      llmResult.data.main_idea
+    );
+
+    return {
+      clientRequestId: args.clientRequestId,
+      replies: [],
+      statusMessageId,
+      persistReplies: false
+    };
+  }
+
+  private async runParagraphEvaluation(args: {
+    fileId: string;
+    sessionId: string;
+    clientRequestId: string;
+    settings: LlmRuntimeSettings;
+    emitToRenderer: EmitChatEvent;
+    essayFeedbackType: EssayFeedbackType;
+    identifiedEssayContext: IdentifiedEssayContext;
+  }): Promise<EssayFeedbackStageResult> {
+    const statusMessageId = randomUUID();
+    args.emitToRenderer({
+      requestId: `${args.clientRequestId}:start`,
+      clientRequestId: args.clientRequestId,
+      fileId: args.fileId,
+      sessionId: args.sessionId,
+      messageId: statusMessageId,
+      workflow: 'essay-feedback',
+      essayFeedbackType: 'paragraph-evaluation',
+      type: 'start',
+      seq: 1,
+      channel: 'meta',
+      text: '',
+      done: false
+    });
+
+    const mainIdea = args.identifiedEssayContext.mainIdea?.trim();
+    if (!mainIdea) {
+      throw new Error('Paragraph evaluation requires a summarized main idea.');
+    }
+
+    const replies: EssayFeedbackReply[] = [];
+    const introduction = args.identifiedEssayContext.identifiedParagraphs.introduction_paragraph;
+    const bodyParagraphs = args.identifiedEssayContext.identifiedParagraphs.body_paragraphs.items;
+
+    for (let index = 0; index < bodyParagraphs.length; index += 1) {
+      const bodyParagraph = bodyParagraphs[index]?.body_paragraph?.trim();
+      if (!bodyParagraph) {
+        continue;
+      }
+      const paragraphClientRequestId = `${args.clientRequestId}:paragraph:${index + 1}`;
+      const payload = buildLlmEssayFeedbackParagraphEvaluationPayload({
+        introduction,
+        bodyParagraph,
+        mainIdea,
+        settings: args.settings,
+        clientRequestId: paragraphClientRequestId
+      });
+
+      const llmResult = await this.deps.llmOrchestrator.requestActionStream<
+        typeof payload,
+        LlmEssayFeedbackParagraphEvaluationResult
+      >('llm.essay.feedback.paragraphEvaluation', payload, (streamEvent) => {
+        if (streamEvent.type !== 'stream_chunk' || streamEvent.data.channel !== 'meta') {
+          return;
+        }
+        args.emitToRenderer({
+          requestId: streamEvent.requestId,
+          clientRequestId: args.clientRequestId,
+          fileId: args.fileId,
+          sessionId: args.sessionId,
+          messageId: statusMessageId,
+          workflow: 'essay-feedback',
+          essayFeedbackType: 'paragraph-evaluation',
+          type: 'status',
+          seq: 10 + index * 10 + streamEvent.data.seq,
+          channel: 'meta',
+          text: `Paragraph ${index + 1}: ${streamEvent.data.text}`,
+          done: false
+        });
+      });
+
+      if (!llmResult.ok) {
+        throw new Error(llmResult.error.message);
+      }
+      if (!isEssayFeedbackParagraphEvaluationResult(llmResult.data)) {
+        throw new Error('Python worker returned an invalid paragraph-evaluation response.');
+      }
+
+      const paragraphFirstSentence = this.extractFirstSentence(bodyParagraph);
+      replies.push(
+        this.buildEssayFeedbackReply({
+          fileId: args.fileId,
+          sessionId: args.sessionId,
+          clientRequestId: `${paragraphClientRequestId}:verdict`,
+          essayFeedbackType: 'paragraph-evaluation',
+          essayFeedbackSection: 'verdict',
+          feedbackType: 'paragraph-evaluation',
+          reply: this.formatEssayFeedbackSectionReply(
+            `Paragraph Evaluation ${index + 1}`,
+            'Verdict',
+            llmResult.data.verdict
+          ),
+          inlineComment: this.buildInlineCommentPayload(paragraphFirstSentence, llmResult.data.verdict),
+          paragraphFirstSentence
+        }),
+        this.buildEssayFeedbackReply({
+          fileId: args.fileId,
+          sessionId: args.sessionId,
+          clientRequestId: `${paragraphClientRequestId}:comments`,
+          essayFeedbackType: 'paragraph-evaluation',
+          essayFeedbackSection: 'comments',
+          feedbackType: 'paragraph-evaluation',
+          reply: this.formatEssayFeedbackSectionReply(
+            `Paragraph Evaluation ${index + 1}`,
+            'Comments',
+            llmResult.data.comments
+          ),
+          inlineComment: this.buildInlineCommentPayload(paragraphFirstSentence, llmResult.data.comments),
+          paragraphFirstSentence
+        })
+      );
+    }
+
+    return {
+      clientRequestId: args.clientRequestId,
       replies,
       statusMessageId
     };
@@ -588,6 +813,7 @@ export class EssayFeedbackChatService {
     identifiedParagraphs: LlmEssayFeedbackIdentifyResult;
     emitToRenderer: EmitChatEvent;
   }): EssayFeedbackStageResult {
+    const statusMessageId = randomUUID();
     const reply = (() => {
       switch (args.essayFeedbackType) {
         case 'thesis-statement-feedback':
@@ -620,7 +846,7 @@ export class EssayFeedbackChatService {
       clientRequestId: args.clientRequestId,
       fileId: args.fileId,
       sessionId: args.sessionId,
-      messageId: builtReply.messageId,
+      messageId: statusMessageId,
       workflow: 'essay-feedback',
       essayFeedbackType: args.essayFeedbackType,
       type: 'start',
@@ -631,8 +857,9 @@ export class EssayFeedbackChatService {
     });
 
     return {
+      clientRequestId: args.clientRequestId,
       replies: [builtReply],
-      statusMessageId: builtReply.messageId
+      statusMessageId
     };
   }
 
@@ -641,15 +868,13 @@ export class EssayFeedbackChatService {
     sessionId: string;
     replies: EssayFeedbackReply[];
   }): Promise<void> {
+    if (args.replies.length === 0) {
+      return;
+    }
     const turns: LlmSessionTurn[] = args.replies.map((reply) => ({
       role: 'assistant',
       content: reply.reply,
-      metadata: reply.inlineComment
-        ? {
-            feedbackType: 'thesis-statement-feedback',
-            inlineComment: reply.inlineComment
-          }
-        : undefined
+      metadata: this.buildSessionTurnMetadata(reply)
     }));
     await this.deps.llmChatSessionRepository.appendTurns(args.sessionId, turns, args.fileId);
 
@@ -671,6 +896,23 @@ export class EssayFeedbackChatService {
     stageResult: EssayFeedbackStageResult;
     emitToRenderer: EmitChatEvent;
   }): void {
+    if (args.stageResult.replies.length === 0) {
+      args.emitToRenderer({
+        requestId: `${args.fileId}:${args.essayFeedbackType}:done`,
+        clientRequestId: args.stageResult.clientRequestId,
+        fileId: args.fileId,
+        sessionId: args.sessionId,
+        messageId: args.stageResult.statusMessageId,
+        workflow: 'essay-feedback',
+        essayFeedbackType: args.essayFeedbackType,
+        type: 'done',
+        seq: 1000,
+        channel: 'meta',
+        text: '',
+        done: true
+      });
+      return;
+    }
     args.stageResult.replies.forEach((reply, index) => {
       args.emitToRenderer({
         requestId: `${reply.clientRequestId}:chunk`,
@@ -683,6 +925,7 @@ export class EssayFeedbackChatService {
         essayFeedbackSection: reply.essayFeedbackSection,
         feedbackType: reply.feedbackType,
         inlineComment: reply.inlineComment,
+        paragraphFirstSentence: reply.paragraphFirstSentence,
         type: 'chunk',
         seq: index + 10,
         channel: 'content',
@@ -692,8 +935,8 @@ export class EssayFeedbackChatService {
     });
 
     args.emitToRenderer({
-      requestId: `${args.stageResult.replies[0]?.clientRequestId ?? `${args.fileId}:done`}:done`,
-      clientRequestId: args.stageResult.replies[0]?.clientRequestId ?? `${args.fileId}:done`,
+      requestId: `${args.stageResult.clientRequestId}:done`,
+      clientRequestId: args.stageResult.clientRequestId,
       fileId: args.fileId,
       sessionId: args.sessionId,
       messageId: args.stageResult.statusMessageId,
@@ -716,6 +959,7 @@ export class EssayFeedbackChatService {
     essayFeedbackSection?: EssayFeedbackSection;
     feedbackType?: ChatFeedbackType;
     inlineComment?: ChatInlineCommentPayload;
+    paragraphFirstSentence?: string;
   }): EssayFeedbackReply {
     return {
       fileId: args.fileId,
@@ -726,7 +970,8 @@ export class EssayFeedbackChatService {
       essayFeedbackType: args.essayFeedbackType,
       essayFeedbackSection: args.essayFeedbackSection,
       feedbackType: args.feedbackType,
-      inlineComment: args.inlineComment
+      inlineComment: args.inlineComment,
+      paragraphFirstSentence: args.paragraphFirstSentence
     };
   }
 
@@ -735,6 +980,34 @@ export class EssayFeedbackChatService {
       searchText: searchText.trim(),
       commentText: commentText.trim()
     };
+  }
+
+  private buildSessionTurnMetadata(reply: EssayFeedbackReply): LlmSessionTurn['metadata'] {
+    if (!reply.inlineComment || !reply.feedbackType) {
+      return undefined;
+    }
+    if (reply.feedbackType === 'thesis-statement-feedback') {
+      return {
+        feedbackType: 'thesis-statement-feedback',
+        inlineComment: reply.inlineComment
+      };
+    }
+    if (reply.feedbackType === 'paragraph-evaluation') {
+      return {
+        feedbackType: 'paragraph-evaluation',
+        inlineComment: reply.inlineComment
+      };
+    }
+    return undefined;
+  }
+
+  private extractFirstSentence(text: string): string {
+    const normalized = text.trim();
+    if (!normalized) {
+      return '';
+    }
+    const match = normalized.match(/^.*?[.!?](?:\s|$)/);
+    return (match?.[0] ?? normalized).trim();
   }
 
   private formatEssayFeedbackSectionReply(title: string, section: string, text: string): string {

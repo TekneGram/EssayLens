@@ -95,6 +95,29 @@ export interface LlmEssayFeedbackThesisStatementResult {
   improvements: string;
 }
 
+export interface LlmEssayFeedbackSummarizeMainIdeaPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackSummarizeMainIdeaResult {
+  main_idea: string;
+}
+
+export interface LlmEssayFeedbackParagraphEvaluationPayload {
+  settings: LlmRuntimeSettings;
+  introduction: string;
+  bodyParagraph: string;
+  mainIdea: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackParagraphEvaluationResult {
+  verdict: string;
+  comments: string;
+}
+
 export interface RuntimeReadyResult {
   settings: LlmRuntimeSettings;
   notReadyDetails: LlmNotReadyErrorDetails | null;

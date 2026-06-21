@@ -9,8 +9,12 @@ import type { LlmSessionTurn } from '../db/repositories/llmChatSessionRepository
 import type {
   LlmChatPayload,
   LlmEssayFeedbackIdentifyPayload,
-  LlmEssayFeedbackStubPayload,
   LlmEssayFeedbackIdentifyResult,
+  LlmEssayFeedbackParagraphEvaluationPayload,
+  LlmEssayFeedbackParagraphEvaluationResult,
+  LlmEssayFeedbackStubPayload,
+  LlmEssayFeedbackSummarizeMainIdeaPayload,
+  LlmEssayFeedbackSummarizeMainIdeaResult,
   LlmEssayFeedbackThesisStatementPayload,
   LlmEssayFeedbackThesisStatementResult,
   LlmParagraphFeedbackBulkPayload,
@@ -140,6 +144,34 @@ export function buildLlmEssayFeedbackThesisStatementPayload(args: {
   };
 }
 
+export function buildLlmEssayFeedbackSummarizeMainIdeaPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackSummarizeMainIdeaPayload {
+  return {
+    essay: args.essay,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackParagraphEvaluationPayload(args: {
+  introduction: string;
+  bodyParagraph: string;
+  mainIdea: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackParagraphEvaluationPayload {
+  return {
+    introduction: args.introduction,
+    bodyParagraph: args.bodyParagraph,
+    mainIdea: args.mainIdea,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
 export function isEssayFeedbackIdentifyResult(data: unknown): data is LlmEssayFeedbackIdentifyResult {
   if (typeof data !== 'object' || data === null) {
     return false;
@@ -177,6 +209,26 @@ export function isEssayFeedbackThesisStatementResult(
     typeof value.verdict === 'string' &&
     typeof value.improvements === 'string'
   );
+}
+
+export function isEssayFeedbackSummarizeMainIdeaResult(
+  data: unknown
+): data is LlmEssayFeedbackSummarizeMainIdeaResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.main_idea === 'string';
+}
+
+export function isEssayFeedbackParagraphEvaluationResult(
+  data: unknown
+): data is LlmEssayFeedbackParagraphEvaluationResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
 }
 
 export function getReplyText(data: unknown): string | null {

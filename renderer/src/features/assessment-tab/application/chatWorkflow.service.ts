@@ -508,12 +508,11 @@ export function handleChatStreamChunkWorkflow({
     }
 
     if (event.workflow === 'essay-feedback') {
-      if (event.essayFeedbackStage === 'identify-paragraphs') {
-        dispatch(removeChatMessage({ messageId: assistantMessageId }));
-        streamMessageByClientRequestId.delete(clientRequestId);
-        streamSeqByClientRequestId.delete(clientRequestId);
-        streamSessionByClientRequestId.delete(clientRequestId);
-      } else if (event.fileId) {
+      dispatch(removeChatMessage({ messageId: assistantMessageId }));
+      streamMessageByClientRequestId.delete(clientRequestId);
+      streamSeqByClientRequestId.delete(clientRequestId);
+      streamSessionByClientRequestId.delete(clientRequestId);
+      if (event.fileId) {
         dispatch(bumpSessionSyncForFile({ fileId: event.fileId }));
       }
       if (activeSessionId) {

@@ -11,6 +11,7 @@ export interface EssayFeedbackIdentifiedParagraphs {
   bodyParagraphs: EssayFeedbackBodyParagraph[];
   conclusionParagraph: string;
   thesisStatement?: string | null;
+  mainIdea?: string | null;
 }
 
 interface EssayFeedbackAnalysisRepositoryOptions {
@@ -23,6 +24,7 @@ interface AnalysisRow {
   body_paragraphs_json: string;
   conclusion_paragraph: string;
   thesis_statement: string | null;
+  main_idea: string | null;
 }
 
 export class EssayFeedbackAnalysisRepository {
@@ -44,13 +46,14 @@ export class EssayFeedbackAnalysisRepository {
     const nowIso = this.now();
     await this.db.run(
       `INSERT INTO essay_feedback_analyses
-       (uuid, session_id, file_entity_uuid, introduction_paragraph, body_paragraphs_json, conclusion_paragraph, thesis_statement, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (uuid, session_id, file_entity_uuid, introduction_paragraph, body_paragraphs_json, conclusion_paragraph, thesis_statement, main_idea, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(session_id, file_entity_uuid) DO UPDATE SET
          introduction_paragraph = excluded.introduction_paragraph,
          body_paragraphs_json = excluded.body_paragraphs_json,
          conclusion_paragraph = excluded.conclusion_paragraph,
          thesis_statement = COALESCE(excluded.thesis_statement, essay_feedback_analyses.thesis_statement),
+         main_idea = COALESCE(excluded.main_idea, essay_feedback_analyses.main_idea),
          updated_at = excluded.updated_at;`,
       [
         randomUUID(),
@@ -60,6 +63,7 @@ export class EssayFeedbackAnalysisRepository {
         JSON.stringify(paragraphs.bodyParagraphs),
         paragraphs.conclusionParagraph,
         paragraphs.thesisStatement ?? null,
+        paragraphs.mainIdea ?? null,
         nowIso,
         nowIso
       ]
@@ -81,12 +85,27 @@ export class EssayFeedbackAnalysisRepository {
     );
   }
 
+  async saveMainIdea(sessionId: string, fileId: string, mainIdea: string): Promise<void> {
+    const normalizedSessionId = sessionId.trim();
+    const normalizedFileId = fileId.trim();
+    const normalizedMainIdea = mainIdea.trim();
+    if (!normalizedMainIdea) {
+      throw new Error('mainIdea must be a non-empty string.');
+    }
+    await this.db.run(
+      `UPDATE essay_feedback_analyses
+       SET main_idea = ?, updated_at = ?
+       WHERE session_id = ? AND file_entity_uuid = ?;`,
+      [normalizedMainIdea, this.now(), normalizedSessionId, normalizedFileId]
+    );
+  }
+
   async getIdentifiedParagraphs(
     sessionId: string,
     fileId: string
   ): Promise<EssayFeedbackIdentifiedParagraphs | null> {
     const row = await this.db.get<AnalysisRow>(
-      `SELECT introduction_paragraph, body_paragraphs_json, conclusion_paragraph, thesis_statement
+      `SELECT introduction_paragraph, body_paragraphs_json, conclusion_paragraph, thesis_statement, main_idea
        FROM essay_feedback_analyses
        WHERE session_id = ? AND file_entity_uuid = ?
        LIMIT 1;`,
@@ -101,7 +120,8 @@ export class EssayFeedbackAnalysisRepository {
       introductionParagraph: row.introduction_paragraph,
       bodyParagraphs: parsedBodyParagraphs,
       conclusionParagraph: row.conclusion_paragraph,
-      thesisStatement: typeof row.thesis_statement === 'string' ? row.thesis_statement : null
+      thesisStatement: typeof row.thesis_statement === 'string' ? row.thesis_statement : null,
+      mainIdea: typeof row.main_idea === 'string' ? row.main_idea : null
     };
   }
 

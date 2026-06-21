@@ -9,6 +9,8 @@ from app.pipeline_simple import (
 )
 from app.pipeline_rubric_eval import run_evaluate_with_rubric
 from app.pipeline_essay_feedback_identify import run_essay_feedback_identify_paragraphs
+from app.pipeline_essay_feedback_paragraph_evaluation import run_essay_feedback_paragraph_evaluation
+from app.pipeline_essay_feedback_summarize_main_idea import run_essay_feedback_summarize_main_idea
 from app.pipeline_essay_feedback_thesis_statement import run_essay_feedback_thesis_statement
 from app.pipeline_paragraph_feedback_bulk import run_paragraph_feedback_bulk
 from controllers.responses import success
@@ -24,6 +26,8 @@ EVALUATE_WITH_RUBRIC_PIPELINE_KEY = "evaluate-with-rubric"
 PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY = "paragraph-feedback-bulk"
 ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY = "essay-feedback-identify"
 ESSAY_FEEDBACK_THESIS_STATEMENT_PIPELINE_KEY = "essay-feedback-thesis-statement"
+ESSAY_FEEDBACK_SUMMARIZE_MAIN_IDEA_PIPELINE_KEY = "essay-feedback-summarize-main-idea"
+ESSAY_FEEDBACK_PARAGRAPH_EVALUATION_PIPELINE_KEY = "essay-feedback-paragraph-evaluation"
 
 ACTION_TO_PIPELINE: dict[str, tuple[str, str]] = {
     "llm.chat": (SIMPLE_CHAT_PIPELINE_KEY, "chat"),
@@ -32,6 +36,8 @@ ACTION_TO_PIPELINE: dict[str, tuple[str, str]] = {
     "llm.evaluate.withRubric": (EVALUATE_WITH_RUBRIC_PIPELINE_KEY, "evaluate"),
     "llm.essay.feedback.identifyParagraphs": (ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY, "evaluate"),
     "llm.essay.feedback.thesisStatement": (ESSAY_FEEDBACK_THESIS_STATEMENT_PIPELINE_KEY, "evaluate"),
+    "llm.essay.feedback.summarizeMainIdea": (ESSAY_FEEDBACK_SUMMARIZE_MAIN_IDEA_PIPELINE_KEY, "evaluate"),
+    "llm.essay.feedback.paragraphEvaluation": (ESSAY_FEEDBACK_PARAGRAPH_EVALUATION_PIPELINE_KEY, "evaluate"),
     "llm.paragraph.feedback.bulk": (PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY, "evaluate"),
 }
 
@@ -115,6 +121,8 @@ class HandleRequest:
                 EVALUATE_WITH_RUBRIC_PIPELINE_KEY,
                 ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY,
                 ESSAY_FEEDBACK_THESIS_STATEMENT_PIPELINE_KEY,
+                ESSAY_FEEDBACK_SUMMARIZE_MAIN_IDEA_PIPELINE_KEY,
+                ESSAY_FEEDBACK_PARAGRAPH_EVALUATION_PIPELINE_KEY,
                 PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY,
             }:
                 if pipeline_key == EVALUATE_WITH_RUBRIC_PIPELINE_KEY:
@@ -163,6 +171,50 @@ class HandleRequest:
                         )
 
                     reply = run_essay_feedback_thesis_statement(payload, self.lifecycle, on_status=emit_status)
+                    return success(request_id, reply)
+                if pipeline_key == ESSAY_FEEDBACK_SUMMARIZE_MAIN_IDEA_PIPELINE_KEY:
+                    seq = 0
+                    client_request_id = payload.get("clientRequestId")
+                    if not isinstance(client_request_id, str):
+                        client_request_id = ""
+
+                    def emit_status(text: str) -> None:
+                        nonlocal seq
+                        seq += 1
+                        self.emit_stream_event(
+                            "stream_chunk",
+                            {
+                                "clientRequestId": client_request_id,
+                                "channel": "meta",
+                                "text": text,
+                                "done": False,
+                                "seq": seq,
+                            },
+                        )
+
+                    reply = run_essay_feedback_summarize_main_idea(payload, self.lifecycle, on_status=emit_status)
+                    return success(request_id, reply)
+                if pipeline_key == ESSAY_FEEDBACK_PARAGRAPH_EVALUATION_PIPELINE_KEY:
+                    seq = 0
+                    client_request_id = payload.get("clientRequestId")
+                    if not isinstance(client_request_id, str):
+                        client_request_id = ""
+
+                    def emit_status(text: str) -> None:
+                        nonlocal seq
+                        seq += 1
+                        self.emit_stream_event(
+                            "stream_chunk",
+                            {
+                                "clientRequestId": client_request_id,
+                                "channel": "meta",
+                                "text": text,
+                                "done": False,
+                                "seq": seq,
+                            },
+                        )
+
+                    reply = run_essay_feedback_paragraph_evaluation(payload, self.lifecycle, on_status=emit_status)
                     return success(request_id, reply)
                 if pipeline_key == PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY:
                     seq = 0

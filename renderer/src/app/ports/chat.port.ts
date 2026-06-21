@@ -31,8 +31,13 @@ export type EssayFeedbackType =
   | 'conclusion-final-comment';
 
 export type EssayFeedbackStage = 'identify-paragraphs';
-export type EssayFeedbackSection = 'verdict' | 'improvements';
-export type ChatFeedbackType = 'topic_sentence' | 'coherence' | 'vocabulary' | 'thesis-statement-feedback';
+export type EssayFeedbackSection = 'verdict' | 'improvements' | 'comments';
+export type ChatFeedbackType =
+  | 'topic_sentence'
+  | 'coherence'
+  | 'vocabulary'
+  | 'thesis-statement-feedback'
+  | 'paragraph-evaluation';
 
 export interface ListMessagesResponse {
   messages: ChatMessageDto[];
@@ -102,6 +107,7 @@ export interface SendChatMessageResponse {
       essayFeedbackSection?: EssayFeedbackSection;
       feedbackType?: ChatFeedbackType;
       inlineComment?: ChatInlineCommentPayload;
+      paragraphFirstSentence?: string;
     }>;
     failures?: Array<{
       fileId: string;
@@ -149,6 +155,7 @@ export interface ChatStreamChunkEvent {
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   vocabulary?: ChatVocabularyFeedback;
   inlineComment?: ChatInlineCommentPayload;
+  paragraphFirstSentence?: string;
   workflow?: 'paragraph-feedback-bulk' | 'essay-feedback';
   essayFeedbackType?: EssayFeedbackType;
   essayFeedbackStage?: EssayFeedbackStage;

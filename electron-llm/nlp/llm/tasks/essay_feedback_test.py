@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from nlp.llm.tasks.essay_feedback import run_identify_paragraphs, run_thesis_statement_feedback
+from nlp.llm.tasks.essay_feedback import (
+    run_identify_paragraphs,
+    run_paragraph_evaluation,
+    run_summarize_main_idea,
+    run_thesis_statement_feedback,
+)
 from nlp.llm.llm_types import ChatResponse
 
 
@@ -97,4 +102,65 @@ def test_run_thesis_statement_feedback_returns_expected_structure_and_status() -
         "improvements": "Add one concrete reason to make the claim more specific.",
     }
     assert statuses == ["Extracting and evaluating the thesis statement..."]
+    assert service.calls[0]["system"]
+
+
+def test_run_summarize_main_idea_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"main_idea":"Students benefit from reading because it builds knowledge and imagination."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_summarize_main_idea(
+        llm_service=service,
+        app_cfg=app_cfg,
+        essay_text="Introduction.\nBody.\nConclusion.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "main_idea": "Students benefit from reading because it builds knowledge and imagination.",
+    }
+    assert statuses == ["Summarizing the essay's main idea..."]
+    assert service.calls[0]["system"]
+
+
+def test_run_paragraph_evaluation_returns_expected_structure_and_status() -> None:
+    service = _FakeLlmService(
+        responses=[
+            ChatResponse(
+                content='{"verdict":"contributes to the main idea well","comments":"The paragraph stays focused on the essay\\'s central claim and supports it with relevant detail."}',
+                reasoning_content=None,
+                finish_reason="stop",
+                model="m",
+                usage=None,
+            )
+        ]
+    )
+    app_cfg = _DummyAppConfig(max_tokens=128)
+    statuses: list[str] = []
+
+    result = run_paragraph_evaluation(
+        llm_service=service,
+        app_cfg=app_cfg,
+        introduction_text="Introduction.",
+        body_paragraph_text="Reading builds vocabulary. It also expands knowledge.",
+        main_idea_text="Reading helps students grow.",
+        on_status=statuses.append,
+    )
+
+    assert result == {
+        "verdict": "contributes to the main idea well",
+        "comments": "The paragraph stays focused on the essay's central claim and supports it with relevant detail.",
+    }
+    assert statuses == ["Evaluating how the body paragraph supports the main idea..."]
     assert service.calls[0]["system"]

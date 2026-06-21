@@ -111,4 +111,33 @@ describe('ChatScreen comment actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
     expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
   });
+
+  it('renders an inline-comment button for paragraph evaluation bubbles', () => {
+    const onCreateInlineCommentFromChatMessage = vi.fn();
+    const inlineComment = {
+      searchText: 'Body paragraph one.',
+      commentText: 'The paragraph stays focused on the main idea.'
+    };
+
+    render(
+      <ChatScreen
+        items={[
+          {
+            id: 'paragraph-1',
+            roleClassName: 'assistant',
+            roleLabel: 'Assistant',
+            content: '### Paragraph Evaluation 1\nComments: The paragraph stays focused on the main idea.',
+            canCreateComment: false,
+            feedbackType: 'paragraph-evaluation',
+            inlineComment
+          }
+        ]}
+        isLoading={false}
+        onCreateInlineCommentFromChatMessage={onCreateInlineCommentFromChatMessage}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add inline comment' }));
+    expect(onCreateInlineCommentFromChatMessage).toHaveBeenCalledWith(inlineComment);
+  });
 });

@@ -22,7 +22,15 @@ export interface LlmSessionTurnThesisFeedbackMetadata {
   inlineComment: LlmSessionTurnInlineCommentPayload;
 }
 
-export type LlmSessionTurnMetadata = LlmSessionTurnVocabularyMetadata | LlmSessionTurnThesisFeedbackMetadata;
+export interface LlmSessionTurnParagraphEvaluationMetadata {
+  feedbackType: 'paragraph-evaluation';
+  inlineComment: LlmSessionTurnInlineCommentPayload;
+}
+
+export type LlmSessionTurnMetadata =
+  | LlmSessionTurnVocabularyMetadata
+  | LlmSessionTurnThesisFeedbackMetadata
+  | LlmSessionTurnParagraphEvaluationMetadata;
 
 export interface LlmSessionTurn {
   role: 'teacher' | 'assistant' | 'system';
@@ -188,7 +196,8 @@ export class LlmChatSessionRepository {
       if (
         typeof parsed === 'object' &&
         parsed !== null &&
-        (parsed as { feedbackType?: unknown }).feedbackType === 'thesis-statement-feedback'
+        ((parsed as { feedbackType?: unknown }).feedbackType === 'thesis-statement-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'paragraph-evaluation')
       ) {
         const inlineComment = (parsed as { inlineComment?: unknown }).inlineComment;
         if (
