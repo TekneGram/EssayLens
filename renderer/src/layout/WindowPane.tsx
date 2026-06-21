@@ -2,6 +2,10 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { AssessmentWindow } from '@/layout/AssessmentWindow';
 import { AssessmentTab } from '@/features/assessment-tab/AssessmentTab';
 import EssayFeedbackManager from '@/features/essay-feedback-manager/components/EssayFeedbackManager';
+import {
+  INITIAL_ESSAY_FEEDBACK_SELECTION,
+  type EssayFeedbackSelectionState
+} from '@/features/essay-feedback-manager/essayFeedbackManager.types';
 import { ChatInterface } from '@/layout/ChatInterface';
 import type { ChatInterfaceBindings } from '@/layout/ChatInterface';
 import { ChatCollapsedRail, ChatView, collapseChatPanel, expandChatPanel, selectIsChatCollapsed } from '@/layout/ChatView';
@@ -14,6 +18,9 @@ export default function WindowPane() {
   const state = useAppState();
   const dispatch = useAppDispatch();
   const [assessmentChatBindings, setAssessmentChatBindings] = useState<ChatInterfaceBindings | null>(null);
+  const [essayFeedbackSelection, setEssayFeedbackSelection] = useState<EssayFeedbackSelectionState>(
+    INITIAL_ESSAY_FEEDBACK_SELECTION
+  );
   const activeTopTab = selectActiveTopTab(state);
   const selectedFileType = selectSelectedFileType(state);
   const isChatCollapsed = selectIsChatCollapsed(state);
@@ -45,10 +52,21 @@ export default function WindowPane() {
         activeTab={activeTopTab}
         onTabChange={(tab) => dispatch({ type: 'ui/setTopTab', payload: tab })}
         isEssayFeedbackMode={isEssayFeedbackMode}
-        assessmentPanel={<AssessmentTab selectedFileType={selectedFileType} onChatBindingsChange={setAssessmentChatBindings} />}
+        assessmentPanel={
+          <AssessmentTab
+            selectedFileType={selectedFileType}
+            essayFeedbackSelection={essayFeedbackSelection}
+            onChatBindingsChange={setAssessmentChatBindings}
+          />
+        }
         rubricPanel={<RubricTab />}
         llmPanel={<LlmManager />}
-        essayFeedbackPanel={<EssayFeedbackManager />}
+        essayFeedbackPanel={
+          <EssayFeedbackManager
+            selection={essayFeedbackSelection}
+            onSelectionChange={setEssayFeedbackSelection}
+          />
+        }
       />
       {isChatCollapsed ? (
         <ChatCollapsedRail onExpand={expandChat} />

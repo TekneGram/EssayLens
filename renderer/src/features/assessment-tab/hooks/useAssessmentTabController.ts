@@ -4,6 +4,7 @@ import type { SelectedFileType } from '@/app/types';
 import type { WordTextMap } from '@/features/text-view-window';
 import { toChatModeAfterCommandSelection } from '../domain/assessmentTab.logic';
 import { useAddFeedbackMutation } from '@/features/comments-view';
+import type { EssayFeedbackSelectionState } from '@/features/essay-feedback-manager/essayFeedbackManager.types';
 import { useAssessmentChatController } from './useAssessmentChatController';
 import { useAssessmentCommentsController } from './useAssessmentCommentsController';
 import { assessmentTabReducer, initialAssessmentTabState } from '../state';
@@ -11,11 +12,13 @@ import type { AssessmentTabChatBindings } from '../types';
 
 interface UseAssessmentTabControllerParams {
   selectedFileType: SelectedFileType;
+  essayFeedbackSelection: EssayFeedbackSelectionState;
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
 }
 
 export function useAssessmentTabController({
   selectedFileType,
+  essayFeedbackSelection,
   onChatBindingsChange
 }: UseAssessmentTabControllerParams) {
   const appState = useAppState();
@@ -94,6 +97,7 @@ export function useAssessmentTabController({
     localDispatch,
     selectedFileId,
     selectedEssayText,
+    essayFeedbackSelection,
     addFeedback,
     onChatBindingsChange,
     setActiveCommandWithModeRule,

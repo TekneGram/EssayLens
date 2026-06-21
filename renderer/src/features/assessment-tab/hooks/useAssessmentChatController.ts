@@ -1,6 +1,7 @@
 import { useAssessmentChatActions } from './chat/useAssessmentChatActions';
 import { useAssessmentChatStateSync } from './chat/useAssessmentChatStateSync';
 import type { FeedbackItem } from '../../feedback/domain';
+import type { EssayFeedbackSelectionState } from '@/features/essay-feedback-manager/essayFeedbackManager.types';
 import type {
   AddBlockFeedbackRequest,
   AddInlineFeedbackRequest
@@ -18,6 +19,7 @@ interface UseAssessmentChatControllerParams {
   localDispatch: Dispatch<AssessmentTabAction>;
   selectedFileId: string | null;
   selectedEssayText: string | null;
+  essayFeedbackSelection: EssayFeedbackSelectionState;
   addFeedback: (request: AddFeedbackDraft) => Promise<FeedbackItem>;
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
   setActiveCommandWithModeRule: (command: AssessmentTabChatBindings['activeCommand']) => void;
@@ -37,6 +39,7 @@ export function useAssessmentChatController({
   localDispatch,
   selectedFileId,
   selectedEssayText,
+  essayFeedbackSelection,
   addFeedback,
   onChatBindingsChange,
   setActiveCommandWithModeRule,
@@ -49,6 +52,7 @@ export function useAssessmentChatController({
     localDispatch,
     selectedFileId,
     selectedEssayText,
+    essayFeedbackSelection,
     addFeedback
   });
 

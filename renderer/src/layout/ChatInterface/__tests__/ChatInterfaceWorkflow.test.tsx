@@ -329,7 +329,7 @@ describe('ChatInterface submit workflow', () => {
     });
   });
 
-  it('submits chat mode through chat API and appends teacher + assistant messages', async () => {
+  it('submits essay feedback bulk through chat API for the selected file', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
     const listFeedback = vi.fn().mockResolvedValue({
       ok: true,
@@ -379,7 +379,7 @@ describe('ChatInterface submit workflow', () => {
     await screen.findByTestId('text-view-window');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-essay-bulk');
@@ -393,8 +393,16 @@ describe('ChatInterface submit workflow', () => {
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
+          kind: 'essay-feedback',
           fileId: '/workspace/essays/draft.docx',
-          message: 'How should I sequence feedback?',
+          selectedFeedbackTypes: [
+            'thesis-statement-feedback',
+            'summarize-main-idea',
+            'paragraph-evaluation',
+            'thesis-restatement-feedback',
+            'summary-feedback',
+            'conclusion-final-comment'
+          ],
           clientRequestId: expect.any(String)
         })
       );
@@ -528,6 +536,107 @@ describe('ChatInterface submit workflow', () => {
     confirmSpy.mockRestore();
   });
 
+  it('loops through each file for essay feedback bulk and sends selected feedback types per file', async () => {
+    const selectFolder = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        folder: {
+          id: '/workspace/essays',
+          path: '/workspace/essays',
+          name: 'essays'
+        }
+      }
+    });
+    const listFiles = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        files: [
+          {
+            id: '/workspace/essays/draft-1.docx',
+            folderId: '/workspace/essays',
+            name: 'draft-1.docx',
+            path: '/workspace/essays/draft-1.docx',
+            kind: 'docx'
+          },
+          {
+            id: '/workspace/essays/draft-2.pdf',
+            folderId: '/workspace/essays',
+            name: 'draft-2.pdf',
+            path: '/workspace/essays/draft-2.pdf',
+            kind: 'pdf'
+          }
+        ]
+      }
+    });
+    const sendMessage = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        reply: '',
+        essayFeedback: {
+          replies: [],
+          failures: []
+        }
+      }
+    });
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { sendMessage },
+        llmManager: createLlmManagerMocks(),
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft-1.docx' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'draft-2.pdf' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(2);
+    });
+    expect(sendMessage.mock.calls).toEqual([
+      [
+        expect.objectContaining({
+          kind: 'essay-feedback',
+          fileId: '/workspace/essays/draft-1.docx',
+          selectedFeedbackTypes: [
+            'thesis-statement-feedback',
+            'summarize-main-idea',
+            'paragraph-evaluation',
+            'thesis-restatement-feedback',
+            'summary-feedback',
+            'conclusion-final-comment'
+          ]
+        })
+      ],
+      [
+        expect.objectContaining({
+          kind: 'essay-feedback',
+          fileId: '/workspace/essays/draft-2.pdf',
+          selectedFeedbackTypes: [
+            'thesis-statement-feedback',
+            'summarize-main-idea',
+            'paragraph-evaluation',
+            'thesis-restatement-feedback',
+            'summary-feedback',
+            'conclusion-final-comment'
+          ]
+        })
+      ]
+    ]);
+  });
+
   it('updates assistant message from stream chunks before sendMessage resolves', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
     const listFeedback = vi.fn().mockResolvedValue({
@@ -573,7 +682,7 @@ describe('ChatInterface submit workflow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'draft.docx' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
       target: { value: 'Please stream this response' }
     });

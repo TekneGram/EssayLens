@@ -5,6 +5,7 @@ export type LlmAction =
   | 'llm.generateFeedbackSummary'
   | 'llm.evaluate.simple'
   | 'llm.evaluate.withRubric'
+  | 'llm.essay.feedback.identifyParagraphs'
   | 'llm.paragraph.feedback.bulk'
   | 'llm.session.create'
   | 'llm.session.clear'

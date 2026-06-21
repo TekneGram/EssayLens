@@ -8,6 +8,7 @@ from app.pipeline_simple import (
     warm_runtime,
 )
 from app.pipeline_rubric_eval import run_evaluate_with_rubric
+from app.pipeline_essay_feedback_identify import run_essay_feedback_identify_paragraphs
 from app.pipeline_paragraph_feedback_bulk import run_paragraph_feedback_bulk
 from controllers.responses import success
 from app.runtime_lifecycle import RuntimeLifecycle
@@ -20,12 +21,14 @@ SIMPLE_CHAT_PIPELINE_KEY = "simple-chat"
 EVALUATE_SIMPLE_PIPELINE_KEY = "evaluate-simple"
 EVALUATE_WITH_RUBRIC_PIPELINE_KEY = "evaluate-with-rubric"
 PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY = "paragraph-feedback-bulk"
+ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY = "essay-feedback-identify"
 
 ACTION_TO_PIPELINE: dict[str, tuple[str, str]] = {
     "llm.chat": (SIMPLE_CHAT_PIPELINE_KEY, "chat"),
     "llm.chatStream": (SIMPLE_CHAT_PIPELINE_KEY, "chatStream"),
     "llm.evaluate.simple": (EVALUATE_SIMPLE_PIPELINE_KEY, "evaluate"),
     "llm.evaluate.withRubric": (EVALUATE_WITH_RUBRIC_PIPELINE_KEY, "evaluate"),
+    "llm.essay.feedback.identifyParagraphs": (ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY, "evaluate"),
     "llm.paragraph.feedback.bulk": (PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY, "evaluate"),
 }
 
@@ -107,11 +110,34 @@ class HandleRequest:
             if pipeline_key in {
                 EVALUATE_SIMPLE_PIPELINE_KEY,
                 EVALUATE_WITH_RUBRIC_PIPELINE_KEY,
+                ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY,
                 PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY,
             }:
                 if pipeline_key == EVALUATE_WITH_RUBRIC_PIPELINE_KEY:
                     reply = run_evaluate_with_rubric(payload, self.lifecycle)
                     return success(request_id, {"reply": reply})
+                if pipeline_key == ESSAY_FEEDBACK_IDENTIFY_PIPELINE_KEY:
+                    seq = 0
+                    client_request_id = payload.get("clientRequestId")
+                    if not isinstance(client_request_id, str):
+                        client_request_id = ""
+
+                    def emit_status(text: str) -> None:
+                        nonlocal seq
+                        seq += 1
+                        self.emit_stream_event(
+                            "stream_chunk",
+                            {
+                                "clientRequestId": client_request_id,
+                                "channel": "meta",
+                                "text": text,
+                                "done": False,
+                                "seq": seq,
+                            },
+                        )
+
+                    reply = run_essay_feedback_identify_paragraphs(payload, self.lifecycle, on_status=emit_status)
+                    return success(request_id, reply)
                 if pipeline_key == PARAGRAPH_FEEDBACK_BULK_PIPELINE_KEY:
                     seq = 0
                     client_request_id = payload.get("clientRequestId")

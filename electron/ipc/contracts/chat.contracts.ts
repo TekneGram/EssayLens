@@ -13,6 +13,16 @@ export interface ChatMessageDto {
   rubricCategory?: string;
 }
 
+export type EssayFeedbackType =
+  | 'thesis-statement-feedback'
+  | 'summarize-main-idea'
+  | 'paragraph-evaluation'
+  | 'thesis-restatement-feedback'
+  | 'summary-feedback'
+  | 'conclusion-final-comment';
+
+export type EssayFeedbackStage = 'identify-paragraphs';
+
 export interface ListMessagesRequest {
   fileId?: string;
 }
@@ -22,10 +32,11 @@ export interface ListMessagesResponse {
 }
 
 export interface SendChatMessageRequest {
-  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback';
   fileId?: string;
   fileIds?: string[];
   redoCompletedFileIds?: string[];
+  selectedFeedbackTypes?: EssayFeedbackType[];
   message?: string;
   essay?: string;
   contextText?: string;
@@ -72,6 +83,25 @@ export interface SendChatMessageResponse {
     failedFileIds?: string[];
     skippedFileIds?: string[];
   };
+  essayFeedback?: {
+    replies: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reply: string;
+      clientRequestId: string;
+      essayFeedbackType: EssayFeedbackType;
+    }>;
+    failures?: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reason: string;
+      clientRequestId: string;
+      details?: unknown;
+      essayFeedbackType?: EssayFeedbackType;
+    }>;
+  };
 }
 
 export interface ParagraphFeedbackCompletionDto {
@@ -106,7 +136,9 @@ export interface ChatStreamChunkEvent {
   feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   vocabulary?: ChatVocabularyFeedback;
-  workflow?: 'paragraph-feedback-bulk';
+  workflow?: 'paragraph-feedback-bulk' | 'essay-feedback';
+  essayFeedbackType?: EssayFeedbackType;
+  essayFeedbackStage?: EssayFeedbackStage;
   type: ChatStreamEventType;
   seq: number;
   channel?: 'content' | 'reasoning' | 'meta';

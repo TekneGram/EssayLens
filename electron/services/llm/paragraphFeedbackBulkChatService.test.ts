@@ -137,6 +137,10 @@ async function createService(
       listCompletedForFiles,
       addCompletion
     } as any,
+    essayFeedbackAnalysisRepository: {
+      upsertIdentifiedParagraphs: vi.fn().mockResolvedValue(undefined),
+      getIdentifiedParagraphs: vi.fn().mockResolvedValue(null)
+    } as any,
     workspaceRepository: {
       resolveFileById: vi.fn().mockResolvedValue({
         id: 'file-1',

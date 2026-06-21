@@ -50,6 +50,8 @@ export function createElectronChatAdapter(): ChatPort {
           feedbackSection: rawEvent.feedbackSection,
           vocabulary: rawEvent.vocabulary,
           workflow: rawEvent.workflow,
+          essayFeedbackType: rawEvent.essayFeedbackType,
+          essayFeedbackStage: rawEvent.essayFeedbackStage,
           type: rawEvent.type,
           seq: rawEvent.seq,
           channel: rawEvent.channel,
