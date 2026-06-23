@@ -92,7 +92,7 @@ export interface LlmEssayFeedbackThesisStatementPayload {
 export interface LlmEssayFeedbackThesisStatementResult {
   thesis_statement: string;
   verdict: string;
-  improvements: string;
+  comments: string;
 }
 
 export interface LlmEssayFeedbackSummarizeMainIdeaPayload {

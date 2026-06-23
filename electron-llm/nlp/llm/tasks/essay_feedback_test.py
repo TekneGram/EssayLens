@@ -80,7 +80,7 @@ def test_run_thesis_statement_feedback_returns_expected_structure_and_status() -
     service = _FakeLlmService(
         responses=[
             ChatResponse(
-                content='{"thesis_statement":"Students should read more.","verdict":"Clear and focused thesis.","improvements":"Add one concrete reason to make the claim more specific."}',
+                content='{"thesis_statement":"Students should read more.","verdict":"reasonable","comments":"Add one concrete reason to make the claim more specific."}',
                 reasoning_content=None,
                 finish_reason="stop",
                 model="m",
@@ -101,8 +101,8 @@ def test_run_thesis_statement_feedback_returns_expected_structure_and_status() -
 
     assert result == {
         "thesis_statement": "Students should read more.",
-        "verdict": "Clear and focused thesis.",
-        "improvements": "Add one concrete reason to make the claim more specific.",
+        "verdict": "reasonable",
+        "comments": "Add one concrete reason to make the claim more specific.",
     }
     assert statuses == ["Extracting and evaluating the thesis statement..."]
     assert service.calls[0]["system"]

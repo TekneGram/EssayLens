@@ -139,8 +139,8 @@ async function createBulkService() {
       ok: true,
       data: {
         thesis_statement: 'Students should read more books.',
-        verdict: 'Clear thesis.',
-        improvements: 'Add one concrete reason.'
+        verdict: 'reasonable',
+        comments: 'Add one concrete reason.'
       },
       timestamp: '2026-06-21T00:00:00.000Z'
     };

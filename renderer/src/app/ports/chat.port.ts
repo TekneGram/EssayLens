@@ -31,7 +31,7 @@ export type EssayFeedbackType =
   | 'conclusion-final-comment';
 
 export type EssayFeedbackStage = 'identify-paragraphs';
-export type EssayFeedbackSection = 'verdict' | 'improvements' | 'comments';
+export type EssayFeedbackSection = 'verdict' | 'comments';
 export type ChatFeedbackType =
   | 'topic_sentence'
   | 'coherence'

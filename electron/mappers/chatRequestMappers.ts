@@ -253,7 +253,7 @@ export function isEssayFeedbackThesisStatementResult(
   return (
     typeof value.thesis_statement === 'string' &&
     typeof value.verdict === 'string' &&
-    typeof value.improvements === 'string'
+    typeof value.comments === 'string'
   );
 }
 

@@ -276,8 +276,8 @@ async function createEssayFeedbackService() {
       ok: true,
       data: {
         thesis_statement: 'Students should read more books.',
-        verdict: 'Clear thesis, but it would be stronger with one concrete reason.',
-        improvements: 'Add a specific reason students benefit from reading more books.'
+        verdict: 'reasonable',
+        comments: 'Add a specific reason students benefit from reading more books.'
       },
       timestamp: '2026-06-21T00:00:00.000Z'
     };
@@ -471,7 +471,7 @@ describe('EssayFeedbackChatService', () => {
     ]);
   });
 
-  it('emits verdict and improvements bubbles for thesis statement feedback with inline comment payloads', async () => {
+  it('emits verdict and comments bubbles for thesis statement feedback with inline comment payloads', async () => {
     const emittedEvents: Array<Record<string, unknown>> = [];
     const { service, appendTurns, requestActionStream, saveThesisStatement, addCompletion } = await createEssayFeedbackService();
 
@@ -489,12 +489,12 @@ describe('EssayFeedbackChatService', () => {
     expect(result.essayFeedback?.replies).toHaveLength(2);
     expect(result.essayFeedback?.replies?.map((reply) => reply.essayFeedbackSection)).toEqual([
       'verdict',
-      'improvements'
+      'comments'
     ]);
     expect(result.essayFeedback?.replies?.map((reply) => reply.inlineComment)).toEqual([
       {
         searchText: 'Students should read more books.',
-        commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+        commentText: 'reasonable'
       },
       {
         searchText: 'Students should read more books.',
@@ -518,20 +518,19 @@ describe('EssayFeedbackChatService', () => {
       [
         {
           role: 'assistant',
-          content:
-            '### Thesis Statement Feedback\nVerdict: Clear thesis, but it would be stronger with one concrete reason.',
+          content: '### Thesis Statement Feedback\nVerdict: reasonable',
           metadata: {
             feedbackType: 'thesis-statement-feedback',
             inlineComment: {
               searchText: 'Students should read more books.',
-              commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+              commentText: 'reasonable'
             }
           }
         },
         {
           role: 'assistant',
           content:
-            '### Thesis Statement Feedback\nImprovements: Add a specific reason students benefit from reading more books.',
+            '### Thesis Statement Feedback\nComments: Add a specific reason students benefit from reading more books.',
           metadata: {
             feedbackType: 'thesis-statement-feedback',
             inlineComment: {
@@ -555,11 +554,11 @@ describe('EssayFeedbackChatService', () => {
         section: 'verdict',
         inlineComment: {
           searchText: 'Students should read more books.',
-          commentText: 'Clear thesis, but it would be stronger with one concrete reason.'
+          commentText: 'reasonable'
         }
       },
       {
-        section: 'improvements',
+        section: 'comments',
         inlineComment: {
           searchText: 'Students should read more books.',
           commentText: 'Add a specific reason students benefit from reading more books.'

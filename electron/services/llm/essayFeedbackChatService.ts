@@ -599,18 +599,18 @@ export class EssayFeedbackChatService {
       this.buildEssayFeedbackReply({
         fileId: args.fileId,
         sessionId: args.sessionId,
-        clientRequestId: `${args.clientRequestId}:improvements`,
+        clientRequestId: `${args.clientRequestId}:comments`,
         essayFeedbackType: 'thesis-statement-feedback',
-        essayFeedbackSection: 'improvements',
+        essayFeedbackSection: 'comments',
         feedbackType: 'thesis-statement-feedback',
         reply: this.formatEssayFeedbackSectionReply(
           'Thesis Statement Feedback',
-          'Improvements',
-          llmResult.data.improvements
+          'Comments',
+          llmResult.data.comments
         ),
         inlineComment: this.buildInlineCommentPayload(
           llmResult.data.thesis_statement,
-          llmResult.data.improvements
+          llmResult.data.comments
         )
       })
     ];

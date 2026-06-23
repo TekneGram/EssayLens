@@ -119,10 +119,13 @@ def _thesis_statement_feedback_schema() -> dict[str, Any]:
         "type": "object",
         "properties": {
             "thesis_statement": {"type": "string"},
-            "verdict": {"type": "string"},
-            "improvements": {"type": "string"},
+            "verdict": {
+                "type": "string",
+                "enum": ["excellent", "reasonable", "needs improving"],
+            },
+            "comments": {"type": "string"},
         },
-        "required": ["thesis_statement", "verdict", "improvements"],
+        "required": ["thesis_statement", "verdict", "comments"],
         "additionalProperties": False,
     }
 
@@ -130,19 +133,19 @@ def _thesis_statement_feedback_schema() -> dict[str, Any]:
 def _sanitize_thesis_statement_feedback(*, obj: dict[str, Any], schema: dict[str, Any]) -> dict[str, Any]:
     thesis_statement = obj.get("thesis_statement")
     verdict = obj.get("verdict")
-    improvements = obj.get("improvements")
+    comments = obj.get("comments")
 
     if not isinstance(thesis_statement, str) or not thesis_statement.strip():
         raise RuntimeError("Thesis-statement feedback response missing thesis_statement.")
     if not isinstance(verdict, str) or not verdict.strip():
         raise RuntimeError("Thesis-statement feedback response missing verdict.")
-    if not isinstance(improvements, str) or not improvements.strip():
-        raise RuntimeError("Thesis-statement feedback response missing improvements.")
+    if not isinstance(comments, str) or not comments.strip():
+        raise RuntimeError("Thesis-statement feedback response missing comments.")
 
     return {
         "thesis_statement": thesis_statement.strip(),
         "verdict": verdict.strip(),
-        "improvements": improvements.strip(),
+        "comments": comments.strip(),
     }
 
 
