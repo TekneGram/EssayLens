@@ -1,0 +1,2 @@
+# Task
+Based on the knowledge of thesis statements, write an example of a thesis statement that could be suitable for this essay. Give concise, concrete explanation about the example using the knowledge of thesis statements.

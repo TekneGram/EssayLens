@@ -8,7 +8,7 @@ from essay_paragraphs import essay_overall_idea, get_thesis_statement_feedback, 
 from essay_coherence import judge_paragraph_details
 from essay_paragraphs import improve_simple_vocabulary
 
-from essay_analysis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
+from essay_analysis_thesis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
 
 import requests
 

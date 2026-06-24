@@ -5,7 +5,7 @@ import argparse
 import time
 from pathlib import Path
 
-from essay_analysis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
+from essay_analysis_thesis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
 
 import requests
 
@@ -96,7 +96,7 @@ def main() -> None:
         wait_for_server(base_url)
         writing_path = "experiments/essay_examples/w1_strong.md"
         
-        identified_paragraphs = identify_paragraphs(writing_path, "experiments/system_prompts_v3/essay_knowledge.md", "experiments/system_prompts_v3/identify_paragraphs.md", base_url, args.max_tokens, args.temp)
+        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_thesis/essay_knowledge.md", "experiments/tasks_thesis/identify_paragraphs.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
@@ -117,13 +117,13 @@ def main() -> None:
         
         full_essay = full_essay + "\n" + conclusion
 
-        thesis_statement_initial = determine_thesis_statement(full_essay, "experiments/system_prompts_v3/essay_knowledge_determine_thesis.md", introduction, "experiments/system_prompts_v3/essay_determine_thesis.md", base_url, args.max_tokens, args.temp)
+        thesis_statement_initial = determine_thesis_statement(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", introduction, "experiments/tasks_thesis/essay_determine_thesis.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(thesis_statement_initial, indent=2))
         thesis_statement_initial_result = thesis_statement_initial["choices"][0]["message"]["content"]
         thesis_statement_initial_result = json.loads(thesis_statement_initial_result)
         ts = thesis_statement_initial_result["thesis_statement"]
 
-        ts_characteristics = thesis_statement_characteristics(full_essay, "experiments/system_prompts_v3/essay_knowledge_determine_thesis.md", thesis_statement_initial_result["thesis_statement"], "experiments/system_prompts_v3/essay_characterize_thesis.md", base_url, args.max_tokens, args.temp)
+        ts_characteristics = thesis_statement_characteristics(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", thesis_statement_initial_result["thesis_statement"], "experiments/tasks_thesis/essay_characterize_thesis.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(ts_characteristics, indent=2))
 
         ts_characteristics = ts_characteristics["choices"][0]["message"]["content"]
@@ -148,7 +148,7 @@ def main() -> None:
 
         # When there are at least 3 missing characteristics from the identified thesis statement, then we should offer advice on improvement
         if no_characteristics_count >= 3:
-            ts_advice = thesis_statement_advice(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, str(no_characteristics_count), "experiments/system_prompts_v3/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp)
+            ts_advice = thesis_statement_advice(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, str(no_characteristics_count), "experiments/tasks_thesis/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp)
             print(json.dumps(ts_advice, indent=2))
 
         # When there are 2 features the thesis statement is reasonable, and we can add a comment.
@@ -160,12 +160,12 @@ def main() -> None:
             else:
                 what_is_missing = what_is_missing + ", ".join(missing_features[:-1]) + " or " + missing_features[-1]
             
-            ts_comment = thesis_statement_comment(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, what_is_missing, "experiments/system_prompts_v3/essay_thesis_statement_comment.md", base_url, args.max_tokens, args.temp)
+            ts_comment = thesis_statement_comment(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, what_is_missing, "experiments/tasks_thesis/essay_thesis_statement_comment.md", base_url, args.max_tokens, args.temp)
             print(json.dumps(ts_comment, indent=2))
 
         # When there are no missing features or just 1 missing feature, then the thesis statement is excellent, and we can praise it.
         if no_characteristics_count == 1 or no_characteristics_count == 0:
-            ts_praise = thesis_statement_heap_praise(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, "experiments/system_prompts_v3/essay_thesis_statement_heap_praise.md", base_url, args.max_tokens, args.temp)
+            ts_praise = thesis_statement_heap_praise(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, "experiments/tasks_thesis/essay_thesis_statement_heap_praise.md", base_url, args.max_tokens, args.temp)
             print(json.dumps(ts_praise, indent=2))
 
     finally:

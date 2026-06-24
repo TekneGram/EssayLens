@@ -22,7 +22,7 @@ def identify_paragraphs(
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You separate essays into individual paragraphs. Here is knowledge about essays: \n" + knowledge},
+            {"role": "system", "content": "You separate essays into individual paragraphs and the references section if there is one. Here is knowledge about essays: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -52,9 +52,11 @@ def identify_paragraphs(
                                 },
                             },
                         },
-                        "conclusion_paragraph": { "type": "string" }
+                        "conclusion_paragraph": { "type": "string" },
+                        "contains_references": { "type": "string", "enum": ["yes", "no"]},
+                        "references_section": { "type": "string"}
                     },
-                    "required": ["introduction_paragraph", "body_paragraphs", "conclusion_paragraph"],
+                    "required": ["introduction_paragraph", "body_paragraphs", "conclusion_paragraph", "contains_references", "references_section"],
                     "additionalProperties": False
                 }
             }

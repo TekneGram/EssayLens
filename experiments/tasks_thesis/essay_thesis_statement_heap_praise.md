@@ -1,0 +1,2 @@
+# Task
+The thesis statement has been written extremely well and contains all the features of a good thesis statement. Your task is to offer praise to the writer and offer one very brief, concise comment about one feature used in the thesis statement.
