@@ -127,3 +127,147 @@ def identify_citations(
     r.raise_for_status()
     data = r.json()
     return data
+
+def check_references_no_citation(
+    essay,
+    knowledge_path,
+    task_path,
+    base_url,
+    max_tokens,
+    temperature
+):
+    repo_root = Path(__file__).resolve().parents[1]
+    knowledge_path = repo_root / knowledge_path
+    task_path = repo_root / task_path
+
+    knowledge = knowledge_path.read_text(encoding="utf-8")
+    task = task_path.read_text(encoding="utf-8")
+    user_prompt = "\n Here is an essay:" + essay + "\n" + task
+
+    payload = {
+        "model": "local-gguf",
+        "messages": [
+            {"role": "system", "content": "You find references after an essay that have no citations in the essay: \n" + knowledge},
+            {"role": "user", "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "chat_template_kwargs": { "enable_thinking": False },
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "reference_has_no_citation",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "reference_has_no_citation": {
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "reference": {"type": "string"},
+                                            "missing_citation": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "This reference has no in-text citation; either remove the reference or add the relevant in-text citation."
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "reference",
+                                            "missing_citation"
+                                        ],
+                                        "additionalProperties": False
+                                    }
+                                }
+                            },
+                            "required": ["items"],
+                            "additionalProperties": False
+                        }
+                    },
+                    "required": [
+                        "reference_has_no_citation"
+                    ],
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data
+
+def check_citation_no_reference(
+    essay,
+    knowledge_path,
+    task_path,
+    base_url,
+    max_tokens,
+    temperature
+):
+    repo_root = Path(__file__).resolve().parents[1]
+    knowledge_path = repo_root / knowledge_path
+    task_path = repo_root / task_path
+
+    knowledge = knowledge_path.read_text(encoding="utf-8")
+    task = task_path.read_text(encoding="utf-8")
+    user_prompt = "\n Here is an essay:" + essay + "\n" + task
+
+    payload = {
+        "model": "local-gguf",
+        "messages": [
+            {"role": "system", "content": "You find citations in the essay that have no references after the essay: \n" + knowledge},
+            {"role": "user", "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "chat_template_kwargs": { "enable_thinking": False },
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "find_citations_with_no_references",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "citation_has_no_reference": {
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "sentence_with_citation": {"type": "string"},
+                                            "missing_reference": {
+                                                "type": "string",
+                                                "enum": ["Reference missing for this citation"]
+                                            }
+                                        },
+                                        "required": [
+                                            "sentence_with_citation",
+                                            "missing_reference"
+                                        ],
+                                        "additionalProperties": False
+                                    }
+                                }
+                            },
+                            "required": ["items"],
+                            "additionalProperties": False
+                        },
+                    },
+                    "required": [
+                        "citation_has_no_reference"
+                    ],
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data

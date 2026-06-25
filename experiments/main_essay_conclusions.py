@@ -5,7 +5,7 @@ import argparse
 import time
 from pathlib import Path
 
-from essay_analysis_citations import identify_paragraphs, identify_citations, check_citation_no_reference, check_references_no_citation
+from essay_analysis_conclusions import identify_paragraphs, analyze_conclusions, provide_conclusion_feedback
 
 import requests
 
@@ -117,30 +117,18 @@ def main() -> None:
         # Essay main idea
         full_essay = introduction
         for bp in body_paragraphs:
-            full_essay = full_essay + "\n" +  bp["body_paragraph"]
+            full_essay = full_essay + "\n\n" +  bp["body_paragraph"]
         
-        full_essay = full_essay + "\n" + conclusion + "\n" + references
+        full_essay = full_essay + "\n\n" + conclusion
+        full_essay_with_refs = full_essay + "\n\n" + references
         
-        identified_citations = identify_citations(full_essay, "experiments/tasks_citations/citations_knowledge.md", "experiments/tasks_citations/identify_citations.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(identified_citations))
-        identified_citations_data = identified_citations["choices"][0]["message"]["content"]
-        identified_citations_data = json.loads(identified_citations_data)
+        evaluation = analyze_conclusions(full_essay, conclusion, "experiments/tasks_conclusions/conclusions_knowledge.md", "experiments/tasks_conclusions/analyze_conclusion.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(evaluation))
+        evaluation_content = evaluation["choices"][0]["message"]["content"]
+        #evaluation_content = json.loads(evaluation_content)
 
-        if identified_citations_data["has_citations"] == "yes" and has_references == "yes":
-            print("Citations and references included - but do they match?")
-            cit_check = check_citation_no_reference(full_essay, "experiments/tasks_citations/citations_references_knowledge.md", "experiments/tasks_citations/check_citation_no_ref.md", base_url, args.max_tokens, args.temp)
-            print(json.dumps(cit_check))
-            ref_check = check_references_no_citation(full_essay, "experiments/tasks_citations/citations_references_knowledge.md", "experiments/tasks_citations/check_ref_no_citation.md", base_url, args.max_tokens, args.temp)
-            print(json.dumps(ref_check))
-
-        if identified_citations_data["has_citations"] == "yes" and has_references == "no":
-            print("Citations but NO references")
-
-        if identified_citations_data["has_citations"] == "no" and has_references == "yes":
-            print("No citations, but has references, so user needs to add citations into the text")
-
-        if identified_citations_data["has_citations"] == "no" and has_references == "no":
-            print("No citations AND no references. User needs to do more research!")
+        feedback = provide_conclusion_feedback(full_essay, introduction, evaluation_content, "experiments/tasks_conclusions/conclusions_knowledge.md", "experiments/tasks_conclusions/conclusions_feedback.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(feedback))
 
 
         
@@ -159,9 +147,9 @@ if __name__ == "__main__":
 
 # To run a quick experiment
 # With Ternary Bonsai:
-# python experiments/main_essay_citations.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
+# python experiments/main_essay_conclusions.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
 
 # With Gemma 4
-# python experiments/main_essay_citations.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
+# python experiments/main_essay_conclusions.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
-# python experiments/main_essay_citations.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
+# python experiments/main_essay_conclusions.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
