@@ -5,7 +5,7 @@ import argparse
 import time
 from pathlib import Path
 
-from essay_analysis_introductions import identify_paragraphs, analyze_gen_spec, provide_introduction_feedback
+from essay_analysis_paragraphs import identify_paragraphs, encourage_development, anything_unclear
 
 import requests
 
@@ -96,7 +96,7 @@ def main() -> None:
         wait_for_server(base_url)
         writing_path = "experiments/essay_examples/w1_weak.md"
         
-        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_introductions/essay_knowledge.md", "experiments/tasks_introductions/identify_paragraphs_references.md", base_url, args.max_tokens, args.temp)
+        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_paragraphs/essay_knowledge.md", "experiments/tasks_paragraphs/identify_paragraphs_references.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
@@ -121,18 +121,18 @@ def main() -> None:
         
         full_essay = full_essay + "\n\n" + conclusion
         full_essay_with_refs = full_essay + "\n\n" + references
-        
-        gen_spec = analyze_gen_spec(full_essay, introduction, "experiments/tasks_introductions/introductions_knowledge.md", "experiments/tasks_introductions/analyze_gen_spec.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(gen_spec))
-        gen_spec_content = gen_spec["choices"][0]["message"]["content"]
-        #gen_spec_content = json.loads(gen_spec_content)
 
-        feedback = provide_introduction_feedback(full_essay, introduction, gen_spec_content, "experiments/tasks_introductions/introductions_knowledge.md", "experiments/tasks_introductions/introductions_feedback.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(feedback))
-
-
-        
-
+        # Count the number of words per body paragraph - encourage development if word count is below 100
+        # If word count is above 100, look for anything being unclear in the paragraph
+        for bp in body_paragraphs:
+            words = bp["body_paragraph"].split(" ")
+            word_count = len(words)
+            if word_count < 100:
+                feedback = encourage_development(full_essay, bp["body_paragraph"], "experiments/tasks_paragraphs/paragraphs_knowledge.md", "experiments/tasks_paragraphs/encourage_development.md", base_url, args.max_tokens, args.temp)
+                print(json.dumps(feedback))
+            else:
+                feedback = anything_unclear(full_essay, bp["body_paragraph"], "experiments/tasks_paragraphs/paragraphs_knowledge.md", "experiments/tasks_paragraphs/seek_clarity.md", base_url, args.max_tokens, args.temp)
+                print(json.dumps(feedback))
 
     finally:
         proc.terminate()
@@ -147,9 +147,9 @@ if __name__ == "__main__":
 
 # To run a quick experiment
 # With Ternary Bonsai:
-# python experiments/main_essay_introductions.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
+# python experiments/main_essay_paragraphs.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
 
 # With Gemma 4
-# python experiments/main_essay_introductions.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
+# python experiments/main_essay_paragraphs.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
-# python experiments/main_essay_introductions.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
+# python experiments/main_essay_paragraphs.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3

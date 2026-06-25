@@ -67,10 +67,10 @@ def identify_paragraphs(
     data = r.json()
     return data
 
-def enhance_vocabulary(
+def encourage_development(
     essay,
+    body_paragraph,
     knowledge_path,
-    word_list,
     task_path,
     base_url,
     max_tokens,
@@ -82,12 +82,12 @@ def enhance_vocabulary(
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = word_list + "\n" + task
+    user_prompt = task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You recommend vocabulary enrichment in a learner's essay based on the following knowledge: \n" + knowledge + "\n" + "Here is the essay:" + "\n" + essay + "\n"},
+            {"role": "system", "content": "You look for areas in the body paragraph of an essay that could be further developed using this knowledge: \n" + knowledge + "\n Here is the essay: \n" + essay + "\n Here is the body paragraph from the essay: \n" + body_paragraph},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -96,31 +96,62 @@ def enhance_vocabulary(
         "response_format": {
             "type": "json_schema",
             "json_schema": {
-                "name": "analyze_pronoun_usage",
+                "name": "encourage_development",
                 "schema": {
                     "type": "object",
                     "properties": {
-                        "recommendations": { 
-                            "type": "object",
-                            "properties": {
-                                "items" : {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "sentence": { "type": "string" },
-                                            "word_to_change": { "type": "string"},
-                                            "updated_sentence": { "type": "string" },
-                                            "comments": { "type": "string" }
-                                        },
-                                        "required": ["sentence", "word_to_change", "updated_sentence", "comments"],
-                                        "additionalProperties": False
-                                    },
-                                },
-                            },
-                        },
+                        "sentence": { "type": "string"},
+                        "feedback": { "type": "string" },
                     },
-                    "required": ["sentences"],
+                    "required": [ "sentence", "feedback" ],
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data
+
+def anything_unclear(
+    essay,
+    body_paragraph,
+    knowledge_path,
+    task_path,
+    base_url,
+    max_tokens,
+    temperature
+):
+    repo_root = Path(__file__).resolve().parents[1]
+    knowledge_path = repo_root / knowledge_path
+    task_path = repo_root / task_path
+
+    knowledge = knowledge_path.read_text(encoding="utf-8")
+    task = task_path.read_text(encoding="utf-8")
+    user_prompt = task
+
+    payload = {
+        "model": "local-gguf",
+        "messages": [
+            {"role": "system", "content": "You look for key points in the body paragraph that are not well explained and that could be further developed: \n" + knowledge + "\n Here is the essay: \n" + essay + "\n Here is the body paragraph you are examining: \n" + body_paragraph},
+            {"role": "user", "content": user_prompt},
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "chat_template_kwargs": { "enable_thinking": False },
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "encourage_development",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "all_clear": { "type": "string", "enum": ["yes", "no"]},
+                        "sentence": { "type": "string"},
+                        "feedback": { "type": "string" },
+                    },
+                    "required": [ "all_clear", "sentence", "feedback" ],
                     "additionalProperties": False
                 }
             }

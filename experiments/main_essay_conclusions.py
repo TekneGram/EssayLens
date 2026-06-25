@@ -96,7 +96,7 @@ def main() -> None:
         wait_for_server(base_url)
         writing_path = "experiments/essay_examples/w1_weak.md"
         
-        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_citations/essay_knowledge.md", "experiments/tasks_citations/identify_paragraphs_references.md", base_url, args.max_tokens, args.temp)
+        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_conclusions/essay_knowledge.md", "experiments/tasks_conclusions/identify_paragraphs_references.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)

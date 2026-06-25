@@ -1,79 +1,717 @@
 from __future__ import annotations
-import json
-import subprocess
-import argparse
-import time
-from pathlib import Path
-import string
-import csv
-from collections import Counter
 
-from essay_analysis_vocabulary import identify_paragraphs
+import argparse
+import csv
+import json
+import math
+import string
+import subprocess
+import time
+from collections import Counter
+from pathlib import Path
 
 import requests
+
+from essay_analysis_vocabulary import identify_paragraphs, enhance_vocabulary
+
+
+WORD_COUNTS_FILE = "experiments/word_freq_data/word_counts.csv"
+
+MIN_ENRICHMENT_FREQUENCY = 3
+
+MODERATE_LL_THRESHOLD = 6.63
+STRONG_LL_THRESHOLD = 10.83
+VERY_STRONG_LL_THRESHOLD = 15.13
+
+
+COMMON_FUNCTION_WORDS = {
+    "the", "a", "an",
+    "and", "or", "but", "if", "because", "so",
+    "of", "in", "on", "at", "to", "for", "from", "with", "by", "about",
+    "as", "than", "into", "over", "after", "before", "between", "through",
+    "is", "am", "are", "was", "were", "be", "been", "being",
+    "do", "does", "did",
+    "have", "has", "had",
+    "will", "would", "can", "could", "shall", "should", "may", "might", "must",
+    "i", "me", "my", "mine",
+    "you", "your", "yours",
+    "he", "him", "his",
+    "she", "her", "hers",
+    "it", "its",
+    "we", "us", "our", "ours",
+    "they", "them", "their", "theirs",
+    "this", "that", "these", "those",
+    "there", "here",
+    "who", "whom", "whose", "which", "what",
+    "when", "where", "why", "how",
+    "not", "no", "nor",
+}
+
 
 def wait_for_server(base_url: str, timeout_s: float = 60.0) -> None:
     deadline = time.time() + timeout_s
     health_url = f"{base_url}/health"
+
     while time.time() < deadline:
         try:
-            r = requests.get(health_url, timeout=2)
-            if r.ok:
+            response = requests.get(health_url, timeout=2)
+            if response.ok:
                 return
         except requests.RequestException:
             pass
+
         time.sleep(0.5)
-    raise TimeoutError(f"Server did not become healthy in {timeout_s}s: {health_url}")
 
-def get_prompts(system_prompt_knowledge_path: str, system_prompt_task_path: str, user_prompt_path: str) -> tuple[str, str]:
-    repo_root = Path(__file__).resolve().parents[1]
-    system_prompt_task_path = repo_root / system_prompt_task_path
-    system_prompt_knowledge_path = repo_root / system_prompt_knowledge_path
-    user_prompt_path = repo_root / user_prompt_path
+    raise TimeoutError(
+        f"Server did not become healthy in {timeout_s}s: {health_url}"
+    )
 
-    system_prompt_knowledge = system_prompt_knowledge_path.read_text(encoding="utf-8")
-    system_prompt_task = system_prompt_task_path.read_text(encoding="utf-8")
-    system_prompt = system_prompt_knowledge + "\n" + system_prompt_task
-    user_content = user_prompt_path.read_text(encoding="utf-8")
-
-    return (system_prompt, user_content)
 
 def select_server_for_model(model: str) -> Path:
     repo_root = Path(__file__).resolve().parents[1]
+
     if model == "gemma":
-        return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
+        return (
+            repo_root
+            / "third_party_new"
+            / "llama-cpp-turboquant"
+            / "build"
+            / "bin"
+            / "llama-server"
+        )
+
     if model == "bonsai":
-        return repo_root / "third_party_prismml" / "llama-cpp" / "build" / "bin" / "llama-server"
-    
-def select_jinja(model: str) -> Path:
+        return (
+            repo_root
+            / "third_party_prismml"
+            / "llama-cpp"
+            / "build"
+            / "bin"
+            / "llama-server"
+        )
+
+    raise ValueError(f"Unknown model: {model}")
+
+
+def select_jinja(model: str) -> Path | None:
     repo_root = Path(__file__).resolve().parents[1]
-    if model =="gemma":
+
+    if model == "gemma":
         return repo_root / "assets" / "models" / "gemma_4_chat_template.jinja"
+
+    return None
+
+
+def clean_word(word: str) -> str:
+    return "".join(
+        char for char in word.lower().strip()
+        if char not in string.punctuation
+    )
+
+
+def get_clean_words(text: str) -> list[str]:
+    words = [clean_word(word) for word in text.split()]
+    return [word for word in words if word]
+
+
+def load_word_counts(filepath: str) -> Counter:
+    """
+    Load word counts from a CSV file.
+
+    Expected columns:
+        word,count
+
+    Also accepts count columns named:
+        frequency, freq
+
+    The same file is used for:
+    1. building frequency bands;
+    2. serving as the comparison corpus for log-likelihood.
+    """
+
+    counts = Counter()
+
+    with open(filepath, "r", newline="", encoding="utf-8") as infile:
+        reader = csv.DictReader(infile)
+
+        if reader.fieldnames is None:
+            raise ValueError("Word count CSV has no header row.")
+
+        lower_fieldnames = [
+            field.lower().strip()
+            for field in reader.fieldnames
+        ]
+
+        word_column = None
+        count_column = None
+
+        for candidate in ["word", "token", "lemma"]:
+            if candidate in lower_fieldnames:
+                word_column = reader.fieldnames[lower_fieldnames.index(candidate)]
+                break
+
+        for candidate in ["count", "frequency", "freq"]:
+            if candidate in lower_fieldnames:
+                count_column = reader.fieldnames[lower_fieldnames.index(candidate)]
+                break
+
+        if word_column is None:
+            raise ValueError(
+                "Could not find a word column. Expected: word, token, or lemma."
+            )
+
+        if count_column is None:
+            raise ValueError(
+                "Could not find a count column. Expected: count, frequency, or freq."
+            )
+
+        for row in reader:
+            word = row[word_column].lower().strip()
+
+            if not word:
+                continue
+
+            try:
+                count = int(float(row[count_column]))
+            except ValueError:
+                continue
+
+            if count > 0:
+                counts[word] += count
+
+    return counts
+
+
+def remove_function_words(word_counts: Counter, function_words: set[str]) -> Counter:
+    return Counter({
+        word: count
+        for word, count in word_counts.items()
+        if word not in function_words
+    })
+
+
+def create_frequency_bands(reference_lexical_counts: Counter) -> dict[str, set[str]]:
+    """
+    Create lexical bands from the comparison corpus.
+
+    The most frequent non-function words are used to create:
+    - top_1000
+    - range_1001_2000
+    - range_2001_3500
+    """
+
+    ranked_words = [
+        word
+        for word, count in reference_lexical_counts.most_common()
+    ]
+
+    return {
+        "top_1000": set(ranked_words[:1000]),
+        "range_1001_2000": set(ranked_words[1000:2000]),
+        "range_2001_3500": set(ranked_words[2000:3500]),
+    }
+
+
+def count_student_lexical_words(
+    essay_words: list[str],
+    function_words: set[str]
+) -> Counter:
+    return Counter(
+        word
+        for word in essay_words
+        if word not in function_words
+    )
+
+
+def assign_words_to_bands(
+    student_lexical_counts: Counter,
+    frequency_bands: dict[str, set[str]]
+) -> dict[str, dict]:
+    """
+    Count student lexical words in each frequency band.
+    """
+
+    lexical_total_tokens = sum(student_lexical_counts.values())
+    lexical_total_types = len(student_lexical_counts)
+
+    band_results = {}
+    assigned_words = set()
+
+    for band_name, band_words in frequency_bands.items():
+        words_in_band = {
+            word: freq
+            for word, freq in student_lexical_counts.items()
+            if word in band_words
+        }
+
+        assigned_words.update(words_in_band.keys())
+
+        token_count = sum(words_in_band.values())
+        type_count = len(words_in_band)
+
+        band_results[band_name] = {
+            "token_count": token_count,
+            "token_percentage_lexical_words": (
+                token_count / lexical_total_tokens * 100
+                if lexical_total_tokens > 0
+                else 0
+            ),
+            "type_count": type_count,
+            "type_percentage_lexical_words": (
+                type_count / lexical_total_types * 100
+                if lexical_total_types > 0
+                else 0
+            ),
+            "words": dict(
+                sorted(
+                    words_in_band.items(),
+                    key=lambda item: item[1],
+                    reverse=True
+                )
+            ),
+        }
+
+    outside_words = {
+        word: freq
+        for word, freq in student_lexical_counts.items()
+        if word not in assigned_words
+    }
+
+    outside_token_count = sum(outside_words.values())
+    outside_type_count = len(outside_words)
+
+    band_results["lexical_outside_3500"] = {
+        "token_count": outside_token_count,
+        "token_percentage_lexical_words": (
+            outside_token_count / lexical_total_tokens * 100
+            if lexical_total_tokens > 0
+            else 0
+        ),
+        "type_count": outside_type_count,
+        "type_percentage_lexical_words": (
+            outside_type_count / lexical_total_types * 100
+            if lexical_total_types > 0
+            else 0
+        ),
+        "words": dict(
+            sorted(
+                outside_words.items(),
+                key=lambda item: item[1],
+                reverse=True
+            )
+        ),
+    }
+
+    return band_results
+
+
+def log_likelihood_g2(
+    student_freq: int,
+    student_total: int,
+    reference_freq: int,
+    reference_total: int
+) -> float:
+    """
+    Calculate the log-likelihood G² value for one word.
+
+    The raw G² value is always non-negative.
+    Direction is added later using relative frequency comparison.
+    """
+
+    a = student_freq
+    b = student_total - student_freq
+    c = reference_freq
+    d = reference_total - reference_freq
+
+    if student_total <= 0 or reference_total <= 0:
+        return 0.0
+
+    total = a + b + c + d
+
+    row1 = a + b
+    row2 = c + d
+    col1 = a + c
+    col2 = b + d
+
+    expected_a = row1 * col1 / total
+    expected_b = row1 * col2 / total
+    expected_c = row2 * col1 / total
+    expected_d = row2 * col2 / total
+
+    def term(observed: float, expected: float) -> float:
+        if observed == 0 or expected == 0:
+            return 0.0
+
+        return observed * math.log(observed / expected)
+
+    return 2 * (
+        term(a, expected_a)
+        + term(b, expected_b)
+        + term(c, expected_c)
+        + term(d, expected_d)
+    )
+
+
+def signed_log_likelihood(
+    student_freq: int,
+    student_total: int,
+    reference_freq: int,
+    reference_total: int
+) -> float:
+    """
+    Positive signed LL means overused in the student essay.
+
+    Negative signed LL means underused in the student essay.
+    """
+
+    g2 = log_likelihood_g2(
+        student_freq=student_freq,
+        student_total=student_total,
+        reference_freq=reference_freq,
+        reference_total=reference_total
+    )
+
+    student_relative_frequency = (
+        student_freq / student_total
+        if student_total > 0
+        else 0
+    )
+
+    reference_relative_frequency = (
+        reference_freq / reference_total
+        if reference_total > 0
+        else 0
+    )
+
+    if student_relative_frequency > reference_relative_frequency:
+        return g2
+
+    if student_relative_frequency < reference_relative_frequency:
+        return -g2
+
+    return 0.0
+
+
+def classify_overuse_strength(signed_ll: float) -> str | None:
+    """
+    Classify positive signed LL values.
+
+    Returns None if the word is not in the enrichment range.
+    """
+
+    if signed_ll >= VERY_STRONG_LL_THRESHOLD:
+        return "very_strong"
+
+    if signed_ll >= STRONG_LL_THRESHOLD:
+        return "strong"
+
+    if signed_ll >= MODERATE_LL_THRESHOLD:
+        return "moderate"
+
+    return None
+
+
+def calculate_word_ll_scores(
+    student_lexical_counts: Counter,
+    reference_lexical_counts: Counter,
+    frequency_bands: dict[str, set[str]]
+) -> list[dict]:
+    """
+    Calculate signed LL scores for all lexical words in the student essay.
+    """
+
+    student_total = sum(student_lexical_counts.values())
+    reference_total = sum(reference_lexical_counts.values())
+
+    word_rows = []
+
+    for word, student_freq in student_lexical_counts.items():
+        reference_freq = reference_lexical_counts.get(word, 0)
+
+        signed_ll = signed_log_likelihood(
+            student_freq=student_freq,
+            student_total=student_total,
+            reference_freq=reference_freq,
+            reference_total=reference_total
+        )
+
+        student_relative_frequency = (
+            student_freq / student_total * 100
+            if student_total > 0
+            else 0
+        )
+
+        reference_relative_frequency = (
+            reference_freq / reference_total * 100
+            if reference_total > 0
+            else 0
+        )
+
+        band = get_word_band(word, frequency_bands)
+
+        word_rows.append({
+            "word": word,
+            "band": band,
+            "student_frequency": student_freq,
+            "student_relative_frequency_pct": student_relative_frequency,
+            "reference_frequency": reference_freq,
+            "reference_relative_frequency_pct": reference_relative_frequency,
+            "signed_log_likelihood": signed_ll,
+        })
+
+    return sorted(
+        word_rows,
+        key=lambda row: row["signed_log_likelihood"],
+        reverse=True
+    )
+
+
+def get_word_band(word: str, frequency_bands: dict[str, set[str]]) -> str:
+    if word in frequency_bands["top_1000"]:
+        return "top_1000"
+
+    if word in frequency_bands["range_1001_2000"]:
+        return "range_1001_2000"
+
+    if word in frequency_bands["range_2001_3500"]:
+        return "range_2001_3500"
+
+    return "lexical_outside_3500"
+
+
+def identify_words_for_enrichment(
+    word_ll_rows: list[dict],
+    min_frequency: int = MIN_ENRICHMENT_FREQUENCY
+) -> list[dict]:
+    """
+    Select words for enrichment.
+
+    Criteria:
+    1. word is in top-1000 lexical band;
+    2. word appears at least min_frequency times;
+    3. signed LL is positive and reaches at least moderate overuse.
+    """
+
+    candidates = []
+
+    for row in word_ll_rows:
+        if row["band"] != "top_1000":
+            continue
+
+        if row["student_frequency"] < min_frequency:
+            continue
+
+        strength = classify_overuse_strength(row["signed_log_likelihood"])
+
+        if strength is None:
+            continue
+
+        candidate = dict(row)
+        candidate["overuse_strength"] = strength
+        candidates.append(candidate)
+
+    return sorted(
+        candidates,
+        key=lambda row: (
+            row["signed_log_likelihood"],
+            row["student_frequency"]
+        ),
+        reverse=True
+    )
+
+
+def run_vocabulary_analysis(
+    essay_text: str,
+    word_counts_file: str = WORD_COUNTS_FILE
+) -> dict:
+    essay_words = get_clean_words(essay_text)
+
+    student_all_counts = Counter(essay_words)
+    student_function_counts = Counter({
+        word: freq
+        for word, freq in student_all_counts.items()
+        if word in COMMON_FUNCTION_WORDS
+    })
+
+    student_lexical_counts = count_student_lexical_words(
+        essay_words,
+        COMMON_FUNCTION_WORDS
+    )
+
+    reference_all_counts = load_word_counts(word_counts_file)
+    reference_lexical_counts = remove_function_words(
+        reference_all_counts,
+        COMMON_FUNCTION_WORDS
+    )
+
+    frequency_bands = create_frequency_bands(reference_lexical_counts)
+
+    band_results = assign_words_to_bands(
+        student_lexical_counts,
+        frequency_bands
+    )
+
+    word_ll_rows = calculate_word_ll_scores(
+        student_lexical_counts=student_lexical_counts,
+        reference_lexical_counts=reference_lexical_counts,
+        frequency_bands=frequency_bands
+    )
+
+    enrichment_candidates = identify_words_for_enrichment(word_ll_rows)
+
+    lexical_total_tokens = sum(student_lexical_counts.values())
+    lexical_total_types = len(student_lexical_counts)
+
+    return {
+        "summary": {
+            "total_tokens_all_words": len(essay_words),
+            "total_types_all_words": len(student_all_counts),
+            "function_word_tokens_removed": sum(student_function_counts.values()),
+            "function_word_types_removed": len(student_function_counts),
+            "lexical_tokens": lexical_total_tokens,
+            "lexical_types": lexical_total_types,
+        },
+        "band_results": band_results,
+        "word_log_likelihood_scores": word_ll_rows,
+        "enrichment_candidates": enrichment_candidates,
+    }
+
+
+def print_vocabulary_analysis(analysis: dict) -> None:
+    print("Vocabulary summary")
+    print("------------------")
+
+    summary = analysis["summary"]
+
+    print(f"Total tokens, all words: {summary['total_tokens_all_words']}")
+    print(f"Total types, all words: {summary['total_types_all_words']}")
+    print(f"Function-word tokens removed: {summary['function_word_tokens_removed']}")
+    print(f"Function-word types removed: {summary['function_word_types_removed']}")
+    print(f"Lexical tokens: {summary['lexical_tokens']}")
+    print(f"Lexical types: {summary['lexical_types']}")
+    print()
+
+    print("Lexical frequency bands")
+    print("-----------------------")
+
+    for band_name, band_data in analysis["band_results"].items():
+        print(band_name)
+        print(f"  Tokens: {band_data['token_count']}")
+        print(
+            "  Token % of lexical words: "
+            f"{band_data['token_percentage_lexical_words']:.2f}%"
+        )
+        print(f"  Types: {band_data['type_count']}")
+        print(
+            "  Type % of lexical words: "
+            f"{band_data['type_percentage_lexical_words']:.2f}%"
+        )
+
+        print("  Most frequent words:")
+        for word, freq in list(band_data["words"].items())[:20]:
+            print(f"    {word}: {freq}")
+
+        print()
+
+    print("Words for vocabulary enrichment")
+    print("-------------------------------")
+    print(
+        "Criteria: top-1000 lexical word, "
+        f"frequency >= {MIN_ENRICHMENT_FREQUENCY}, "
+        f"signed LL >= {MODERATE_LL_THRESHOLD}"
+    )
+    print()
+
+    candidates = analysis["enrichment_candidates"]
+
+    if not candidates:
+        print("No words met the enrichment criteria.")
+        print()
+    else:
+        for item in candidates:
+            print(f"Word: {item['word']}")
+            print(f"  Strength: {item['overuse_strength']}")
+            print(f"  Student frequency: {item['student_frequency']}")
+            print(
+                "  Student relative frequency: "
+                f"{item['student_relative_frequency_pct']:.3f}%"
+            )
+            print(f"  Reference frequency: {item['reference_frequency']}")
+            print(
+                "  Reference relative frequency: "
+                f"{item['reference_relative_frequency_pct']:.3f}%"
+            )
+            print(
+                "  Signed log likelihood: "
+                f"{item['signed_log_likelihood']:.2f}"
+            )
+            print()
+
+    print("All lexical word LL scores")
+    print("--------------------------")
+
+    for item in analysis["word_log_likelihood_scores"]:
+        print(
+            f"{item['word']}\t"
+            f"{item['band']}\t"
+            f"student_freq={item['student_frequency']}\t"
+            f"student_pct={item['student_relative_frequency_pct']:.3f}\t"
+            f"ref_freq={item['reference_frequency']}\t"
+            f"ref_pct={item['reference_relative_frequency_pct']:.3f}\t"
+            f"signed_LL={item['signed_log_likelihood']:.2f}"
+        )
 
 
 def main() -> None:
-    # Set up arguments for command line
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", required=True, help="Path to GGUF model")
-    parser.add_argument("--model", required=True, help="Name of model: bonsai, gemma", choices=["bonsai", "gemma"])
+
+    parser.add_argument(
+        "--model_path",
+        required=True,
+        help="Path to GGUF model"
+    )
+
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="Name of model: bonsai, gemma",
+        choices=["bonsai", "gemma"]
+    )
+
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--ctx", type=int, default=8192)
-    parser.add_argument("--cache-k", default="turbo3", choices=["f32", "f16", "bf16", "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"])
-    parser.add_argument("--cache-v", default="turbo3", choices=["f32", "f16", "bf16", "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"])
+
+    parser.add_argument(
+        "--cache-k",
+        default="turbo3",
+        choices=["f32", "f16", "bf16", "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"]
+    )
+
+    parser.add_argument(
+        "--cache-v",
+        default="turbo3",
+        choices=["f32", "f16", "bf16", "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"]
+    )
+
     parser.add_argument("--n-gpu-layers", type=int, default=99)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--temp", type=float, default=0.7)
+
     args = parser.parse_args()
 
-    # File path to server
     llama_server = select_server_for_model(args.model)
     jinja = select_jinja(args.model)
-    cmd_extra = []
-    if args.model=="gemma":
-        # Set thinking to 0 for gemma
-        cmd_extra = ["--reasoning", "off", "--reasoning-budget", "0", "--jinja", "--chat-template-file", str(jinja)]
 
-    # Basic server settings
+    cmd_extra = []
+
+    if args.model == "gemma":
+        cmd_extra = [
+            "--reasoning", "off",
+            "--reasoning-budget", "0",
+            "--jinja",
+            "--chat-template-file", str(jinja),
+        ]
+
     cmd = [
         str(llama_server),
         "-m", str(Path(args.model_path).resolve()),
@@ -85,530 +723,93 @@ def main() -> None:
         "--n-gpu-layers", str(args.n_gpu_layers),
     ]
 
-    # Extra model-dependent flags
     cmd.extend(cmd_extra)
-    print(cmd)
 
+    print("Starting server:")
+    print(" ".join(cmd))
 
-    # Start the server
-    print("Starting server:\n", " ".join(cmd))
     proc = subprocess.Popen(cmd)
     base_url = f"http://127.0.0.1:{args.port}"
 
     try:
         wait_for_server(base_url)
+
         writing_path = "experiments/essay_examples/w4.md"
-        
-        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_vocabulary/essay_knowledge.md", "experiments/tasks_vocabulary/identify_paragraphs_references.md", base_url, args.max_tokens, args.temp)
+
+        identified_paragraphs = identify_paragraphs(
+            writing_path,
+            "experiments/tasks_vocabulary/essay_knowledge.md",
+            "experiments/tasks_vocabulary/identify_paragraphs_references.md",
+            base_url,
+            args.max_tokens,
+            args.temp
+        )
+
         print(json.dumps(identified_paragraphs, indent=2))
+
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
-        
-        # Introduction
+
         introduction = essay_paragraphs["introduction_paragraph"]
-
-        # Body paragraphs
         body_paragraphs = essay_paragraphs["body_paragraphs"]["items"]
-
-        # Conclusion paragraph
         conclusion = essay_paragraphs["conclusion_paragraph"]
 
-        # References section
-        references = essay_paragraphs["references_section"]
+        essay_only = introduction
 
-        # Essay main idea
-        full_essay = introduction
-        for bp in body_paragraphs:
-            full_essay = full_essay + "\n" +  bp["body_paragraph"]
-        
-        essay_only = full_essay + "\n" + conclusion + "\n"
-        full_essay = essay_only + "\n" + references
+        for body_paragraph in body_paragraphs:
+            essay_only += "\n" + body_paragraph["body_paragraph"]
 
+        essay_only += "\n" + conclusion + "\n"
 
-        # Vocabulary analysis
-        # First, get the list of words, word pairs and triplets.
-        WORD_COUNTS_FILE = "experiments/word_freq_data/word_counts.csv"
-        raw_words = full_essay.split()
-
-        COMMON_FUNCTION_WORDS = {
-            "the", "a", "an",
-            "and", "or", "but", "if", "because", "so",
-            "of", "in", "on", "at", "to", "for", "from", "with", "by", "about",
-            "as", "than", "into", "over", "after", "before", "between", "through",
-            "is", "am", "are", "was", "were", "be", "been", "being",
-            "do", "does", "did",
-            "have", "has", "had",
-            "will", "would", "can", "could", "shall", "should", "may", "might", "must",
-            "i", "me", "my", "mine",
-            "you", "your", "yours",
-            "he", "him", "his",
-            "she", "her", "hers",
-            "it", "its",
-            "we", "us", "our", "ours",
-            "they", "them", "their", "theirs",
-            "this", "that", "these", "those",
-            "there", "here",
-            "who", "whom", "whose", "which", "what",
-            "when", "where", "why", "how",
-            "not", "no", "nor",
-        }
-        
-        # Cleaning
-        def contains_punctuation(word):
-            return any(char in string.punctuation for char in word)
-        
-        def remove_punctuation(word):
-            return "".join(
-                char for char in word
-                if char not in string.punctuation
-            )
-        
-        def clean_word(word):
-            return remove_punctuation(word).lower().strip()
-        
-        def get_clean_words(text):
-            raw_words = text.split()
-            words = [
-                clean_word(word)
-                for word in raw_words
-            ]
-
-            # Remove empty strings caused by punctuatioin only tokens
-            words = [
-                word for word in words
-                if word
-            ]
-
-            return words
-        
-        # Word list loading
-        def load_ranked_words(filepath, function_words):
-            ranked_words = []
-            with open(filepath, "r", newline="", encoding="utf-8") as infile:
-                reader = csv.DictReader(infile)
-                for row in reader:
-                    word = row["word"].lower().strip()
-
-                    if not word:
-                        continue
-
-                    if word in function_words:
-                        continue
-
-                    ranked_words.append(word)
-
-            return ranked_words
-        
-        def create_frequency_bands(ranked_words):
-            return {
-                "top_1000": set(ranked_words[:1000]),
-                "range_1001_2000": set(ranked_words[1000:2000]),
-                "range_2001_3500": set(ranked_words[2000:3500]),
-            }
-
-
-        def analyse_essay_words_with_function_exclusion(words, frequency_bands, function_words):
-            total_tokens = len(words)
-            essay_word_counts = Counter(words)
-            total_types = len(essay_word_counts)
-
-            function_word_counts = {
-                word: freq
-                for word, freq in essay_word_counts.items()
-                if word in function_words
-            }
-
-            lexical_word_counts = {
-                word: freq
-                for word, freq in essay_word_counts.items()
-                if word not in function_words
-            }
-
-            lexical_total_tokens = sum(lexical_word_counts.values())
-            lexical_total_types = len(lexical_word_counts)
-
-            results = {}
-
-            function_token_count = sum(function_word_counts.values())
-            function_type_count = len(function_word_counts)
-
-            results["function_words_excluded"] = {
-                "token_count": function_token_count,
-                "token_percentage_all_words": (
-                    function_token_count / total_tokens * 100
-                    if total_tokens > 0
-                    else 0
-                ),
-                "token_percentage_lexical_words": None,
-                "type_count": function_type_count,
-                "type_percentage_all_words": (
-                    function_type_count / total_types * 100
-                    if total_types > 0
-                    else 0
-                ),
-                "type_percentage_lexical_words": None,
-                "words": dict(
-                    sorted(
-                        function_word_counts.items(),
-                        key=lambda item: item[1],
-                        reverse=True
-                    )
-                ),
-            }
-
-            assigned_lexical_words = set()
-
-            for band_name, band_words in frequency_bands.items():
-                words_in_band = {
-                    word: freq
-                    for word, freq in lexical_word_counts.items()
-                    if word in band_words
-                }
-
-                assigned_lexical_words.update(words_in_band.keys())
-
-                token_count = sum(words_in_band.values())
-                type_count = len(words_in_band)
-
-                results[band_name] = {
-                    "token_count": token_count,
-                    "token_percentage_all_words": (
-                        token_count / total_tokens * 100
-                        if total_tokens > 0
-                        else 0
-                    ),
-                    "token_percentage_lexical_words": (
-                        token_count / lexical_total_tokens * 100
-                        if lexical_total_tokens > 0
-                        else 0
-                    ),
-                    "type_count": type_count,
-                    "type_percentage_all_words": (
-                        type_count / total_types * 100
-                        if total_types > 0
-                        else 0
-                    ),
-                    "type_percentage_lexical_words": (
-                        type_count / lexical_total_types * 100
-                        if lexical_total_types > 0
-                        else 0
-                    ),
-                    "words": dict(
-                        sorted(
-                            words_in_band.items(),
-                            key=lambda item: item[1],
-                            reverse=True
-                        )
-                    ),
-                }
-
-            outside_words = {
-                word: freq
-                for word, freq in lexical_word_counts.items()
-                if word not in assigned_lexical_words
-            }
-
-            outside_token_count = sum(outside_words.values())
-            outside_type_count = len(outside_words)
-
-            results["lexical_outside_3500"] = {
-                "token_count": outside_token_count,
-                "token_percentage_all_words": (
-                    outside_token_count / total_tokens * 100
-                    if total_tokens > 0
-                    else 0
-                ),
-                "token_percentage_lexical_words": (
-                    outside_token_count / lexical_total_tokens * 100
-                    if lexical_total_tokens > 0
-                    else 0
-                ),
-                "type_count": outside_type_count,
-                "type_percentage_all_words": (
-                    outside_type_count / total_types * 100
-                    if total_types > 0
-                    else 0
-                ),
-                "type_percentage_lexical_words": (
-                    outside_type_count / lexical_total_types * 100
-                    if lexical_total_types > 0
-                    else 0
-                ),
-                "words": dict(
-                    sorted(
-                        outside_words.items(),
-                        key=lambda item: item[1],
-                        reverse=True
-                    )
-                ),
-            }
-
-            lower_frequency_token_count = (
-                results["range_1001_2000"]["token_count"]
-                + results["range_2001_3500"]["token_count"]
-                + results["lexical_outside_3500"]["token_count"]
-            )
-
-            lower_frequency_type_count = (
-                results["range_1001_2000"]["type_count"]
-                + results["range_2001_3500"]["type_count"]
-                + results["lexical_outside_3500"]["type_count"]
-            )
-
-            summary = {
-                "total_tokens_all_words": total_tokens,
-                "total_types_all_words": total_types,
-                "lexical_total_tokens": lexical_total_tokens,
-                "lexical_total_types": lexical_total_types,
-                "function_token_count": function_token_count,
-                "function_type_count": function_type_count,
-                "function_token_percentage": (
-                    function_token_count / total_tokens * 100
-                    if total_tokens > 0
-                    else 0
-                ),
-                "lexical_token_percentage": (
-                    lexical_total_tokens / total_tokens * 100
-                    if total_tokens > 0
-                    else 0
-                ),
-                "lexical_type_token_ratio": (
-                    lexical_total_types / lexical_total_tokens
-                    if lexical_total_tokens > 0
-                    else 0
-                ),
-                "lower_frequency_lexical_token_count": lower_frequency_token_count,
-                "lower_frequency_lexical_token_percentage": (
-                    lower_frequency_token_count / lexical_total_tokens * 100
-                    if lexical_total_tokens > 0
-                    else 0
-                ),
-                "lower_frequency_lexical_type_count": lower_frequency_type_count,
-                "lower_frequency_lexical_type_percentage": (
-                    lower_frequency_type_count / lexical_total_types * 100
-                    if lexical_total_types > 0
-                    else 0
-                ),
-            }
-
-            return summary, results
-
-        ranked_words = load_ranked_words(WORD_COUNTS_FILE, COMMON_FUNCTION_WORDS)
-        frequency_bands = create_frequency_bands(ranked_words)
-        essay_words = get_clean_words(essay_only)
-        
-        summary, results = analyse_essay_words_with_function_exclusion(
-            essay_words,
-            frequency_bands,
-            COMMON_FUNCTION_WORDS
+        analysis = run_vocabulary_analysis(
+            essay_text=essay_only,
+            word_counts_file=WORD_COUNTS_FILE
         )
 
-        print("Summary")
-        print(f"Total tokens, all words: {summary['total_tokens_all_words']}")
-        print(f"Total types, all words: {summary['total_types_all_words']}")
-        print(f"Lexical tokens: {summary['lexical_total_tokens']}")
-        print(f"Lexical types: {summary['lexical_total_types']}")
-        print(f"Function-word tokens excluded: {summary['function_token_count']}")
-        print(f"Function-word token percentage: {summary['function_token_percentage']:.2f}%")
-        print(f"Lexical token percentage: {summary['lexical_token_percentage']:.2f}%")
-        print(f"Lexical TTR: {summary['lexical_type_token_ratio']:.3f}")
-        print(
-            "Lower-frequency lexical token percentage: "
-            f"{summary['lower_frequency_lexical_token_percentage']:.2f}%"
-        )
-        print(
-            "Lower-frequency lexical type percentage: "
-            f"{summary['lower_frequency_lexical_type_percentage']:.2f}%"
-        )
+       #  print_vocabulary_analysis(analysis)
 
-        print()
+        top_15_high_ll_top_1000_freq_3 = [
+            row
+            for row in analysis["word_log_likelihood_scores"]
+            if row["band"] == "top_1000"
+            and row["student_frequency"] >= 3
+            and row["signed_log_likelihood"] > 0
+        ][:15]
 
-        for band_name, result in results.items():
-            print(band_name)
-            print(f"  Tokens: {result['token_count']}")
-
-            print(
-                "  Token % of all words: "
-                f"{result['token_percentage_all_words']:.2f}%"
-            )
-
-            if result["token_percentage_lexical_words"] is not None:
-                print(
-                    "  Token % of lexical words: "
-                    f"{result['token_percentage_lexical_words']:.2f}%"
-                )
-
-            print(f"  Types: {result['type_count']}")
-
-            print(
-                "  Type % of all words: "
-                f"{result['type_percentage_all_words']:.2f}%"
-            )
-
-            if result["type_percentage_lexical_words"] is not None:
-                print(
-                    "  Type % of lexical words: "
-                    f"{result['type_percentage_lexical_words']:.2f}%"
-                )
-
-            print("  Most frequent words:")
-            for word, freq in list(result["words"].items())[:20]:
-                print(f"    {word}: {freq}")
-
-            print()
-
-        # Decision making
-        def decide_vocabulary_enrichment(summary, results):
-            """
-            Returns a decision about whether the student's vocabulary likely needs enrichment.
-
-            Assumes function words have already been excluded from the lexical bands.
-            """
-
-            lexical_top_1000_token_pct = results["top_1000"]["token_percentage_lexical_words"]
-            lexical_top_1000_type_pct = results["top_1000"]["type_percentage_lexical_words"]
-
-            lower_freq_token_pct = summary["lower_frequency_lexical_token_percentage"]
-            lower_freq_type_pct = summary["lower_frequency_lexical_type_percentage"]
-
-            lexical_ttr = summary["lexical_type_token_ratio"]
-
-            lexical_total_tokens = summary["lexical_total_tokens"]
-            lexical_total_types = summary["lexical_total_types"]
-
-            # Count repeated common lexical words in the top 1000 band.
-            # These are words from the student's essay, not the reference corpus.
-            top_1000_words = results["top_1000"]["words"]
-
-            top_repeated_lexical_words = [
-                (word, freq)
-                for word, freq in top_1000_words.items()
-                if freq >= 3
-            ]
-
-            repeated_top_1000_count = sum(
-                freq for word, freq in top_repeated_lexical_words
-            )
-
-            repeated_top_1000_pct = (
-                repeated_top_1000_count / lexical_total_tokens * 100
-                if lexical_total_tokens > 0
-                else 0
-            )
-
-            risk_points = 0
-            reasons = []
-
-            # Main range signal
-            if lower_freq_type_pct < 25:
-                risk_points += 2
-                reasons.append(
-                    "Low proportion of distinct lower-frequency lexical words."
-                )
-            elif lower_freq_type_pct < 35:
-                risk_points += 1
-                reasons.append(
-                    "Moderate but limited lower-frequency lexical range."
-                )
-
-            # Over-reliance on common content vocabulary
-            if lexical_top_1000_type_pct > 70:
-                risk_points += 2
-                reasons.append(
-                    "Most distinct lexical words come from the top 1000 band."
-                )
-            elif lexical_top_1000_type_pct > 60:
-                risk_points += 1
-                reasons.append(
-                    "A relatively high share of lexical types comes from the top 1000 band."
-                )
-
-            if lexical_top_1000_token_pct > 75:
-                risk_points += 1
-                reasons.append(
-                    "Most lexical tokens are from the top 1000 band."
-                )
-
-            # Repetition signal
-            if repeated_top_1000_pct > 35:
-                risk_points += 2
-                reasons.append(
-                    "A large share of the essay repeats common lexical words."
-                )
-            elif repeated_top_1000_pct > 25:
-                risk_points += 1
-                reasons.append(
-                    "There is some repetition of common lexical words."
-                )
-
-            # Essay length-sensitive TTR warning.
-            # This is only a rough signal; TTR naturally decreases as text length increases.
-            if lexical_total_tokens >= 150 and lexical_ttr < 0.40:
-                risk_points += 1
-                reasons.append(
-                    "Lexical type-token ratio is low for a text of this length."
-                )
-
-            if risk_points >= 5:
-                decision = "vocabulary_enrichment_needed"
-            elif risk_points >= 3:
-                decision = "targeted_vocabulary_feedback_recommended"
+        print("Top 15 high-LL top-1000 lexical words with frequency >= 3")
+        print("----------------------------------------------------------")
+        i = 0
+        initial_task = "Look for the following words in the essay: "
+        for row in top_15_high_ll_top_1000_freq_3:
+            if i == 2:
+                initial_task = initial_task + row['word'] + "."
+                enhancements = enhance_vocabulary(essay_only, "experiments/tasks_vocabulary/vocabulary_enrichment_knowledge.md", initial_task, "experiments/tasks_vocabulary/vocabulary_enrichment_task.md", base_url, args.max_tokens, args.temp)
+                i = 0
+                initial_task = "Look for the following words in the essay: "
+                print(json.dumps(enhancements))
             else:
-                decision = "vocabulary_enrichment_not_primary_issue"
-
-            return {
-                "decision": decision,
-                "risk_points": risk_points,
-                "reasons": reasons,
-                "diagnostics": {
-                    "lexical_top_1000_token_pct": lexical_top_1000_token_pct,
-                    "lexical_top_1000_type_pct": lexical_top_1000_type_pct,
-                    "lower_frequency_lexical_token_pct": lower_freq_token_pct,
-                    "lower_frequency_lexical_type_pct": lower_freq_type_pct,
-                    "lexical_ttr": lexical_ttr,
-                    "repeated_top_1000_pct": repeated_top_1000_pct,
-                    "top_repeated_lexical_words": top_repeated_lexical_words[:20],
-                }
-            }
-        
-        decision = decide_vocabulary_enrichment(summary, results)
-        print("Vocabulary decision:")
-        print(decision["decision"])
-        print(f"Risk points: {decision['risk_points']}")
-        print()
-
-        print("Reasons:")
-        for reason in decision["reasons"]:
-            print(f"- {reason}")
-
-        print()
-
-        print("Diagnostics:")
-        for key, value in decision["diagnostics"].items():
-            print(f"{key}: {value}")
-
-        word_pairs = [
-            " ".join(remove_punctuation(word) for word in raw_words[i:i+2])
-            for i in range(len(raw_words) - 1)
-            if not any(contains_punctuation(word) for word in raw_words[i:i+2])
-        ]
-
-        word_triplets = [
-            " ".join(remove_punctuation(word) for word in raw_words[i:i+3])
-            for i in range(len(raw_words) - 2)
-            if not any(contains_punctuation(word) for word in raw_words[i:i+3])
-        ]
+                initial_task = initial_task + row['word'] + ", "
+                i += 1
+            
+            print(
+                f"{row['word']}\t"
+                f"freq={row['student_frequency']}\t"
+                f"student_pct={row['student_relative_frequency_pct']:.3f}\t"
+                f"ref_pct={row['reference_relative_frequency_pct']:.3f}\t"
+                f"signed_LL={row['signed_log_likelihood']:.2f}"
+            )
 
     finally:
         proc.terminate()
+
         try:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
 
+
 if __name__ == "__main__":
     main()
-
 
 # To run a quick experiment
 # With Ternary Bonsai:
