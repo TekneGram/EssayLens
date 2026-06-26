@@ -170,7 +170,7 @@ def analyze_linguistic_coherence(
                                         "type": "object",
                                         "properties": {
                                             "sentence": { "type": "string" },
-                                            "coherence": { "type": "string", "enum": ["satisfactory", "add a contrast", "add an addition connector", "show cause and effect", "show reason", "use elaboration words", "improve pronouns"]},
+                                            "coherence": { "type": "string", "enum": ["satisfactory", "add a contrast", "add an addition connector", "show cause and effect", "show reason", "use elaboration words"]},
                                             "comment": { "type": "string" }
                                         },
                                         "required": ["sentence", "coherence", "comment"],

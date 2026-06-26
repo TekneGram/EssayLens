@@ -290,7 +290,7 @@ def thesis_statement_heap_praise(
         "response_format": {
             "type": "json_schema",
             "json_schema": {
-                "name": "thesis_statement_comments",
+                "name": "thesis_statement_heap_praise",
                 "schema": {
                     "type": "object",
                     "properties": {
