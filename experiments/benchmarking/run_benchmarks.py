@@ -3,6 +3,7 @@ import json
 from append_to_csv import append_to_csv
 
 from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
+from run_citations_retries import run_identify_citations_with_retries
 
 def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
 
@@ -16,7 +17,7 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
     )
 
     if not result["passed"]:
-        return None, None, None
+        return None, None, None, None
 
     essay_paragraphs = result["essay_paragraphs"]
     
@@ -47,7 +48,7 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
             "experiments/benchmarking/llm_responses", 
             f"identify_paragraphs_{csv_file_append}.csv", 
             ["ESSAY_ID", "PARA_TYPE", "PARAGRAPH"], 
-            [essay_id, f"body paragraph{str(i)}", bp["body_paragraph"]]
+            [essay_id, f"body paragraph {str(i)}", bp["body_paragraph"]]
         )
         full_essay = full_essay + "\n\n" +  bp["body_paragraph"]
         i += 1
@@ -67,28 +68,51 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
 
     full_essay = full_essay + "\n\n" + conclusion
     full_essay_with_refs = full_essay + "\n\n" + references
-    return full_essay, full_essay_with_refs, has_references
+    return full_essay, full_essay_with_refs, body_paragraphs, has_references
 
-def run_citations_benchmarks(base_url, max_tokens, temp):
+def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+    result = run_identify_citations_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+    if not result["passed"]:
+        return None
+    
+    for sentence_obj in result["citations_data"]["sentences"]["items"]:
+        sentence = sentence_obj["sentence"]
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"identify_citations_{csv_file_append}.csv",
+            ['ESSAY_ID', 'SENTENCE_WITH_CITATION'],
+            [essay_id, sentence]
+        )
+    
+    citations_data = result["citations_data"]
+
+    return citations_data
+
+def run_coherence_benchmark(base_url, max_tokens, temp):
     return
 
-def run_coherence_benchmarks(base_url, max_tokens, temp):
+def run_conclusion_benchmark(base_url, max_tokens, temp):
     return
 
-def run_conclusion_benchmarks(base_url, max_tokens, temp):
+def run_grammar_benchmark(base_url, max_tokens, temp):
     return
 
-def run_grammar_benchmarks(base_url, max_tokens, temp):
+def run_introduction_benchmark(base_url, max_tokens, temp):
     return
 
-def run_introduction_benchmarks(base_url, max_tokens, temp):
+def run_paragraph_benchmark(base_url, max_tokens, temp):
     return
 
-def run_paragraph_benchmarks(base_url, max_tokens, temp):
+def run_thesis_benchmark(base_url, max_tokens, temp):
     return
 
-def run_thesis_benchmarks(base_url, max_tokens, temp):
-    return
-
-def run_vocabulary_benchmarks(base_url, max_tokens, temp):
+def run_vocabulary_benchmark(base_url, max_tokens, temp):
     return

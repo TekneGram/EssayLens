@@ -1,7 +1,7 @@
 import json
 from essay_analysis_all_paragraphs import identify_paragraphs
 from attempts_logs import append_identify_paragraphs_attempt_log
-from validators import validate_identify_paragraphs_shape
+from validators.validate_identify_paragraphs import validate_identify_paragraphs_shape
 
 MAX_IDENTIFY_PARAGRAPHS_ATTEMPTS = 6
 
@@ -45,14 +45,15 @@ def run_identify_paragraphs_with_retries(
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
             last_error = str(exc)
+            append_identify_paragraphs_attempt_log(
+                essay_id=essay_id,
+                csv_file_append=csv_file_append,
+                attempt_count = attempt,
+                passed=False,
+                failure_reason=last_error,
+            )
 
-    append_identify_paragraphs_attempt_log(
-        essay_id=essay_id,
-        csv_file_append=csv_file_append,
-        attempt_count = max_attempts,
-        passed=False,
-        failure_reason=last_error,
-    )
+    
 
     return {
         "passed": False,

@@ -12,11 +12,13 @@ from pathlib import Path
 CURRENT_DIR = Path(__file__).resolve().parent
 EXPERIMENTS_DIR = CURRENT_DIR.parent
 REPO_ROOT = CURRENT_DIR.parent.parent
+VALIDATORS_DIR = CURRENT_DIR / "validators"
 
 sys.path.insert(0, str(CURRENT_DIR))
 sys.path.insert(0, str(EXPERIMENTS_DIR))
+sys.path.insert(0, str(VALIDATORS_DIR))
 
-from run_benchmarks import run_identify_essay_benchmark
+from run_benchmarks import run_identify_essay_benchmark, run_identify_citations_benchmark
 
 import requests
 
@@ -109,10 +111,34 @@ def main() -> None:
             except UnicodeDecodeError:
                 essay = md_file.read_text(encoding="utf-8", errors="replace")
             
-            full_essay, full_essay_with_references, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-            print(full_essay)
-            print(full_essay_with_references)
-            print(has_references)
+            # ----- STEP 1: IDENTIFY THE PARAGRAPHS -----
+            # First, get the essay as individual paragraphs
+            full_essay, full_essay_with_references, body_paragraphs, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            # If there is any failure, continue with the next essay
+            if full_essay is None:
+                continue
+            
+            # ----- STEP 2: RUN CITATIONS BENCHMARKS -----
+            # run citations benchmark
+            citations_data = run_identify_citations_benchmark(
+                essay=full_essay_with_references,
+                essay_id=essay_id,
+                base_url=base_url,
+                max_tokens=args.max_tokens,
+                temp=args.temp,
+                csv_file_append=args.csv_file_append
+            )
+            # Move on to the next file if everything failed
+            if citations_data is None:
+                continue
+
+            if citations_data["has_citations"] == "yes" and has_references == "yes":
+                print("Citations and references included - but do they match?")
+                # check citation no reference
+                # AND check reference no citation
+
+
+
 
     finally:
         proc.terminate()
