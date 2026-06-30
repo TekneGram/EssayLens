@@ -5,6 +5,10 @@ from append_to_csv import append_to_csv
 from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
 from run_citations_retries import run_identify_citations_with_retries, run_check_citations_no_references_with_retries, run_check_references_no_citations_with_retries
 from run_thesis_retries import run_determine_thesis_statement_with_retries, run_thesis_statement_charateristics_with_retries, run_thesis_statement_advice_with_retries, run_thesis_statement_comment_with_retries, run_thesis_statement_heap_praise_with_retries
+from run_introduction_retries import run_analyze_gen_spec_with_retries, run_provide_introduction_feedback_with_retries
+
+
+# ----- 1. IDENTIFY PARAGRAPHS ------
 
 def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
 
@@ -71,6 +75,9 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
     full_essay_with_refs = full_essay + "\n\n" + references
     return full_essay, full_essay_with_refs, body_paragraphs, has_references
 
+
+# ----- 2. CITATIONS -----
+
 def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
     result = run_identify_citations_with_retries(
         essay=essay,
@@ -117,6 +124,7 @@ def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_t
         csv_file_append=csv_file_append
     )
 
+# ----- 3. THESIS STATEMENTS -----
 def run_determine_thesis_statement_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
     result = run_determine_thesis_statement_with_retries(
         essay=essay,
@@ -174,6 +182,55 @@ def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement
         csv_file_append=csv_file_append
     )
 
+# ----- 4. INTRODUCTION -----
+
+def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append):
+    result = run_analyze_gen_spec_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        introduction=introduction,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, gen_spec_content, base_url, max_tokens, temp, csv_file_append):
+    result = run_provide_introduction_feedback_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        introduction=introduction,
+        gen_spec_content=gen_spec_content,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+
+
+# ----- 5. CONCLUSION -----
+
+
+
+
+# ----- 6. COHERENCE -----
+
+
+
+
+# ----- 7. PARAGRAPHS -----
+
+
+
+
+# ----- 8. VOCABULARY -----
+
+
+
+
+# ----- 9. GRAMMAR -----
+
 def run_coherence_benchmark(base_url, max_tokens, temp):
     return
 
@@ -187,9 +244,6 @@ def run_introduction_benchmark(base_url, max_tokens, temp):
     return
 
 def run_paragraph_benchmark(base_url, max_tokens, temp):
-    return
-
-def run_thesis_benchmark(base_url, max_tokens, temp):
     return
 
 def run_vocabulary_benchmark(base_url, max_tokens, temp):
