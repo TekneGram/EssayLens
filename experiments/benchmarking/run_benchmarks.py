@@ -7,6 +7,7 @@ from run_citations_retries import run_identify_citations_with_retries, run_check
 from run_thesis_retries import run_determine_thesis_statement_with_retries, run_thesis_statement_charateristics_with_retries, run_thesis_statement_advice_with_retries, run_thesis_statement_comment_with_retries, run_thesis_statement_heap_praise_with_retries
 from run_introduction_retries import run_analyze_gen_spec_with_retries, run_provide_introduction_feedback_with_retries
 from run_conclusion_retries import run_analyze_conclusions_with_retries, run_provide_conclusion_feedback_with_retries
+from run_coherence_tries import run_analyze_topic_sentence_coherence_with_retries, run_analyze_pronouns_with_retries, run_analyze_linguistic_coherence_with_retries
 
 
 # ----- 1. IDENTIFY PARAGRAPHS ------
@@ -236,7 +237,38 @@ def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, base_
 
 
 # ----- 6. COHERENCE -----
+def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
+    result = run_analyze_topic_sentence_coherence_benchmark(
+        bp=bp,
+        essay_id=essay_id,
+        para_num=para_num,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
+def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
+    result = run_analyze_pronouns_with_retries(
+        bp=bp,
+        essay_id=essay_id,
+        para_num=para_num,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
+    result = run_analyze_linguistic_coherence_with_retries(
+        bp=bp,
+        essay_id=essay_id,
+        para_num=para_num,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
 
 
