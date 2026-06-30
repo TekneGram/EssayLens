@@ -46,7 +46,7 @@ def run_analyze_topic_sentence_coherence_with_retries(
             return {
                 "passed": True,
                 "attempts_used": attempt,
-                "conclusion_data": validated,
+                "coherence_data": validated,
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
@@ -64,7 +64,7 @@ def run_analyze_topic_sentence_coherence_with_retries(
     return {
         "passed": False,
         "attempts_used": max_attempts,
-        "conclusion_data": None,
+        "coherence_data": None,
         "failure_reason": last_error
     }
 
@@ -110,7 +110,7 @@ def run_analyze_pronouns_with_retries(
             return {
                 "passed": True,
                 "attempts_used": attempt,
-                "conclusion_data": validated,
+                "coherence_data": validated,
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
@@ -128,7 +128,7 @@ def run_analyze_pronouns_with_retries(
     return {
         "passed": False,
         "attempts_used": max_attempts,
-        "conclusion_data": None,
+        "coherence_data": None,
         "failure_reason": last_error
     }
 
@@ -174,7 +174,7 @@ def run_analyze_linguistic_coherence_with_retries(
             return {
                 "passed": True,
                 "attempts_used": attempt,
-                "conclusion_data": validated,
+                "coherence_data": validated,
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
@@ -192,6 +192,6 @@ def run_analyze_linguistic_coherence_with_retries(
     return {
         "passed": False,
         "attempts_used": max_attempts,
-        "conclusion_data": None,
+        "coherence_data": None,
         "failure_reason": last_error
     }
