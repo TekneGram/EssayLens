@@ -9,11 +9,11 @@ describe('ChatInterface toggle lock rules', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
     expect(screen.getByRole('menu').classList.contains('chat-command-menu')).toBe(true);
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
 
     expect(onCommandSelected).toHaveBeenCalledWith({
       id: 'evaluate-essay-bulk',
-      label: 'Overview Comments',
+      label: 'Essay feedback in bulk',
       source: 'chat-dropdown'
     });
   });

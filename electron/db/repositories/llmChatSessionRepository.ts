@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { getSharedDatabaseClient } from '../appDatabase';
 import type { SQLiteClient } from '../sqlite';
 
+export interface LlmSessionTurnInlineCommentPayload {
+  searchText: string;
+  commentText: string;
+}
+
 export interface LlmSessionTurnVocabularyMetadata {
   feedbackType: 'vocabulary';
   vocabulary: {
@@ -9,9 +14,32 @@ export interface LlmSessionTurnVocabularyMetadata {
     textContext: string;
     preciseVocabulary: string;
   };
+  inlineComment?: LlmSessionTurnInlineCommentPayload;
 }
 
-export type LlmSessionTurnMetadata = LlmSessionTurnVocabularyMetadata;
+export interface LlmSessionTurnThesisFeedbackMetadata {
+  feedbackType: 'thesis-statement-feedback';
+  inlineComment: LlmSessionTurnInlineCommentPayload;
+}
+
+export interface LlmSessionTurnParagraphEvaluationMetadata {
+  feedbackType: 'paragraph-evaluation';
+  inlineComment: LlmSessionTurnInlineCommentPayload;
+}
+
+export interface LlmSessionTurnConclusionFeedbackMetadata {
+  feedbackType:
+    | 'thesis-restatement-feedback'
+    | 'summary-feedback'
+    | 'conclusion-final-comment';
+  inlineComment: LlmSessionTurnInlineCommentPayload;
+}
+
+export type LlmSessionTurnMetadata =
+  | LlmSessionTurnVocabularyMetadata
+  | LlmSessionTurnThesisFeedbackMetadata
+  | LlmSessionTurnParagraphEvaluationMetadata
+  | LlmSessionTurnConclusionFeedbackMetadata;
 
 export interface LlmSessionTurn {
   role: 'teacher' | 'assistant' | 'system';
@@ -155,12 +183,40 @@ export class LlmChatSessionRepository {
         (parsed as { feedbackType?: unknown }).feedbackType === 'vocabulary'
       ) {
         const vocabulary = (parsed as { vocabulary?: unknown }).vocabulary;
+        const inlineComment = (parsed as { inlineComment?: unknown }).inlineComment;
         if (
           typeof vocabulary === 'object' &&
           vocabulary !== null &&
           typeof (vocabulary as { simpleVocabulary?: unknown }).simpleVocabulary === 'string' &&
           typeof (vocabulary as { textContext?: unknown }).textContext === 'string' &&
           typeof (vocabulary as { preciseVocabulary?: unknown }).preciseVocabulary === 'string'
+        ) {
+          if (
+            inlineComment &&
+            (typeof inlineComment !== 'object' ||
+              typeof (inlineComment as { searchText?: unknown }).searchText !== 'string' ||
+              typeof (inlineComment as { commentText?: unknown }).commentText !== 'string')
+          ) {
+            return undefined;
+          }
+          return parsed as LlmSessionTurnMetadata;
+        }
+      }
+      if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        ((parsed as { feedbackType?: unknown }).feedbackType === 'thesis-statement-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'paragraph-evaluation' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'thesis-restatement-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'summary-feedback' ||
+          (parsed as { feedbackType?: unknown }).feedbackType === 'conclusion-final-comment')
+      ) {
+        const inlineComment = (parsed as { inlineComment?: unknown }).inlineComment;
+        if (
+          typeof inlineComment === 'object' &&
+          inlineComment !== null &&
+          typeof (inlineComment as { searchText?: unknown }).searchText === 'string' &&
+          typeof (inlineComment as { commentText?: unknown }).commentText === 'string'
         ) {
           return parsed as LlmSessionTurnMetadata;
         }

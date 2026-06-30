@@ -1,5 +1,6 @@
 import { AppException } from '../core/appException';
 import type {
+  EssayFeedbackType,
   SendChatMessageRequest,
   SendChatMessageResponse
 } from '../ipc/contracts/chat.contracts';
@@ -7,8 +8,25 @@ import type { LlmRuntimeSettings } from '../ipc/contracts/llmManager.contracts';
 import type { LlmSessionTurn } from '../db/repositories/llmChatSessionRepository';
 import type {
   LlmChatPayload,
+  LlmEssayFeedbackIdentifyPayload,
+  LlmEssayFeedbackIdentifyResult,
+  LlmEssayFeedbackParagraphEvaluationPayload,
+  LlmEssayFeedbackParagraphEvaluationResult,
+  LlmEssayFeedbackConclusionFinalCommentPayload,
+  LlmEssayFeedbackConclusionFinalCommentResult,
+  LlmEssayFeedbackStubPayload,
+  LlmEssayFeedbackSummaryFeedbackPayload,
+  LlmEssayFeedbackSummaryFeedbackResult,
+  LlmEssayFeedbackSummarizeMainIdeaPayload,
+  LlmEssayFeedbackSummarizeMainIdeaResult,
+  LlmEssayFeedbackThesisRestatementPayload,
+  LlmEssayFeedbackThesisRestatementResult,
+  LlmEssayFeedbackThesisStatementPayload,
+  LlmEssayFeedbackThesisStatementResult,
   LlmParagraphFeedbackBulkPayload,
   LlmRubricEvaluationPayload,
+  EssayFeedbackBulkRequest,
+  EssayFeedbackRequest,
   ParagraphFeedbackBulkRequest,
   RubricFeedbackCategorySection,
   RubricFeedbackRequest
@@ -20,6 +38,26 @@ export function isRubricFeedbackRequest(request: SendChatMessageRequest): reques
 
 export function isParagraphFeedbackBulkRequest(request: SendChatMessageRequest): request is ParagraphFeedbackBulkRequest {
   return request.kind === 'paragraph-feedback-bulk' && Array.isArray(request.fileIds) && request.fileIds.length > 0;
+}
+
+export function isEssayFeedbackRequest(request: SendChatMessageRequest): request is EssayFeedbackRequest {
+  return (
+    request.kind === 'essay-feedback' &&
+    typeof request.fileId === 'string' &&
+    !!request.fileId.trim() &&
+    Array.isArray(request.selectedFeedbackTypes) &&
+    request.selectedFeedbackTypes.length > 0
+  );
+}
+
+export function isEssayFeedbackBulkRequest(request: SendChatMessageRequest): request is EssayFeedbackBulkRequest {
+  return (
+    request.kind === 'essay-feedback-bulk' &&
+    Array.isArray(request.fileIds) &&
+    request.fileIds.length > 0 &&
+    Array.isArray(request.selectedFeedbackTypes) &&
+    request.selectedFeedbackTypes.length > 0
+  );
 }
 
 export function requireChatMessage(request: SendChatMessageRequest): string {
@@ -74,6 +112,199 @@ export function buildLlmParagraphFeedbackBulkPayload(args: {
     essay: args.essay,
     clientRequestId: args.clientRequestId
   };
+}
+
+export function buildLlmEssayFeedbackStubPayload(args: {
+  fileId: string;
+  selectedFeedbackTypes: EssayFeedbackType[];
+}): LlmEssayFeedbackStubPayload {
+  return {
+    fileId: args.fileId,
+    selectedFeedbackTypes: [...new Set(args.selectedFeedbackTypes)]
+  };
+}
+
+export function buildLlmEssayFeedbackIdentifyPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackIdentifyPayload {
+  return {
+    essay: args.essay,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackThesisStatementPayload(args: {
+  essay: string;
+  introduction: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackThesisStatementPayload {
+  return {
+    essay: args.essay,
+    introduction: args.introduction,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackSummarizeMainIdeaPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackSummarizeMainIdeaPayload {
+  return {
+    essay: args.essay,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackParagraphEvaluationPayload(args: {
+  introduction: string;
+  bodyParagraph: string;
+  mainIdea: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackParagraphEvaluationPayload {
+  return {
+    introduction: args.introduction,
+    bodyParagraph: args.bodyParagraph,
+    mainIdea: args.mainIdea,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackThesisRestatementPayload(args: {
+  thesisStatement: string;
+  conclusionFirstSentence: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackThesisRestatementPayload {
+  return {
+    thesisStatement: args.thesisStatement,
+    conclusionFirstSentence: args.conclusionFirstSentence,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackSummaryFeedbackPayload(args: {
+  essay: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackSummaryFeedbackPayload {
+  return {
+    essay: args.essay,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function buildLlmEssayFeedbackConclusionFinalCommentPayload(args: {
+  essay: string;
+  finalSentence: string;
+  settings: LlmRuntimeSettings;
+  clientRequestId?: string;
+}): LlmEssayFeedbackConclusionFinalCommentPayload {
+  return {
+    essay: args.essay,
+    finalSentence: args.finalSentence,
+    settings: args.settings,
+    clientRequestId: args.clientRequestId
+  };
+}
+
+export function isEssayFeedbackIdentifyResult(data: unknown): data is LlmEssayFeedbackIdentifyResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  if (
+    typeof value.introduction_paragraph !== 'string' ||
+    typeof value.conclusion_paragraph !== 'string' ||
+    typeof value.body_paragraphs !== 'object' ||
+    value.body_paragraphs === null
+  ) {
+    return false;
+  }
+  const bodyParagraphs = value.body_paragraphs as Record<string, unknown>;
+  if (!Array.isArray(bodyParagraphs.items)) {
+    return false;
+  }
+  return bodyParagraphs.items.every(
+    (item) =>
+      typeof item === 'object' &&
+      item !== null &&
+      typeof (item as Record<string, unknown>).body_paragraph === 'string'
+  );
+}
+
+export function isEssayFeedbackThesisStatementResult(
+  data: unknown
+): data is LlmEssayFeedbackThesisStatementResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return (
+    typeof value.thesis_statement === 'string' &&
+    typeof value.verdict === 'string' &&
+    typeof value.comments === 'string'
+  );
+}
+
+export function isEssayFeedbackSummarizeMainIdeaResult(
+  data: unknown
+): data is LlmEssayFeedbackSummarizeMainIdeaResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.main_idea === 'string';
+}
+
+export function isEssayFeedbackParagraphEvaluationResult(
+  data: unknown
+): data is LlmEssayFeedbackParagraphEvaluationResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackThesisRestatementResult(
+  data: unknown
+): data is LlmEssayFeedbackThesisRestatementResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackSummaryFeedbackResult(
+  data: unknown
+): data is LlmEssayFeedbackSummaryFeedbackResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
+}
+
+export function isEssayFeedbackConclusionFinalCommentResult(
+  data: unknown
+): data is LlmEssayFeedbackConclusionFinalCommentResult {
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  const value = data as Record<string, unknown>;
+  return typeof value.verdict === 'string' && typeof value.comments === 'string';
 }
 
 export function getReplyText(data: unknown): string | null {

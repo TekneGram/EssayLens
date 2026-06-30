@@ -20,7 +20,10 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
         messages: state.messages.filter((message) => message.id !== action.payload.messageId)
       };
     case 'chat/setSessionTranscript': {
-      const retained = state.messages.filter((message) => message.sessionId !== action.payload.sessionId);
+      const retained = state.messages.filter(
+        (message) =>
+          message.sessionId !== action.payload.sessionId || message.messageSource === 'stream-status'
+      );
       return {
         ...state,
         messages: [...retained, ...action.payload.messages]
@@ -38,7 +41,8 @@ export function chatReducer(state: ChatState = initialChatState, action: AppActi
             content:
               action.payload.mode === 'append'
                 ? `${message.content}${action.payload.content}`
-                : action.payload.content
+                : action.payload.content,
+            messageSource: action.payload.messageSource ?? message.messageSource
           };
         })
       };

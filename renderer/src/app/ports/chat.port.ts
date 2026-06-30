@@ -8,6 +8,11 @@ export interface ChatVocabularyFeedback {
   preciseVocabulary: string;
 }
 
+export interface ChatInlineCommentPayload {
+  searchText: string;
+  commentText: string;
+}
+
 export interface ChatMessageDto {
   id: string;
   role: 'system' | 'teacher' | 'assistant';
@@ -17,15 +22,36 @@ export interface ChatMessageDto {
   rubricCategory?: string;
 }
 
+export type EssayFeedbackType =
+  | 'thesis-statement-feedback'
+  | 'summarize-main-idea'
+  | 'paragraph-evaluation'
+  | 'thesis-restatement-feedback'
+  | 'summary-feedback'
+  | 'conclusion-final-comment';
+
+export type EssayFeedbackStage = 'identify-paragraphs';
+export type EssayFeedbackSection = 'verdict' | 'comments';
+export type ChatFeedbackType =
+  | 'topic_sentence'
+  | 'coherence'
+  | 'vocabulary'
+  | 'thesis-statement-feedback'
+  | 'paragraph-evaluation'
+  | 'thesis-restatement-feedback'
+  | 'summary-feedback'
+  | 'conclusion-final-comment';
+
 export interface ListMessagesResponse {
   messages: ChatMessageDto[];
 }
 
 export interface SendChatMessageRequest {
-  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback' | 'essay-feedback-bulk';
   fileId?: string;
   fileIds?: string[];
   redoCompletedFileIds?: string[];
+  selectedFeedbackTypes?: EssayFeedbackType[];
   message?: string;
   essay?: string;
   contextText?: string;
@@ -57,6 +83,7 @@ export interface SendChatMessageResponse {
       feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
       feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
       vocabulary?: ChatVocabularyFeedback;
+      inlineComment?: ChatInlineCommentPayload;
       diagnosticType?: 'reasoning_leak';
       progressMessageId?: string;
     }>;
@@ -72,6 +99,29 @@ export interface SendChatMessageResponse {
     failedFileIds?: string[];
     skippedFileIds?: string[];
   };
+  essayFeedback?: {
+    replies: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reply: string;
+      clientRequestId: string;
+      essayFeedbackType: EssayFeedbackType;
+      essayFeedbackSection?: EssayFeedbackSection;
+      feedbackType?: ChatFeedbackType;
+      inlineComment?: ChatInlineCommentPayload;
+      paragraphFirstSentence?: string;
+    }>;
+    failures?: Array<{
+      fileId: string;
+      sessionId: string;
+      messageId: string;
+      reason: string;
+      clientRequestId: string;
+      details?: unknown;
+      essayFeedbackType?: EssayFeedbackType;
+    }>;
+  };
 }
 
 export interface ParagraphFeedbackCompletionDto {
@@ -84,6 +134,7 @@ export interface ParagraphFeedbackCompletionDto {
 
 export interface CheckParagraphFeedbackCompletionsRequest {
   fileIds: string[];
+  workflowKey?: 'paragraph_feedback' | 'essay_feedback';
 }
 
 export interface CheckParagraphFeedbackCompletionsResponse {
@@ -103,10 +154,15 @@ export interface ChatStreamChunkEvent {
   sessionId?: string;
   messageId?: string;
   rubricCategory?: string;
-  feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
+  feedbackType?: ChatFeedbackType;
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   vocabulary?: ChatVocabularyFeedback;
-  workflow?: 'paragraph-feedback-bulk';
+  inlineComment?: ChatInlineCommentPayload;
+  paragraphFirstSentence?: string;
+  workflow?: 'paragraph-feedback-bulk' | 'essay-feedback';
+  essayFeedbackType?: EssayFeedbackType;
+  essayFeedbackStage?: EssayFeedbackStage;
+  essayFeedbackSection?: EssayFeedbackSection;
   type: ChatStreamEventType;
   seq: number;
   channel?: 'content' | 'reasoning' | 'meta';

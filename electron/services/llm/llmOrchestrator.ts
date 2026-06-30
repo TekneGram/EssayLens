@@ -14,6 +14,13 @@ const SUPPORTED_ACTIONS = new Set<LlmAction>([
   'llm.generateFeedbackSummary',
   'llm.evaluate.simple',
   'llm.evaluate.withRubric',
+  'llm.essay.feedback.identifyParagraphs',
+  'llm.essay.feedback.thesisStatement',
+  'llm.essay.feedback.summarizeMainIdea',
+  'llm.essay.feedback.paragraphEvaluation',
+  'llm.essay.feedback.thesisRestatement',
+  'llm.essay.feedback.summaryFeedback',
+  'llm.essay.feedback.conclusionFinalComment',
   'llm.paragraph.feedback.bulk',
   'llm.session.create',
   'llm.session.clear',
@@ -78,6 +85,13 @@ export class LlmOrchestrator {
       now: () => new Date().toISOString(),
       defaultTimeoutMs: 180_000,
       actionTimeoutMs: {
+        'llm.essay.feedback.identifyParagraphs': 600_000,
+        'llm.essay.feedback.thesisStatement': 600_000,
+        'llm.essay.feedback.summarizeMainIdea': 600_000,
+        'llm.essay.feedback.paragraphEvaluation': 600_000,
+        'llm.essay.feedback.thesisRestatement': 600_000,
+        'llm.essay.feedback.summaryFeedback': 600_000,
+        'llm.essay.feedback.conclusionFinalComment': 600_000,
         'llm.paragraph.feedback.bulk': 600_000
       },
       ...deps

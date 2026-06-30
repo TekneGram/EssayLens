@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatState } from '../domain';
+import type { ChatMessage, ChatMessageSource, ChatState } from '../domain';
 import type { LlmSessionListItemDto } from '@/app/ports/llmSession.port';
 
 type SetMessagesAction = { type: 'chat/setMessages'; payload: ChatMessage[] };
@@ -10,7 +10,12 @@ type SetSessionTranscriptAction = {
 };
 type UpdateMessageContentAction = {
   type: 'chat/updateMessageContent';
-  payload: { messageId: string; content: string; mode: 'append' | 'replace' };
+  payload: {
+    messageId: string;
+    content: string;
+    mode: 'append' | 'replace';
+    messageSource?: ChatMessageSource;
+  };
 };
 type SetMessageCommentableAction = {
   type: 'chat/setMessageCommentable';

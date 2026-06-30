@@ -1,7 +1,9 @@
 import type { Dispatch } from 'react';
 import type { ChatStreamChunkEvent } from '@/app/ports/chat.port';
+import type { EssayFeedbackType } from '@/app/ports/chat.port';
 import {
   addChatMessage,
+  bumpSessionSyncForFile,
   removeChatMessage,
   setChatMessageCommentable,
   setChatError,
@@ -22,12 +24,13 @@ import {
 interface SubmitChatMessageWorkflowParams {
   chatApi: ChatPort;
   dispatch: Dispatch<AppAction>;
-  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
+  kind?: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback' | 'essay-feedback-bulk';
   message?: string;
   essay?: string;
   rubricId?: string;
   bulkFileIds?: string[];
   redoCompletedFileIds?: string[];
+  essayFeedbackTypes?: EssayFeedbackType[];
   selectedFileId: string | null;
   activeSessionId?: string;
   pendingSelection: PendingSelection | null;
@@ -45,6 +48,7 @@ export async function submitChatMessageWorkflow({
   rubricId,
   bulkFileIds,
   redoCompletedFileIds,
+  essayFeedbackTypes,
   selectedFileId,
   activeSessionId,
   pendingSelection,
@@ -57,6 +61,10 @@ export async function submitChatMessageWorkflow({
       ? makeLocalId('rubricreq')
       : kind === 'paragraph-feedback-bulk'
         ? makeLocalId('paragraphbulkreq')
+        : kind === 'essay-feedback'
+          ? makeLocalId('essayfeedbackreq')
+          : kind === 'essay-feedback-bulk'
+            ? makeLocalId('essayfeedbackbulkreq')
         : makeLocalId('chatreq');
   const createdAt = new Date().toISOString();
 
@@ -89,6 +97,7 @@ export async function submitChatMessageWorkflow({
         relatedFileId: selectedFileId ?? undefined,
         sessionId: activeSessionId,
         createdAt,
+        messageSource: 'local',
         canCreateComment: false
       })
     );
@@ -107,10 +116,11 @@ export async function submitChatMessageWorkflow({
       sessionId: activeSessionId,
       clientRequestId
     } as {
-      kind: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk';
+      kind: 'chat' | 'rubric-feedback' | 'paragraph-feedback-bulk' | 'essay-feedback' | 'essay-feedback-bulk';
       fileId?: string;
       fileIds?: string[];
       redoCompletedFileIds?: string[];
+      selectedFeedbackTypes?: EssayFeedbackType[];
       sessionId?: string;
       clientRequestId: string;
       message?: string;
@@ -130,8 +140,14 @@ export async function submitChatMessageWorkflow({
     if (kind === 'paragraph-feedback-bulk' && bulkFileIds && bulkFileIds.length > 0) {
       request.fileIds = bulkFileIds;
     }
-    if (kind === 'paragraph-feedback-bulk' && redoCompletedFileIds && redoCompletedFileIds.length > 0) {
+    if ((kind === 'paragraph-feedback-bulk' || kind === 'essay-feedback-bulk') && redoCompletedFileIds && redoCompletedFileIds.length > 0) {
       request.redoCompletedFileIds = redoCompletedFileIds;
+    }
+    if ((kind === 'essay-feedback' || kind === 'essay-feedback-bulk') && essayFeedbackTypes && essayFeedbackTypes.length > 0) {
+      request.selectedFeedbackTypes = essayFeedbackTypes;
+    }
+    if (kind === 'essay-feedback-bulk' && bulkFileIds && bulkFileIds.length > 0) {
+      request.fileIds = bulkFileIds;
     }
     if (typeof pendingSelection?.exactQuote === 'string') {
       request.contextText = pendingSelection.exactQuote;
@@ -147,7 +163,8 @@ export async function submitChatMessageWorkflow({
         updateChatMessageContent({
           messageId: assistantMessageId,
           content: result.data.reply,
-          mode: 'replace'
+          mode: 'replace',
+          messageSource: 'persisted'
         })
       );
       dispatch(setChatMessageCommentable({ messageId: assistantMessageId, canCreateComment: true }));
@@ -177,7 +194,8 @@ export async function submitChatMessageWorkflow({
           updateChatMessageContent({
             messageId: responseMessageId,
             content: reply.reply,
-            mode: 'replace'
+            mode: 'replace',
+            messageSource: 'persisted'
           })
         );
         dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: true }));
@@ -203,7 +221,10 @@ export async function submitChatMessageWorkflow({
               relatedFileId: reply.fileId,
               sessionId: responseSessionId,
               createdAt,
-              canCreateComment: !reply.diagnosticType
+              messageSource: 'persisted',
+              canCreateComment: !reply.diagnosticType,
+              feedbackType: reply.feedbackType,
+              inlineComment: reply.inlineComment
             })
           );
         } else {
@@ -211,7 +232,8 @@ export async function submitChatMessageWorkflow({
             updateChatMessageContent({
               messageId: responseMessageId,
               content: reply.reply,
-              mode: 'replace'
+              mode: 'replace',
+              messageSource: 'persisted'
             })
           );
           dispatch(setChatMessageCommentable({ messageId: responseMessageId, canCreateComment: !reply.diagnosticType }));
@@ -232,7 +254,8 @@ export async function submitChatMessageWorkflow({
             updateChatMessageContent({
               messageId: existingMessageId,
               content: failureContent,
-              mode: 'replace'
+              mode: 'replace',
+              messageSource: 'persisted'
             })
           );
         } else {
@@ -244,6 +267,76 @@ export async function submitChatMessageWorkflow({
               relatedFileId: failure.fileId,
               sessionId: failure.sessionId,
               createdAt,
+              messageSource: 'persisted',
+              canCreateComment: false
+            })
+          );
+        }
+
+        streamMessageByClientRequestId.delete(failure.clientRequestId);
+        streamSeqByClientRequestId.delete(failure.clientRequestId);
+        streamSessionByClientRequestId.delete(failure.clientRequestId);
+      }
+    } else if (kind === 'essay-feedback' || kind === 'essay-feedback-bulk') {
+      for (const reply of result.data.essayFeedback?.replies ?? []) {
+        const createdAt = new Date().toISOString();
+        const existingMessageId = streamMessageByClientRequestId.get(reply.clientRequestId);
+
+        if (existingMessageId) {
+          dispatch(
+            updateChatMessageContent({
+              messageId: existingMessageId,
+              content: reply.reply,
+              mode: 'replace',
+              messageSource: 'persisted'
+            })
+          );
+        } else {
+          dispatch(
+            addChatMessage({
+              id: reply.messageId,
+              role: 'assistant',
+              content: reply.reply,
+              relatedFileId: reply.fileId,
+              sessionId: reply.sessionId,
+              createdAt,
+              messageSource: 'persisted',
+              canCreateComment: false,
+              feedbackType: reply.feedbackType,
+              inlineComment: reply.inlineComment
+            })
+          );
+        }
+
+        streamMessageByClientRequestId.delete(reply.clientRequestId);
+        streamSeqByClientRequestId.delete(reply.clientRequestId);
+        streamSessionByClientRequestId.delete(reply.clientRequestId);
+      }
+
+      for (const failure of result.data.essayFeedback?.failures ?? []) {
+        const createdAt = new Date().toISOString();
+        const existingMessageId = streamMessageByClientRequestId.get(failure.clientRequestId);
+        const failureContent = formatParagraphFeedbackBulkFailure(failure.reason, failure.details);
+
+        if (existingMessageId) {
+          dispatch(
+            updateChatMessageContent({
+              messageId: existingMessageId,
+              content: failureContent,
+              mode: 'replace',
+              messageSource: 'persisted'
+            })
+          );
+        } else {
+          dispatch(
+            addChatMessage({
+              id: failure.messageId,
+              role: 'assistant',
+              content: failureContent,
+              relatedFileId: failure.fileId,
+              sessionId: failure.sessionId,
+              createdAt,
+              messageSource: 'persisted',
               canCreateComment: false
             })
           );
@@ -261,7 +354,7 @@ export async function submitChatMessageWorkflow({
       dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
     }
   } catch (error) {
-    if (kind === 'rubric-feedback' || kind === 'paragraph-feedback-bulk') {
+    if (kind === 'rubric-feedback' || kind === 'paragraph-feedback-bulk' || kind === 'essay-feedback' || kind === 'essay-feedback-bulk') {
       streamMessageByClientRequestId.clear();
       streamSeqByClientRequestId.clear();
       streamSessionByClientRequestId.clear();
@@ -322,9 +415,11 @@ function ensureStreamAssistantMessage(args: HandleChatStreamChunkWorkflowParams)
       relatedFileId: event.fileId,
       sessionId: event.sessionId,
       createdAt: new Date().toISOString(),
+      messageSource: isContentStreamChunk(event) ? 'stream-reply' : 'stream-status',
       canCreateComment: false,
-      feedbackType: event.feedbackType === 'vocabulary' ? 'vocabulary' : undefined,
-      vocabulary: event.vocabulary
+      feedbackType: event.feedbackType,
+      vocabulary: event.vocabulary,
+      inlineComment: event.inlineComment
     })
   );
 
@@ -364,7 +459,8 @@ export function handleChatStreamChunkWorkflow({
       updateChatMessageContent({
         messageId: assistantMessageId,
         content: event.text ?? '',
-        mode: 'append'
+        mode: 'append',
+        messageSource: 'stream-reply'
       })
     );
     if (activeSessionId && (event.text ?? '').trim().length > 0) {
@@ -384,8 +480,13 @@ export function handleChatStreamChunkWorkflow({
     dispatch(
       updateChatMessageContent({
         messageId: assistantMessageId,
-        content: event.text || 'Processing paragraph feedback...',
-        mode: 'replace'
+        content:
+          event.text ||
+          (event.workflow === 'essay-feedback'
+            ? 'Processing essay feedback...'
+            : 'Processing paragraph feedback...'),
+        mode: 'replace',
+        messageSource: 'stream-status'
       })
     );
     if (activeSessionId) {
@@ -400,6 +501,20 @@ export function handleChatStreamChunkWorkflow({
       streamMessageByClientRequestId.delete(clientRequestId);
       streamSeqByClientRequestId.delete(clientRequestId);
       streamSessionByClientRequestId.delete(clientRequestId);
+      if (activeSessionId) {
+        dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
+      }
+      return;
+    }
+
+    if (event.workflow === 'essay-feedback') {
+      dispatch(removeChatMessage({ messageId: assistantMessageId }));
+      streamMessageByClientRequestId.delete(clientRequestId);
+      streamSeqByClientRequestId.delete(clientRequestId);
+      streamSessionByClientRequestId.delete(clientRequestId);
+      if (event.fileId) {
+        dispatch(bumpSessionSyncForFile({ fileId: event.fileId }));
+      }
       if (activeSessionId) {
         dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
       }
@@ -427,11 +542,12 @@ export function handleChatStreamChunkWorkflow({
       updateChatMessageContent({
         messageId: assistantMessageId,
         content: visibleError,
-        mode: 'replace'
+        mode: 'replace',
+        messageSource: 'stream-status'
       })
     );
 
-    if (event.workflow === 'paragraph-feedback-bulk') {
+    if (event.workflow === 'paragraph-feedback-bulk' || event.workflow === 'essay-feedback') {
       if (activeSessionId) {
         dispatch(setSessionSendPhase({ sessionId: activeSessionId, phase: undefined }));
       }

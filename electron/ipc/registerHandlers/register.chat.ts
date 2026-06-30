@@ -87,7 +87,7 @@ export function registerChatHandlers(ipcMain: IpcMainLike, deps: Partial<ChatHan
 
     const completions = await resolvedDeps.llmFeedbackCompletionRepository.listCompletedForFiles({
       fileIds: request.fileIds,
-      workflowKey: 'paragraph_feedback',
+      workflowKey: request.workflowKey ?? 'paragraph_feedback',
       modelKey: activeModel.key
     });
 

@@ -3,6 +3,7 @@ import { useAssessmentSplitter } from './hooks/useAssessmentSplitter';
 import { useAssessmentTabController } from './hooks/useAssessmentTabController';
 import type { AssessmentTabChatBindings } from './types';
 import { CommentsView } from '@/features/comments-view';
+import type { EssayFeedbackSelectionState } from '@/features/essay-feedback-manager/essayFeedbackManager.types';
 import { OriginalTextView } from '@/features/original-text-view';
 import type { SelectedFileType } from '@/app/types';
 
@@ -10,10 +11,15 @@ const ImageView = () => <div data-testid="image-view">Image View (Not Migrated)<
 
 interface AssessmentTabProps {
   selectedFileType: SelectedFileType;
+  essayFeedbackSelection: EssayFeedbackSelectionState;
   onChatBindingsChange?: (bindings: AssessmentTabChatBindings) => void;
 }
 
-export function AssessmentTab({ selectedFileType, onChatBindingsChange }: AssessmentTabProps) {
+export function AssessmentTab({
+  selectedFileType,
+  essayFeedbackSelection,
+  onChatBindingsChange
+}: AssessmentTabProps) {
   const {
     selectedFileId,
     originalText,
@@ -41,7 +47,7 @@ export function AssessmentTab({ selectedFileType, onChatBindingsChange }: Assess
     onDocumentTextChange,
     onDocumentTextMapChange,
     setSplitRatio
-  } = useAssessmentTabController({ selectedFileType, onChatBindingsChange });
+  } = useAssessmentTabController({ selectedFileType, essayFeedbackSelection, onChatBindingsChange });
 
   const { containerRef, onSplitterPointerDown, onSplitterKeyDown } = useAssessmentSplitter({
     assessmentSplitRatio,

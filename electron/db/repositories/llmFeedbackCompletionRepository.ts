@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getSharedDatabaseClient } from '../appDatabase';
 import type { SQLiteClient } from '../sqlite';
 
-export type LlmFeedbackWorkflowKey = 'paragraph_feedback';
+export type LlmFeedbackWorkflowKey = 'paragraph_feedback' | 'essay_feedback';
 
 export interface LlmFeedbackCompletionRecord {
   id: string;

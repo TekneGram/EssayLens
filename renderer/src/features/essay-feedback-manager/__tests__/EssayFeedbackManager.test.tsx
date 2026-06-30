@@ -45,11 +45,12 @@ describe('EssayFeedbackManager', () => {
     const paragraph = screen.getByLabelText('Paragraph evaluation') as HTMLInputElement;
     const restatement = screen.getByLabelText('Thesis restatement feedback') as HTMLInputElement;
 
-    fireEvent.click(summarize);
-    expect(summarize.checked).toBe(false);
-
     fireEvent.click(paragraph);
     expect(paragraph.checked).toBe(false);
+    expect(summarize.disabled).toBe(false);
+
+    fireEvent.click(summarize);
+    expect(summarize.checked).toBe(false);
 
     fireEvent.click(paragraph);
     expect(paragraph.checked).toBe(true);
