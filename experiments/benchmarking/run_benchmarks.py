@@ -9,6 +9,8 @@ from run_introduction_retries import run_analyze_gen_spec_with_retries, run_prov
 from run_conclusion_retries import run_analyze_conclusions_with_retries, run_provide_conclusion_feedback_with_retries
 from run_coherence_retries import run_analyze_topic_sentence_coherence_with_retries, run_analyze_pronouns_with_retries, run_analyze_linguistic_coherence_with_retries
 from run_paragraphs_retries import run_encourage_development_with_retries, run_anything_unclear_with_retries
+from run_vocabulary_retries import run_enhance_vocabulary_with_retries
+
 
 # ----- 1. IDENTIFY PARAGRAPHS ------
 
@@ -300,7 +302,15 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
 
 
 # ----- 8. VOCABULARY -----
-
+def run_enhance_vocabulary_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+    result = run_enhance_vocabulary_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
 
 
