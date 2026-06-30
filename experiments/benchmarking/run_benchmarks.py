@@ -6,6 +6,7 @@ from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
 from run_citations_retries import run_identify_citations_with_retries, run_check_citations_no_references_with_retries, run_check_references_no_citations_with_retries
 from run_thesis_retries import run_determine_thesis_statement_with_retries, run_thesis_statement_charateristics_with_retries, run_thesis_statement_advice_with_retries, run_thesis_statement_comment_with_retries, run_thesis_statement_heap_praise_with_retries
 from run_introduction_retries import run_analyze_gen_spec_with_retries, run_provide_introduction_feedback_with_retries
+from run_conclusion_retries import run_analyze_conclusions_with_retries, run_provide_conclusion_feedback_with_retries
 
 
 # ----- 1. IDENTIFY PARAGRAPHS ------
@@ -210,7 +211,27 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
 
 
 # ----- 5. CONCLUSION -----
+def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max_tokens, temp, csv_file_append):
+    result = run_analyze_conclusions_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        conclusion=conclusion,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
+def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, base_url, max_tokens, temp, csv_file_append):
+    result = run_provide_conclusion_feedback_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        conclusion=conclusion,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
 
 
@@ -234,13 +255,7 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
 def run_coherence_benchmark(base_url, max_tokens, temp):
     return
 
-def run_conclusion_benchmark(base_url, max_tokens, temp):
-    return
-
 def run_grammar_benchmark(base_url, max_tokens, temp):
-    return
-
-def run_introduction_benchmark(base_url, max_tokens, temp):
     return
 
 def run_paragraph_benchmark(base_url, max_tokens, temp):

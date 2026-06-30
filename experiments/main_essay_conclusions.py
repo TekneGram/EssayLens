@@ -127,7 +127,7 @@ def main() -> None:
         evaluation_content = evaluation["choices"][0]["message"]["content"]
         #evaluation_content = json.loads(evaluation_content)
 
-        feedback = provide_conclusion_feedback(full_essay, introduction, evaluation_content, "experiments/tasks_conclusions/conclusions_knowledge.md", "experiments/tasks_conclusions/conclusions_feedback.md", base_url, args.max_tokens, args.temp)
+        feedback = provide_conclusion_feedback(full_essay, conclusion, evaluation_content, "experiments/tasks_conclusions/conclusions_knowledge.md", "experiments/tasks_conclusions/conclusions_feedback.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(feedback))
 
 
