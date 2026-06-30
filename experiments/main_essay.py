@@ -4,8 +4,11 @@ import subprocess
 import argparse
 import time
 from pathlib import Path
-from essay_paragraphs import identify_paragraphs, essay_overall_idea, get_thesis_statement_feedback, judge_develop_thesis, judge_restate_thesis, judge_final_sentence, judge_conclusion_summary
+from essay_paragraphs import essay_overall_idea, get_thesis_statement_feedback, judge_develop_thesis, judge_restate_thesis, judge_final_sentence, judge_conclusion_summary
 from essay_coherence import judge_paragraph_details
+from essay_paragraphs import improve_simple_vocabulary
+
+from essay_analysis_thesis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
 
 import requests
 
@@ -94,9 +97,9 @@ def main() -> None:
 
     try:
         wait_for_server(base_url)
-        writing_path = "experiments/essay_examples/w1.md"
+        writing_path = "experiments/essay_examples/w1_strong.md"
         
-        identified_paragraphs = identify_paragraphs("experiments/system_prompts_v3/essay_knowledge.md", writing_path, "experiments/system_prompts_v3/identify_paragraphs.md", base_url, args.max_tokens, args.temp)
+        identified_paragraphs = identify_paragraphs(writing_path, "experiments/system_prompts_v3/essay_knowledge.md", "experiments/system_prompts_v3/identify_paragraphs.md", base_url, args.max_tokens, args.temp)
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
@@ -110,16 +113,6 @@ def main() -> None:
         # Conclusion paragraph
         conclusion = essay_paragraphs["conclusion_paragraph"]
 
-
-        ## Overview analysis
-        # Essay thesis statement
-        thesis_statement_feedback = get_thesis_statement_feedback("experiments/system_prompts_v3/essay_knowledge.md", writing_path, "experiments/system_prompts_v3/introduction_thesis.md", introduction, base_url, args.max_tokens, args.temp)
-        print(json.dumps(thesis_statement_feedback, indent=2))
-        thesis_statement_fb = thesis_statement_feedback["choices"][0]["message"]["content"]
-        thesis_statement_fb = json.loads(thesis_statement_fb)
-        thesis_statement = thesis_statement_fb["thesis_statement"]
-        
-
         # Essay main idea
         full_essay = introduction
         for bp in body_paragraphs:
@@ -127,52 +120,122 @@ def main() -> None:
         
         full_essay = full_essay + "\n" + conclusion
 
-        # DETAILS
-        for bp in body_paragraphs:
-            details_judgement = judge_paragraph_details(bp["body_paragraph"], "experiments/system_prompts_v3/coherence_details.md", base_url, args.max_tokens, args.temp)
-            print(json.dumps((details_judgement)))
+        thesis_statement_initial = determine_thesis_statement(full_essay, "experiments/system_prompts_v3/essay_knowledge_determine_thesis.md", introduction, "experiments/system_prompts_v3/essay_determine_thesis.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(thesis_statement_initial, indent=2))
+        thesis_statement_initial_result = thesis_statement_initial["choices"][0]["message"]["content"]
+        thesis_statement_initial_result = json.loads(thesis_statement_initial_result)
+        ts = thesis_statement_initial_result["thesis_statement"]
 
-        # Summarize overall main idea
-        main_idea = essay_overall_idea("experiments/system_prompts_v3/essay_knowledge.md", full_essay, "experiments/system_prompts_v3/essay_main_idea.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(main_idea, indent=2))
+        ts_characteristics = thesis_statement_characteristics(full_essay, "experiments/system_prompts_v3/essay_knowledge_determine_thesis.md", thesis_statement_initial_result["thesis_statement"], "experiments/system_prompts_v3/essay_characterize_thesis.md", base_url, args.max_tokens, args.temp)
+        print(json.dumps(ts_characteristics, indent=2))
 
-        # Get the main idea
-        essay_main_idea = main_idea["choices"][0]["message"]["content"]
-        essay_main_idea = json.loads(essay_main_idea)
+        ts_characteristics = ts_characteristics["choices"][0]["message"]["content"]
+        ts_characteristics = json.loads(ts_characteristics)
 
-        # Evaluate the body paragraphs
-        for bp in body_paragraphs:
-            body = bp["body_paragraph"]
-            judgement = judge_develop_thesis("experiments/system_prompts_v3/essay_knowledge.md", introduction, body, essay_main_idea["main_idea"], "experiments/system_prompts_v3/body_judge_development.md", base_url, args.max_tokens, args.temp)
-            print(json.dumps(judgement, indent=2))
+        no_characteristics_count = 0
+        missing_features = []
+        if ts_characteristics["main_idea"] == "no":
+            no_characteristics_count = no_characteristics_count + 1
+            missing_features.append("have a main idea")
+        if ts_characteristics["clear_goal"] == "no":
+            no_characteristics_count = no_characteristics_count + 1
+            missing_features.append("have a clear goal")
+        if ts_characteristics["preview_topics"] == "no":
+            no_characteristics_count = no_characteristics_count + 1
+            missing_features.append("preview topics")
+        if ts_characteristics["writer_opinion"] == "no":
+            no_characteristics_count = no_characteristics_count + 1
+            missing_features.append("have the writer's opinion")
 
-        # Evaluate the conclusion
+        print("Characteristics count is: " + str(no_characteristics_count))
 
-        # First get the first sentence of the conclusion
-        print(conclusion)
-        period_index = conclusion.find(".")
-        if period_index != -1:
-            first_sentence = conclusion[:period_index + 1]
-            thesis_restatement_judgement = judge_restate_thesis(thesis_statement, first_sentence, "experiments/system_prompts_v3/essay_conclusion_thesis_restatement.md", base_url, args.max_tokens, args.temp)
-            print(json.dumps(thesis_restatement_judgement, indent=2))
+        # When there are at least 3 missing characteristics from the identified thesis statement, then we should offer advice on improvement
+        if no_characteristics_count >= 3:
+            ts_advice = thesis_statement_advice(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, str(no_characteristics_count), "experiments/system_prompts_v3/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(ts_advice, indent=2))
 
-        final_sentence = ""
-        last_period = conclusion.rfind(".")
-        if last_period != -1:
-            previous_period = conclusion.rfind(".", 0, last_period)
-
-            if previous_period != -1:
-                final_sentence = conclusion[previous_period + 1:last_period + 1].strip()
+        # When there are 2 features the thesis statement is reasonable, and we can add a comment.
+        if no_characteristics_count == 2:
+            # Concatenate summary of missing features for LLM
+            what_is_missing = "The writer's thesis statement appears to not "
+            if len(missing_features) == 1:
+                what_is_missing = what_is_missing + missing_features[0]
             else:
-                final_sentence = conclusion[:last_period + 1].strip()
-        else:
-            final_sentence = conclusion.strip()
-        
-        final_sentence_judgement = judge_final_sentence(full_essay, final_sentence, "experiments/system_prompts_v3/essay_conclusion_final_sentence.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(final_sentence_judgement))
+                what_is_missing = what_is_missing + ", ".join(missing_features[:-1]) + " or " + missing_features[-1]
+            
+            ts_comment = thesis_statement_comment(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, what_is_missing, "experiments/system_prompts_v3/essay_thesis_statement_comment.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(ts_comment, indent=2))
 
-        conclusion_summary_judgement = judge_conclusion_summary(full_essay, "experiments/system_prompts_v3/essay_conclusion_summary.md", base_url, args.max_tokens, args.temp)
-        print(json.dumps(conclusion_summary_judgement))
+        # When there are no missing features or just 1 missing feature, then the thesis statement is excellent, and we can praise it.
+        if no_characteristics_count == 1 or no_characteristics_count == 0:
+            ts_praise = thesis_statement_heap_praise(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", ts, "experiments/system_prompts_v3/essay_thesis_statement_heap_praise.md", base_url, args.max_tokens, args.temp)
+            print(json.dumps(ts_praise, indent=2))
+
+        # if thesis_statement_initial_result["has_thesis_statement"] == "no clear statement":
+        #     ts_advice = thesis_statement_advice(full_essay, "experiments/system_prompts_v3/essay_knowledge_thesis_characteristics.md", "experiments/system_prompts_v3/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp)
+        #     print(json.dumps(ts_advice, indent=2))
+
+
+        ##----- LEGACY -----##
+        ## Overview analysis
+        # Essay thesis statement
+        # thesis_statement_feedback = get_thesis_statement_feedback("experiments/system_prompts_v3/essay_knowledge.md", writing_path, "experiments/system_prompts_v3/introduction_thesis.md", introduction, base_url, args.max_tokens, args.temp)
+        # print(json.dumps(thesis_statement_feedback, indent=2))
+        # thesis_statement_fb = thesis_statement_feedback["choices"][0]["message"]["content"]
+        # thesis_statement_fb = json.loads(thesis_statement_fb)
+        # thesis_statement = thesis_statement_fb["thesis_statement"]
+
+        # VOCABULARY
+        # for bp in body_paragraphs:
+        #     alternative_word = improve_simple_vocabulary(bp["body_paragraph"], "experiments/system_prompts_v3/essay_extract_simple_vocabulary.md", base_url, args.max_tokens, args.temp)
+        #     print(json.dumps(alternative_word))
+
+        # # DETAILS
+        # for bp in body_paragraphs:
+        #     details_judgement = judge_paragraph_details(bp["body_paragraph"], "experiments/system_prompts_v3/coherence_details.md", base_url, args.max_tokens, args.temp)
+        #     print(json.dumps((details_judgement)))
+
+        # # Summarize overall main idea
+        # main_idea = essay_overall_idea("experiments/system_prompts_v3/essay_knowledge.md", full_essay, "experiments/system_prompts_v3/essay_main_idea.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(main_idea, indent=2))
+
+        # # Get the main idea
+        # essay_main_idea = main_idea["choices"][0]["message"]["content"]
+        # essay_main_idea = json.loads(essay_main_idea)
+
+        # # Evaluate the body paragraphs
+        # for bp in body_paragraphs:
+        #     body = bp["body_paragraph"]
+        #     judgement = judge_develop_thesis("experiments/system_prompts_v3/essay_knowledge.md", introduction, body, essay_main_idea["main_idea"], "experiments/system_prompts_v3/body_judge_development.md", base_url, args.max_tokens, args.temp)
+        #     print(json.dumps(judgement, indent=2))
+
+        # # Evaluate the conclusion
+
+        # # First get the first sentence of the conclusion
+        # print(conclusion)
+        # period_index = conclusion.find(".")
+        # if period_index != -1:
+        #     first_sentence = conclusion[:period_index + 1]
+        #     thesis_restatement_judgement = judge_restate_thesis(thesis_statement, first_sentence, "experiments/system_prompts_v3/essay_conclusion_thesis_restatement.md", base_url, args.max_tokens, args.temp)
+        #     print(json.dumps(thesis_restatement_judgement, indent=2))
+
+        # final_sentence = ""
+        # last_period = conclusion.rfind(".")
+        # if last_period != -1:
+        #     previous_period = conclusion.rfind(".", 0, last_period)
+
+        #     if previous_period != -1:
+        #         final_sentence = conclusion[previous_period + 1:last_period + 1].strip()
+        #     else:
+        #         final_sentence = conclusion[:last_period + 1].strip()
+        # else:
+        #     final_sentence = conclusion.strip()
+        
+        # final_sentence_judgement = judge_final_sentence(full_essay, final_sentence, "experiments/system_prompts_v3/essay_conclusion_final_sentence.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(final_sentence_judgement))
+
+        # conclusion_summary_judgement = judge_conclusion_summary(full_essay, "experiments/system_prompts_v3/essay_conclusion_summary.md", base_url, args.max_tokens, args.temp)
+        # print(json.dumps(conclusion_summary_judgement))
 
         
 
@@ -190,9 +253,9 @@ if __name__ == "__main__":
 
 # To run a quick experiment
 # With Ternary Bonsai:
-# python experiments/main_essay.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 1024
+# python experiments/main_essay.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
 
 # With Gemma 4
-# python experiments/main_essay.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 1024
+# python experiments/main_essay.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
 # python experiments/main_essay.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3

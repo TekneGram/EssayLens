@@ -1,4 +1,8 @@
-import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
+import type {
+  ChatFeedbackType,
+  ChatInlineCommentPayload,
+  ChatVocabularyFeedback
+} from '@/app/ports/chat.port';
 import type { LlmSessionTurnDto } from '@/app/ports/llmSession.port';
 import type { ChatMessage } from '@/layout/ChatInterface/domain';
 
@@ -8,8 +12,9 @@ export interface ChatViewMessageItem {
   roleLabel: string;
   content: string;
   canCreateComment: boolean;
-  feedbackType?: 'vocabulary';
+  feedbackType?: ChatFeedbackType;
   vocabulary?: ChatVocabularyFeedback;
+  inlineComment?: ChatInlineCommentPayload;
 }
 
 export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessageItem[] {
@@ -20,7 +25,8 @@ export function toChatViewMessageItems(messages: ChatMessage[]): ChatViewMessage
     content: message.content,
     canCreateComment: message.role === 'assistant' && (message.canCreateComment ?? true),
     feedbackType: message.feedbackType,
-    vocabulary: message.vocabulary
+    vocabulary: message.vocabulary,
+    inlineComment: message.inlineComment
   }));
 }
 
@@ -32,7 +38,8 @@ export function toSessionTurnItems(sessionId: string, turns: LlmSessionTurnDto[]
     content: turn.content,
     canCreateComment: turn.role === 'assistant',
     feedbackType: turn.feedbackType,
-    vocabulary: turn.vocabulary
+    vocabulary: turn.vocabulary,
+    inlineComment: turn.inlineComment
   }));
 }
 
@@ -45,9 +52,11 @@ export function toSessionChatMessages(sessionId: string, fileEntityUuid: string,
     relatedFileId: fileEntityUuid,
     sessionId,
     createdAt,
+    messageSource: 'persisted',
     canCreateComment: turn.role === 'assistant',
     feedbackType: turn.feedbackType,
-    vocabulary: turn.vocabulary
+    vocabulary: turn.vocabulary,
+    inlineComment: turn.inlineComment
   }));
 }
 

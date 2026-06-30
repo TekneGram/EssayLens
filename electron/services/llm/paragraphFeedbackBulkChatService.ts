@@ -2,7 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AppException } from '../../core/appException';
-import type { ChatVocabularyFeedback, SendChatMessageResponse } from '../../ipc/contracts/chat.contracts';
+import type {
+  ChatInlineCommentPayload,
+  ChatVocabularyFeedback,
+  SendChatMessageResponse
+} from '../../ipc/contracts/chat.contracts';
 import type { StopLlmServerResponse } from '../../ipc/contracts/llmServer.contracts';
 import {
   buildLlmParagraphFeedbackBulkPayload,
@@ -25,6 +29,7 @@ interface ParagraphFeedbackBulkReply {
   feedbackType?: 'topic_sentence' | 'coherence' | 'vocabulary';
   feedbackSection?: 'verdict' | 'reason' | 'revision_suggestion';
   vocabulary?: ChatVocabularyFeedback;
+  inlineComment?: ChatInlineCommentPayload;
   diagnosticType?: 'reasoning_leak';
   progressMessageId?: string;
 }
@@ -312,7 +317,11 @@ export class ParagraphFeedbackBulkChatService {
             content: item.reply,
             metadata:
               item.feedbackType === 'vocabulary' && item.vocabulary
-                ? { feedbackType: 'vocabulary' as const, vocabulary: item.vocabulary }
+                ? {
+                    feedbackType: 'vocabulary' as const,
+                    vocabulary: item.vocabulary,
+                    inlineComment: item.inlineComment
+                  }
                 : undefined
           })),
           fileId
@@ -364,6 +373,7 @@ export class ParagraphFeedbackBulkChatService {
           feedbackType: item.feedbackType,
           feedbackSection: item.feedbackSection,
           vocabulary: item.vocabulary,
+          inlineComment: item.inlineComment,
           type: 'chunk',
           seq: 2,
           channel: 'content',
@@ -482,6 +492,16 @@ ${sectionLabel}: ${text}`;
     return `You used '${item.simple_vocabulary}' when you wrote '${item.text_context}'. You can improve this with: '${item.precise_vocabulary}'.`;
   }
 
+  private buildVocabularyInlineComment(
+    vocabulary: ChatVocabularyFeedback,
+    reply: string
+  ): ChatInlineCommentPayload {
+    return {
+      searchText: vocabulary.textContext,
+      commentText: reply
+    };
+  }
+
   private formatReasoningLeakReply(warning: string, reasoningContent: string): string {
     return `### Diagnostic Warning
 ${warning}
@@ -543,33 +563,39 @@ ${reasoningContent}`;
       });
 
     const vocabularyItems = paragraphFeedback?.vocabulary;
-    const vocabularyReplies: ParagraphFeedbackBulkReply[] = Array.isArray(vocabularyItems)
-      ? vocabularyItems
-          .filter(
-            (item): item is ParagraphFeedbackVocabularyItem =>
-              !!item &&
-              typeof item.simple_vocabulary === 'string' &&
-              typeof item.text_context === 'string' &&
-              typeof item.precise_vocabulary === 'string' &&
-              item.simple_vocabulary.trim().length > 0 &&
-              item.text_context.trim().length > 0 &&
-              item.precise_vocabulary.trim().length > 0
-          )
-          .map((item, index) => ({
+    const vocabularyReplies: ParagraphFeedbackBulkReply[] = [];
+    if (Array.isArray(vocabularyItems)) {
+      vocabularyItems
+        .filter(
+          (item): item is ParagraphFeedbackVocabularyItem =>
+            !!item &&
+            typeof item.simple_vocabulary === 'string' &&
+            typeof item.text_context === 'string' &&
+            typeof item.precise_vocabulary === 'string' &&
+            item.simple_vocabulary.trim().length > 0 &&
+            item.text_context.trim().length > 0 &&
+            item.precise_vocabulary.trim().length > 0
+        )
+        .forEach((item, index) => {
+          const vocabulary = {
+            simpleVocabulary: item.simple_vocabulary.trim(),
+            textContext: item.text_context.trim(),
+            preciseVocabulary: item.precise_vocabulary.trim()
+          };
+          const reply = this.formatVocabularyReply(item);
+          vocabularyReplies.push({
             fileId,
             sessionId,
             messageId: randomUUID(),
-            reply: this.formatVocabularyReply(item),
+            reply,
             clientRequestId: `${baseClientRequestId}:vocabulary:${index + 1}`,
             feedbackType: 'vocabulary' as const,
-            vocabulary: {
-              simpleVocabulary: item.simple_vocabulary.trim(),
-              textContext: item.text_context.trim(),
-              preciseVocabulary: item.precise_vocabulary.trim()
-            },
+            vocabulary,
+            inlineComment: this.buildVocabularyInlineComment(vocabulary, reply),
             progressMessageId
-          }))
-      : [];
+          });
+        });
+    }
 
     const replies: ParagraphFeedbackBulkReply[] = [...typedReplies, ...vocabularyReplies];
 

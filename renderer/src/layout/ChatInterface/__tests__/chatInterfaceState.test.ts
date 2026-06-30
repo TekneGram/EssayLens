@@ -193,4 +193,59 @@ describe('chat-interface state helpers', () => {
 
     expect(next.messages[0].canCreateComment).toBe(true);
   });
+
+  it('preserves transient stream status messages when session transcript reloads', () => {
+    const next = chatReducer(
+      {
+        ...initialAppState.chat,
+        messages: [
+          {
+            id: 'status-1',
+            role: 'assistant',
+            content: 'Extracting and evaluating the thesis statement...',
+            relatedFileId: 'file-1',
+            sessionId: 'sess-1',
+            createdAt: '2026-02-20T00:00:00.000Z',
+            messageSource: 'stream-status'
+          },
+          {
+            id: 'reply-1',
+            role: 'assistant',
+            content: 'Old transient reply',
+            relatedFileId: 'file-1',
+            sessionId: 'sess-1',
+            createdAt: '2026-02-20T00:00:00.000Z',
+            messageSource: 'stream-reply'
+          }
+        ]
+      },
+      setSessionTranscript({
+        sessionId: 'sess-1',
+        messages: [
+          {
+            id: 'sess-1:assistant:0',
+            role: 'assistant',
+            content: 'Persisted reply',
+            relatedFileId: 'file-1',
+            sessionId: 'sess-1',
+            createdAt: '2026-02-20T00:00:00.000Z',
+            messageSource: 'persisted'
+          }
+        ]
+      })
+    );
+
+    expect(next.messages).toEqual([
+      expect.objectContaining({
+        id: 'status-1',
+        content: 'Extracting and evaluating the thesis statement...',
+        messageSource: 'stream-status'
+      }),
+      expect.objectContaining({
+        id: 'sess-1:assistant:0',
+        content: 'Persisted reply',
+        messageSource: 'persisted'
+      })
+    ]);
+  });
 });

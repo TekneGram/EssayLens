@@ -99,7 +99,8 @@ export function registerLlmSessionHandlers(
         role: turn.role,
         content: turn.content,
         feedbackType: turn.metadata?.feedbackType,
-        vocabulary: turn.metadata?.vocabulary
+        vocabulary: turn.metadata?.feedbackType === 'vocabulary' ? turn.metadata.vocabulary : undefined,
+        inlineComment: turn.metadata?.inlineComment
       }))
     };
     return result;

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { toast } from 'react-toastify';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from '@/App';
 import { AppProviders } from '@/app/providers/AppProviders';
@@ -41,7 +42,51 @@ function renderApp() {
   );
 }
 
-function createLlmManagerMocks() {
+function createLlmManagerMocks(overrides: { max_tokens?: number } = {}) {
+  const currentSettings = {
+    llm_server_path: null,
+    llm_gguf_path: null,
+    llm_mmproj_path: null,
+    llm_server_url: null,
+    llm_host: '127.0.0.1',
+    llm_port: 8080,
+    llm_n_ctx: 4096,
+    llm_n_threads: null,
+    llm_n_gpu_layers: null,
+    llm_n_batch: null,
+    llm_n_parallel: null,
+    llm_seed: null,
+    llm_rope_freq_base: null,
+    llm_rope_freq_scale: null,
+    llm_model_family: 'instruct/think',
+    llm_reasoning_mode: null,
+    llm_reasoning_budget: null,
+    llm_chat_template_path: null,
+    llm_use_jinja: true,
+    llm_cache_prompt: true,
+    llm_flash_attn: true,
+    max_tokens: overrides.max_tokens ?? 1024,
+    temperature: 0.2,
+    top_p: 0.95,
+    top_k: 50,
+    repeat_penalty: 1.1,
+    request_seed: null,
+    use_fake_reply: false,
+    fake_reply_text: null,
+    llm_log_outbound_payload: false,
+    bulk_llm_recycle_policy: 'after_each_file' as const
+  };
+
+  const updateSettings = vi.fn().mockImplementation(async (request: { settings: Partial<typeof currentSettings> }) => {
+    Object.assign(currentSettings, request.settings);
+    return {
+      ok: true,
+      data: {
+        settings: { ...currentSettings }
+      }
+    };
+  });
+
   return {
     listCatalogModels: vi.fn().mockResolvedValue({ ok: true, data: { models: [] } }),
     listDownloadedModels: vi.fn().mockResolvedValue({ ok: true, data: { models: [] } }),
@@ -49,50 +94,14 @@ function createLlmManagerMocks() {
     getSettings: vi.fn().mockResolvedValue({
       ok: true,
       data: {
-        settings: {
-          llm_server_path: null,
-          llm_gguf_path: null,
-          llm_mmproj_path: null,
-          llm_server_url: null,
-          llm_host: '127.0.0.1',
-          llm_port: 8080,
-          llm_n_ctx: 4096,
-          llm_n_threads: null,
-          llm_n_gpu_layers: null,
-          llm_n_batch: null,
-          llm_n_parallel: null,
-          llm_seed: null,
-          llm_rope_freq_base: null,
-          llm_rope_freq_scale: null,
-          llm_model_family: 'instruct/think',
-          llm_reasoning_mode: null,
-          llm_reasoning_budget: null,
-          llm_chat_template_path: null,
-          llm_use_jinja: true,
-          llm_cache_prompt: true,
-          llm_flash_attn: true,
-          max_tokens: 1024,
-          temperature: 0.2,
-          top_p: 0.95,
-          top_k: 50,
-          repeat_penalty: 1.1,
-          request_seed: null,
-          use_fake_reply: false,
-          fake_reply_text: null,
-          llm_log_outbound_payload: false,
-          bulk_llm_recycle_policy: 'after_each_file'
-        }
+        settings: { ...currentSettings }
       }
     }),
     selectModel: vi.fn().mockResolvedValue({ ok: true, data: { model: null } }),
-    updateSettings: vi.fn().mockResolvedValue({
-      ok: true,
-      data: {
-        settings: {}
-      }
-    }),
+    updateSettings,
     resetSettingsToDefaults: vi.fn().mockResolvedValue({ ok: true, data: { settings: {}, activeModel: null } }),
-    onDownloadProgress: vi.fn().mockImplementation(() => () => {})
+    onDownloadProgress: vi.fn().mockImplementation(() => () => {}),
+    __currentSettings: currentSettings
   };
 }
 
@@ -186,6 +195,55 @@ function createLlmSessionMocks() {
 }
 
 describe('ChatInterface submit workflow', () => {
+  it('sets max_tokens to 2048 when essay feedback bulk is selected and leaves it there after clearing the command', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const llmManager = createLlmManagerMocks({ max_tokens: 1024 });
+    const enterToastSpy = vi.spyOn(toast, 'info').mockImplementation(() => 'toast-id');
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { sendMessage: vi.fn(), checkParagraphFeedbackCompletions: vi.fn() },
+        llmManager,
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+
+    await waitFor(() => {
+      expect(llmManager.updateSettings).toHaveBeenCalledWith({ settings: { max_tokens: 2048 } });
+    });
+    fireEvent.click(screen.getByRole('tab', { name: 'Your LLM' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit setting max_tokens' }).textContent).toBe('2048');
+    });
+    expect(enterToastSpy).toHaveBeenCalledWith('Essay feedback in bulk increased max_tokens to 2048 from 1024.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selected command' }));
+
+    await waitFor(() => {
+      expect(enterToastSpy).toHaveBeenCalledWith(
+        'Essay feedback in bulk leaves max_tokens at 2048. If you want to change it back to the default 1024, update it in Your LLM.'
+      );
+    });
+    expect(llmManager.updateSettings).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Edit setting max_tokens' }).textContent).toBe('2048');
+
+    enterToastSpy.mockRestore();
+  });
+
   it('disables chat send and blocks sendMessage when no file is selected', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
     const sendMessage = vi.fn();
@@ -329,7 +387,7 @@ describe('ChatInterface submit workflow', () => {
     });
   });
 
-  it('submits chat mode through chat API and appends teacher + assistant messages', async () => {
+  it('submits essay feedback bulk through chat API for the selected file', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
     const listFeedback = vi.fn().mockResolvedValue({
       ok: true,
@@ -356,13 +414,20 @@ describe('ChatInterface submit workflow', () => {
         reply: 'Assistant workflow reply.'
       }
     });
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
+      }
+    });
 
     Object.defineProperty(window, 'api', {
       value: {
         workspace: { selectFolder, listFiles },
         assessment: { listFeedback, addFeedback },
         rubric: createRubricMocks(),
-        chat: { sendMessage },
+        chat: { sendMessage, checkParagraphFeedbackCompletions },
         llmManager: createLlmManagerMocks(),
         llmSession: createLlmSessionMocks()
       },
@@ -379,7 +444,7 @@ describe('ChatInterface submit workflow', () => {
     await screen.findByTestId('text-view-window');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-essay-bulk');
@@ -393,11 +458,23 @@ describe('ChatInterface submit workflow', () => {
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          fileId: '/workspace/essays/draft.docx',
-          message: 'How should I sequence feedback?',
+          kind: 'essay-feedback-bulk',
+          fileIds: ['/workspace/essays/draft.docx'],
+          selectedFeedbackTypes: [
+            'thesis-statement-feedback',
+            'summarize-main-idea',
+            'paragraph-evaluation',
+            'thesis-restatement-feedback',
+            'summary-feedback',
+            'conclusion-final-comment'
+          ],
           clientRequestId: expect.any(String)
         })
       );
+    });
+    expect(checkParagraphFeedbackCompletions).toHaveBeenCalledWith({
+      fileIds: ['/workspace/essays/draft.docx'],
+      workflowKey: 'essay_feedback'
     });
     expect((sendMessage.mock.calls[0]?.[0] as { contextText?: string }).contextText).toBeUndefined();
     expect(addFeedback).not.toHaveBeenCalled();
@@ -528,6 +605,161 @@ describe('ChatInterface submit workflow', () => {
     confirmSpy.mockRestore();
   });
 
+  it('sends one DOCX-only bulk essay feedback request with selected feedback types', async () => {
+    const selectFolder = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        folder: {
+          id: '/workspace/essays',
+          path: '/workspace/essays',
+          name: 'essays'
+        }
+      }
+    });
+    const listFiles = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        files: [
+          {
+            id: '/workspace/essays/draft-1.docx',
+            folderId: '/workspace/essays',
+            name: 'draft-1.docx',
+            path: '/workspace/essays/draft-1.docx',
+            kind: 'docx'
+          },
+          {
+            id: '/workspace/essays/draft-2.pdf',
+            folderId: '/workspace/essays',
+            name: 'draft-2.pdf',
+            path: '/workspace/essays/draft-2.pdf',
+            kind: 'pdf'
+          }
+        ]
+      }
+    });
+    const sendMessage = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        reply: '',
+        essayFeedback: {
+          replies: [],
+          failures: []
+        }
+      }
+    });
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
+      }
+    });
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { sendMessage, checkParagraphFeedbackCompletions },
+        llmManager: createLlmManagerMocks(),
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft-1.docx' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'draft-2.pdf' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+    });
+    expect(checkParagraphFeedbackCompletions).toHaveBeenCalledWith({
+      fileIds: ['/workspace/essays/draft-1.docx'],
+      workflowKey: 'essay_feedback'
+    });
+    expect(sendMessage.mock.calls).toEqual([
+      [
+        expect.objectContaining({
+          kind: 'essay-feedback-bulk',
+          fileIds: ['/workspace/essays/draft-1.docx'],
+          selectedFeedbackTypes: [
+            'thesis-statement-feedback',
+            'summarize-main-idea',
+            'paragraph-evaluation',
+            'thesis-restatement-feedback',
+            'summary-feedback',
+            'conclusion-final-comment'
+          ]
+        })
+      ]
+    ]);
+  });
+
+  it('skips completed essay feedback files when the user chooses skip', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: { key: 'essay-model', displayName: 'Essay Model' },
+        completions: [
+          {
+            fileId: '/workspace/essays/draft.docx',
+            modelKey: 'essay-model',
+            modelDisplayName: 'Essay Model',
+            sessionId: 'essay-feedback-existing',
+            completedAt: '2026-02-24T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    const sendMessage = vi.fn();
+    const confirmSpy = vi.spyOn(window, 'confirm')
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { checkParagraphFeedbackCompletions, sendMessage },
+        llmManager: createLlmManagerMocks(),
+        llmSession: createLlmSessionMocks()
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(checkParagraphFeedbackCompletions).toHaveBeenCalledWith({
+        fileIds: ['/workspace/essays/draft.docx'],
+        workflowKey: 'essay_feedback'
+      });
+    });
+    expect(confirmSpy).toHaveBeenCalledTimes(2);
+    expect(sendMessage).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+
   it('updates assistant message from stream chunks before sendMessage resolves', async () => {
     const { selectFolder, listFiles } = createWorkspaceMocks();
     const listFeedback = vi.fn().mockResolvedValue({
@@ -545,6 +777,13 @@ describe('ChatInterface submit workflow', () => {
           resolveSend = resolve;
         })
     );
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
+      }
+    });
     const onStreamChunk = vi.fn().mockImplementation((listener: (event: unknown) => void) => {
       streamListener = listener;
       return () => {
@@ -557,7 +796,7 @@ describe('ChatInterface submit workflow', () => {
         workspace: { selectFolder, listFiles },
         assessment: { listFeedback, addFeedback },
         rubric: createRubricMocks(),
-        chat: { sendMessage, onStreamChunk },
+        chat: { sendMessage, onStreamChunk, checkParagraphFeedbackCompletions },
         llmManager: createLlmManagerMocks(),
         llmSession: createLlmSessionMocks()
       },
@@ -573,7 +812,7 @@ describe('ChatInterface submit workflow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'draft.docx' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
       target: { value: 'Please stream this response' }
     });
@@ -612,5 +851,138 @@ describe('ChatInterface submit workflow', () => {
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('loads persisted chat sessions during essay bulk streaming once a persisted essay reply arrives', async () => {
+    const { selectFolder, listFiles } = createWorkspaceMocks();
+    const llmSession = createLlmSessionMocks();
+    llmSession.listByFile.mockResolvedValue({
+      ok: true,
+      data: {
+        fileEntityUuid: '/workspace/essays/draft.docx',
+        sessions: [
+          {
+            sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+            fileEntityUuid: '/workspace/essays/draft.docx',
+            createdAt: '2026-02-01T00:00:00.000Z',
+            updatedAt: '2026-02-01T00:00:00.000Z',
+            lastUsedAt: '2026-02-01T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    llmSession.getTurns.mockResolvedValue({
+      ok: true,
+      data: {
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        fileEntityUuid: '/workspace/essays/draft.docx',
+        turns: []
+      }
+    });
+    let streamListener: ((event: unknown) => void) | undefined;
+    let resolveSend: ((value: unknown) => void) | undefined;
+    const sendMessage = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    const checkParagraphFeedbackCompletions = vi.fn().mockResolvedValue({
+      ok: true,
+      data: {
+        activeModel: null,
+        completions: []
+      }
+    });
+    const onStreamChunk = vi.fn().mockImplementation((listener: (event: unknown) => void) => {
+      streamListener = listener;
+      return () => {
+        streamListener = undefined;
+      };
+    });
+
+    Object.defineProperty(window, 'api', {
+      value: {
+        workspace: { selectFolder, listFiles },
+        assessment: { listFeedback: vi.fn().mockResolvedValue({ ok: true, data: { feedback: [] } }) },
+        rubric: createRubricMocks(),
+        chat: { sendMessage, onStreamChunk, checkParagraphFeedbackCompletions },
+        llmManager: createLlmManagerMocks(),
+        llmSession
+      },
+      configurable: true
+    });
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'draft.docx' })).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send chat message' }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = sendMessage.mock.calls[0]?.[0] as { clientRequestId?: string } | undefined;
+    const clientRequestId = payload?.clientRequestId;
+    const currentStreamListener = streamListener;
+    expect(clientRequestId).toBeTypeOf('string');
+
+    if (typeof currentStreamListener === 'function') {
+      currentStreamListener({
+        requestId: 'essay-bulk-start-1',
+        clientRequestId: `${clientRequestId}:identify`,
+        fileId: '/workspace/essays/draft.docx',
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        messageId: 'progress-1',
+        workflow: 'essay-feedback',
+        essayFeedbackStage: 'identify-paragraphs',
+        type: 'start',
+        seq: 1,
+        channel: 'meta',
+        text: '',
+        done: false
+      });
+      currentStreamListener({
+        requestId: 'essay-bulk-chunk-1',
+        clientRequestId: `${clientRequestId}:essay:1:summary-feedback`,
+        fileId: '/workspace/essays/draft.docx',
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        messageId: 'reply-1',
+        workflow: 'essay-feedback',
+        essayFeedbackType: 'summary-feedback',
+        type: 'chunk',
+        seq: 2,
+        channel: 'content',
+        text: 'Persisted essay feedback reply',
+        done: false
+      });
+    }
+
+    await waitFor(() => {
+      expect(llmSession.listByFile).toHaveBeenCalledWith({ fileEntityUuid: '/workspace/essays/draft.docx' });
+      expect(llmSession.getTurns).toHaveBeenCalledWith({
+        sessionId: 'essay-feedback:/workspace/essays/draft.docx:1',
+        fileEntityUuid: '/workspace/essays/draft.docx'
+      });
+    });
+
+    const currentResolveSend = resolveSend;
+    if (typeof currentResolveSend === 'function') {
+      currentResolveSend({
+        ok: true,
+        data: {
+          reply: '',
+          essayFeedback: {
+            replies: [],
+            failures: []
+          }
+        }
+      });
+    }
   });
 });

@@ -1,10 +1,13 @@
 import type {
+  EssayFeedbackType,
+  EssayFeedbackStage,
   ChatStreamChunkEvent,
   SendChatMessageRequest,
   SendChatMessageResponse
 } from '../../ipc/contracts/chat.contracts';
 import type { GetRubricMatrixResponse } from '../../ipc/contracts/rubric.contracts';
 import { ChatRepository } from '../../db/repositories/chatRepository';
+import { EssayFeedbackAnalysisRepository } from '../../db/repositories/essayFeedbackAnalysisRepository';
 import { LlmChatSessionRepository, type LlmSessionTurn } from '../../db/repositories/llmChatSessionRepository';
 import { LlmSelectionRepository } from '../../db/repositories/llmSelectionRepository';
 import { LlmSettingsRepository, type LlmRuntimeSettings } from '../../db/repositories/llmSettingsRepository';
@@ -16,6 +19,7 @@ import type { LlmNotReadyErrorDetails } from '../../ipc/contracts/chat.contracts
 
 export interface ChatServiceDeps {
   repository: ChatRepository;
+  essayFeedbackAnalysisRepository: EssayFeedbackAnalysisRepository;
   llmOrchestrator: LlmOrchestrator;
   llmSettingsRepository: LlmSettingsRepository;
   llmChatSessionRepository: LlmChatSessionRepository;
@@ -57,6 +61,98 @@ export interface LlmParagraphFeedbackBulkPayload {
   clientRequestId?: string;
 }
 
+export interface LlmEssayFeedbackStubPayload {
+  fileId: string;
+  selectedFeedbackTypes: EssayFeedbackType[];
+}
+
+export interface LlmEssayFeedbackIdentifyPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackIdentifyResult {
+  introduction_paragraph: string;
+  body_paragraphs: {
+    items: Array<{
+      body_paragraph: string;
+    }>;
+  };
+  conclusion_paragraph: string;
+}
+
+export interface LlmEssayFeedbackThesisStatementPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  introduction: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackThesisStatementResult {
+  thesis_statement: string;
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackSummarizeMainIdeaPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackSummarizeMainIdeaResult {
+  main_idea: string;
+}
+
+export interface LlmEssayFeedbackParagraphEvaluationPayload {
+  settings: LlmRuntimeSettings;
+  introduction: string;
+  bodyParagraph: string;
+  mainIdea: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackParagraphEvaluationResult {
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackThesisRestatementPayload {
+  settings: LlmRuntimeSettings;
+  thesisStatement: string;
+  conclusionFirstSentence: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackThesisRestatementResult {
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackSummaryFeedbackPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackSummaryFeedbackResult {
+  verdict: string;
+  comments: string;
+}
+
+export interface LlmEssayFeedbackConclusionFinalCommentPayload {
+  settings: LlmRuntimeSettings;
+  essay: string;
+  finalSentence: string;
+  clientRequestId?: string;
+}
+
+export interface LlmEssayFeedbackConclusionFinalCommentResult {
+  verdict: string;
+  comments: string;
+}
+
 export interface RuntimeReadyResult {
   settings: LlmRuntimeSettings;
   notReadyDetails: LlmNotReadyErrorDetails | null;
@@ -74,6 +170,19 @@ export type RubricFeedbackRequest = SendChatMessageRequest & {
 export type ParagraphFeedbackBulkRequest = SendChatMessageRequest & {
   kind: 'paragraph-feedback-bulk';
   fileIds: string[];
+  redoCompletedFileIds?: string[];
+};
+
+export type EssayFeedbackRequest = SendChatMessageRequest & {
+  kind: 'essay-feedback';
+  fileId: string;
+  selectedFeedbackTypes: EssayFeedbackType[];
+};
+
+export type EssayFeedbackBulkRequest = SendChatMessageRequest & {
+  kind: 'essay-feedback-bulk';
+  fileIds: string[];
+  selectedFeedbackTypes: EssayFeedbackType[];
   redoCompletedFileIds?: string[];
 };
 

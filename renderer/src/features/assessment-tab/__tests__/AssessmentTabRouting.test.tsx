@@ -195,7 +195,7 @@ describe('Assessment tab file selection routing', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Open command menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Overview Comments' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Essay feedback in bulk' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('assessment-chat-interface-stub').textContent).toBe('chat:true:evaluate-essay-bulk');

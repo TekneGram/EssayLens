@@ -1,0 +1,2 @@
+# Task
+Identify the topic sentence - it is usually the first sentence of the body paragraph. Then, for each of the following sentences determine whether the sentence behaves by elaborating a previous sentence or whether it tries to introduce a new idea and is potentially off topic. Comment very briefly and concisely on the elaboration. If it's a topic sentence, say what the main idea of the paragraph is. If it introduces a new idea, explain why. Keep comments very concise.

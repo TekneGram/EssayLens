@@ -8,7 +8,7 @@ import type { SelectedFileType } from '@/app/types';
 import type { AppAction } from '@/app/providers/state/actions';
 import type { Dispatch } from 'react';
 import type { PendingSelection } from '@/layout/ChatInterface/domain';
-import type { ChatVocabularyFeedback } from '@/app/ports/chat.port';
+import type { ChatInlineCommentPayload } from '@/app/ports/chat.port';
 import type { FeedbackItem } from '@/features/feedback/domain';
 import type {
   AddBlockFeedbackRequest,
@@ -53,7 +53,7 @@ interface UseAssessmentCommentsControllerResult {
   onGenerateFeedbackDocument: () => Promise<void>;
   onCommentsTabChange: (tab: import('@/app/providers/state').CommentsTab) => void;
   onCreateCommentFromChatMessage: (text: string) => Promise<void>;
-  onCreateInlineCommentFromVocabulary: (vocabulary: ChatVocabularyFeedback) => Promise<void>;
+  onCreateInlineCommentFromChatMessage: (payload: ChatInlineCommentPayload) => Promise<void>;
 }
 
 export function useAssessmentCommentsController({
