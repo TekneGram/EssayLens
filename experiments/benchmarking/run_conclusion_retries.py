@@ -35,6 +35,8 @@ def run_analyze_conclusions_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -52,6 +54,8 @@ def run_analyze_conclusions_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -96,6 +100,8 @@ def run_provide_conclusion_feedback_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -113,6 +119,8 @@ def run_provide_conclusion_feedback_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,

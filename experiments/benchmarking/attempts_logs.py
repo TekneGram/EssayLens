@@ -3,6 +3,8 @@ from append_to_csv import append_to_csv
 
 def append_attempt_log(
         essay_id,
+        paragraph_num,
+        sentence_num,
         csv_file_append,
         attempt_count,
         passed,
@@ -12,9 +14,11 @@ def append_attempt_log(
     append_to_csv(
         "experiments/benchmarking/llm_responses/attempt_logs",
         f"attempt_logs_{csv_file_append}.csv",
-        ["ESSAY_ID", "ATTEMPTS_USED", "PASSED_VALIDATION", "FAILURE_REASON", "BENCHMARK_TYPE"],
+        ["ESSAY_ID", "PARAGRAPh_NUM", "SENTENCE_NUM", "ATTEMPTS_USED", "PASSED_VALIDATION", "FAILURE_REASON", "BENCHMARK_TYPE"],
         [
             essay_id,
+            paragraph_num,
+            sentence_num,
             attempt_count,
             "yes" if passed else "no",
             failure_reason,

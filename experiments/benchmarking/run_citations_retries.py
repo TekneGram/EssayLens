@@ -33,6 +33,8 @@ def run_identify_citations_with_retries(
             
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -51,6 +53,8 @@ def run_identify_citations_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -96,6 +100,8 @@ def run_check_references_no_citations_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -114,6 +120,8 @@ def run_check_references_no_citations_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -157,6 +165,8 @@ def run_check_citations_no_references_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -175,6 +185,8 @@ def run_check_citations_no_references_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
