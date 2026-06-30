@@ -4,6 +4,7 @@ from append_to_csv import append_to_csv
 
 from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
 from run_citations_retries import run_identify_citations_with_retries, run_check_citations_no_references_with_retries, run_check_references_no_citations_with_retries
+from run_thesis_retries import run_determine_thesis_statement_with_retries, run_thesis_statement_charateristics_with_retries, run_thesis_statement_advice_with_retries, run_thesis_statement_comment_with_retries, run_thesis_statement_heap_praise_with_retries
 
 def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
 
@@ -110,6 +111,63 @@ def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_t
     result = run_check_references_no_citations_with_retries(
         essay=essay,
         essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_determine_thesis_statement_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
+    result = run_determine_thesis_statement_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        thesis_statement=thesis_statement,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
+    result = run_thesis_statement_charateristics_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        thesis_statement=thesis_statement,
+        base_url=base_url,
+        max_token=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_characteristics_count, base_url, max_tokens, temp, csv_file_append):
+    result = run_thesis_statement_advice_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        thesis_statement=thesis_statement,
+        no_characteristics_count=no_characteristics_count,
+        base_url=base_url,
+        max_token=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, max_tokens, temp, csv_file_append):
+    result = run_thesis_statement_comment_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        thesis_statement=thesis_statement,
+        what_is_missing=what_is_missing,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
+    result = run_thesis_statement_heap_praise_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        thesis_statement=thesis_statement,
         base_url=base_url,
         max_tokens=max_tokens,
         temp=temp,
