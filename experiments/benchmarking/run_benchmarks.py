@@ -10,6 +10,7 @@ from run_conclusion_retries import run_analyze_conclusions_with_retries, run_pro
 from run_coherence_retries import run_analyze_topic_sentence_coherence_with_retries, run_analyze_pronouns_with_retries, run_analyze_linguistic_coherence_with_retries
 from run_paragraphs_retries import run_encourage_development_with_retries, run_anything_unclear_with_retries
 from run_vocabulary_retries import run_enhance_vocabulary_with_retries
+from run_grammar_retries import run_edit_for_style_with_retries, run_repair_grammar_with_retries
 
 
 # ----- 1. IDENTIFY PARAGRAPHS ------
@@ -315,15 +316,25 @@ def run_enhance_vocabulary_benchmark(essay, essay_id, base_url, max_tokens, temp
 
 
 # ----- 9. GRAMMAR -----
+def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
+    result = run_edit_for_style_with_retries(
+        bp=bp,
+        essay_id=essay_id,
+        para_num=para_num,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
-def run_coherence_benchmark(base_url, max_tokens, temp):
-    return
+def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
+    result = run_repair_grammar_with_retries(
+        bp=bp,
+        essay_id=essay_id,
+        para_num=para_num,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
-def run_grammar_benchmark(base_url, max_tokens, temp):
-    return
-
-def run_paragraph_benchmark(base_url, max_tokens, temp):
-    return
-
-def run_vocabulary_benchmark(base_url, max_tokens, temp):
-    return
