@@ -18,7 +18,8 @@ sys.path.insert(0, str(CURRENT_DIR))
 sys.path.insert(0, str(EXPERIMENTS_DIR))
 sys.path.insert(0, str(VALIDATORS_DIR))
 
-from run_benchmarks import run_identify_essay_benchmark, run_identify_citations_benchmark
+from run_benchmarks import run_identify_essay_benchmark
+from run_benchmarks import run_identify_citations_benchmark, run_check_citations_no_references_benchmark, run_check_references_no_citations_benchmark
 
 import requests
 
@@ -135,7 +136,28 @@ def main() -> None:
             if citations_data["has_citations"] == "yes" and has_references == "yes":
                 print("Citations and references included - but do they match?")
                 # check citation no reference
+                
                 # AND check reference no citation
+
+            # ----- STEP 3: RUN THESIS BENCHMARKS -----
+
+
+            # ----- STEP 4: RUN INTRODUCTIONS BENCHMARKS -----
+
+
+            # ----- STEP 5: RUN CONCLUSION BENCHMARKS -----
+
+
+            # ----- STEP 6: RUN COHERENCE BENCHMARKS -----
+
+
+            # ----- STEP 7: RUN PARAGRAPHS BENCHMARKS -----
+
+
+            # ----- STEP 8: EUN VOCABULARY BENCHMARKS -----
+
+
+            # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
 
 
 

@@ -3,7 +3,7 @@ import json
 from append_to_csv import append_to_csv
 
 from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
-from run_citations_retries import run_identify_citations_with_retries
+from run_citations_retries import run_identify_citations_with_retries, run_check_citations_no_references_with_retries, run_check_references_no_citations_with_retries
 
 def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
 
@@ -95,6 +95,26 @@ def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp
     citations_data = result["citations_data"]
 
     return citations_data
+
+def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+    result = run_check_citations_no_references_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+    result = run_check_references_no_citations_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
 
 def run_coherence_benchmark(base_url, max_tokens, temp):
     return

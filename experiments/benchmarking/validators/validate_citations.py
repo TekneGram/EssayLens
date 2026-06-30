@@ -63,3 +63,13 @@ def validate_identify_sentences_with_citations_shape(obj):
           "has_citations": has_citations,
           "sentences": {"items": validated_items},
       }
+
+def validate_check_references_no_citation_results(
+        obj
+):
+    return
+
+def validate_check_citation_no_ref_results(
+        obj
+):
+    return
