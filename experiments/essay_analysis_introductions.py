@@ -156,7 +156,7 @@ def provide_introduction_feedback(
                     "properties": {
                         "feedback": { "type": "string" }
                     },
-                    "required": [ "string" ],
+                    "required": [ "feedback" ],
                     "additionalProperties": False
                 }
             }

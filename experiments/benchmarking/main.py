@@ -21,6 +21,7 @@ sys.path.insert(0, str(VALIDATORS_DIR))
 from run_benchmarks import run_identify_essay_benchmark
 from run_benchmarks import run_identify_citations_benchmark, run_check_citations_no_references_benchmark, run_check_references_no_citations_benchmark
 from run_benchmarks import run_determine_thesis_statement_benchmark, run_thesis_statement_characteristics_benchmark, run_thesis_statement_advice_benchmark, run_thesis_statement_comment_benchmark, run_thesis_statement_heap_praise_benchmark
+from run_benchmarks import run_analyze_gen_spec_benchmark, run_provide_introduction_feedback_benchmark
 
 import requests
 
@@ -226,14 +227,28 @@ def main() -> None:
                                 print("It seems ts_praise failed.")
                             else:
                                 print(ts_praise)
-
-
-
-
+                else:
+                    # This is the case when there is no clear thesis statement
+                    ts_advice = run_thesis_statement_advice_benchmark(essay, essay_id, "Actually, it was determined that there is no clear thesis statement in this essay", 4, base_url, args.max_tokens, args.temp, args.csv_append_file)
+                    if ts_advice is None:
+                        print("It seems getting advice on the thesis statement, when there is no thesi statement, failed.")
+                    else:
+                        print(ts_advice)
 
 
             # ----- STEP 4: RUN INTRODUCTIONS BENCHMARKS -----
+            gen_spec = run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            if gen_spec is None:
+                print("It seems running the analysis on general to specific formation of the introduction failed.")
+            else:
+                print(gen_spec)
+                introduction_feedback = run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, json.dumps(gen_spec), base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if introduction_feedback is None:
+                    print("It seems getting the feedback on the introduction failed.")
+                else:
+                    print(introduction_feedback)
 
+            
 
             # ----- STEP 5: RUN CONCLUSION BENCHMARKS -----
 

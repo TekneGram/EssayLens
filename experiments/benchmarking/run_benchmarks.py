@@ -300,6 +300,18 @@ def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    for data in result["introduction_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"introduction_gen_spec_{csv_file_append}.csv",
+            ['ESSAY_ID', 'CLEAR_TOPIC', 'SUFFICIENT_CONTEXT', 'RELEVANCE_HIGHLIGHTED', 'SPECIFIC_FOCUS_IDENTIFIED', 'TOPIC', 'ESSAY_CONTEXT', 'RELEVANCE', 'FOCUS'],
+            [essay_id, data["clear_topic"], data["sufficient_content"], data["relevance_highlighted"], data["specific_focus_identified"], data["topic"], data["essay_context"], data["relevance"], data["focus"]]
+        )
+    return result["introduction_data"]
+
 def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, gen_spec_content, base_url, max_tokens, temp, csv_file_append):
     result = run_provide_introduction_feedback_with_retries(
         essay=essay,
@@ -311,6 +323,19 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["introduction_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"introduction_feedback_{csv_file_append}.csv",
+            ['ESSAY_ID', 'INTRODUCTION_FEEDBACK'],
+            [essay_id, data["feedback"]]
+        )
+    
+    return result["feedback"]
 
 
 
