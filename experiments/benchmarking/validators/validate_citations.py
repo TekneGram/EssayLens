@@ -67,9 +67,163 @@ def validate_identify_sentences_with_citations_shape(obj):
 def validate_check_references_no_citation_results(
         obj
 ):
-    return
+    if not isinstance(obj, dict):
+        raise ValueError("Top-level response is not an object.")
+    
+    required_keys = {"reference_has_no_citation"}
+    actual_keys = set(obj.keys())
+    missing = required_keys - actual_keys
+    extra = actual_keys - required_keys
+
+    if missing:
+        raise ValueError(f"Missing keys: {sorted(missing)}")
+    if extra:
+        raise ValueError(f"Unexpected keys: {sorted(extra)}")
+    
+    reference_has_no_citation = obj["reference_has_no_citation"]
+    if not isinstance(reference_has_no_citation, dict):
+        raise ValueError("reference_has_no_citation must be an object")
+
+    if set(reference_has_no_citation.keys()) != {"items"}:
+        raise ValueError(
+            "reference_has_no_citation must contain onlt the 'items' key."
+        )
+    
+    items = reference_has_no_citation["items"]
+    if not isinstance(items, list):
+        raise ValueError("reference_has_no_citation.items must be an array")
+    
+    expected_message = ("This reference has no in-text citation; either remove the reference or add the relevant in-text citation.")
+
+    validated_items = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"reference_has_no_citation.items[{index}] must be an object."
+            )
+        if set(item.keys()) != {"reference", "missing_citation"}:
+              raise ValueError(
+                  f"reference_has_no_citation.items[{index}] must contain only "
+                  f"'reference' and 'missing_citation'."
+              )
+
+        reference = item["reference"]
+        missing_citation = item["missing_citation"]
+
+        if not isinstance(reference, str):
+            raise ValueError(
+                f"reference_has_no_citation.items[{index}].reference must be a string."
+            )
+
+        reference = reference.strip()
+        if not reference:
+            raise ValueError(
+                f"reference_has_no_citation.items[{index}].reference must not be empty."
+            )
+
+        if not isinstance(missing_citation, str):
+            raise ValueError(
+                f"reference_has_no_citation.items[{index}].missing_citation must be a string."
+            )
+
+        if missing_citation != expected_message:
+            raise ValueError(
+                f"reference_has_no_citation.items[{index}].missing_citation must match the expected enum value."
+            )
+
+        validated_items.append(
+            {
+                "reference": reference,
+                "missing_citation": missing_citation,
+            }
+        )
+
+    return {
+        "reference_has_no_citation": {
+            "items": validated_items,
+        }
+    }
 
 def validate_check_citation_no_ref_results(
         obj
 ):
-    return
+    if not isinstance(obj, dict):
+          raise ValueError("Top-level response is not an object.")
+
+    required_keys = {"citation_has_no_reference"}
+    actual_keys = set(obj.keys())
+
+    missing = required_keys - actual_keys
+    extra = actual_keys - required_keys
+
+    if missing:
+        raise ValueError(f"Missing keys: {sorted(missing)}")
+    if extra:
+        raise ValueError(f"Unexpected keys: {sorted(extra)}")
+
+    citation_has_no_reference = obj["citation_has_no_reference"]
+    if not isinstance(citation_has_no_reference, dict):
+        raise ValueError("citation_has_no_reference must be an object.")
+
+    if set(citation_has_no_reference.keys()) != {"items"}:
+        raise ValueError(
+            "citation_has_no_reference must contain only the 'items' key."
+        )
+
+    items = citation_has_no_reference["items"]
+    if not isinstance(items, list):
+        raise ValueError("citation_has_no_reference.items must be an array.")
+
+    expected_message = "Reference missing for this citation"
+
+    validated_items = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"citation_has_no_reference.items[{index}] must be an object."
+            )
+
+        if set(item.keys()) != {"sentence_with_citation",
+        "missing_reference"}:
+            raise ValueError(
+                f"citation_has_no_reference.items[{index}] must contain only 'sentence_with_citation' and 'missing_reference'."
+            )
+
+        sentence_with_citation = item["sentence_with_citation"]
+        missing_reference = item["missing_reference"]
+
+        if not isinstance(sentence_with_citation, str):
+            raise ValueError(
+
+                f"citation_has_no_reference.items[{index}].sentence_with_citation must be a string."
+            )
+
+        sentence_with_citation = sentence_with_citation.strip()
+        if not sentence_with_citation:
+            raise ValueError(
+
+                f"citation_has_no_reference.items[{index}].sentence_with_citation must not be empty."
+            )
+
+        if not isinstance(missing_reference, str):
+            raise ValueError(
+                f"citation_has_no_reference.items[{index}].missing_reference must be a string."
+            )
+
+        if missing_reference != expected_message:
+            raise ValueError(
+                f"citation_has_no_reference.items[{index}].missing_reference must match the expected enum value."
+            )
+
+        validated_items.append(
+            {
+                "sentence_with_citation": sentence_with_citation,
+                "missing_reference": missing_reference,
+            }
+        )
+
+    return {
+        "citation_has_no_reference": {
+            "items": validated_items,
+        }
+    }
