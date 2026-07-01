@@ -73,6 +73,7 @@ def run_provide_conclusion_feedback_with_retries(
         essay,
         essay_id,
         conclusion,
+        evaluation_content,
         base_url,
         max_tokens,
         temp,
@@ -87,6 +88,7 @@ def run_provide_conclusion_feedback_with_retries(
             conc_feedback = provide_conclusion_feedback(
                 essay,
                 conclusion,
+                evaluation_content,
                 "experiments/tasks_conclusions/conclusions_knowledge.md",
                 "experiments/tasks_conclusions/conclusion_feedback.md",
                 base_url,

@@ -335,7 +335,7 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
             [essay_id, data["feedback"]]
         )
     
-    return result["feedback"]
+    return result["introduction_data"]
 
 
 
@@ -351,16 +351,42 @@ def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max
         csv_file_append=csv_file_append
     )
 
-def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, base_url, max_tokens, temp, csv_file_append):
+    if not result["passed"]:
+        return None
+    
+    for data in result["conclusion_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"conclusion_analysis_{csv_file_append}.csv",
+            ['ESSAY_ID', 'RESTATE_MAIN_IDEA', 'SUFFICIENT_SUMMARY', 'STRONG_FINAL_COMMENT', 'MAIN_IDEA', 'SUMMARY', 'FINAL_COMMENT']
+            [essay_id, data["restate_main_idea"], data["sufficient_summary"], data["strong_final_comment"], data["main_idea"], data["summary"], data["final_comment"]]
+        )
+    return result["conclusion_data"]
+
+def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evaluation_content, base_url, max_tokens, temp, csv_file_append):
     result = run_provide_conclusion_feedback_with_retries(
         essay=essay,
         essay_id=essay_id,
         conclusion=conclusion,
+        evaluation_content=evaluation_content,
         base_url=base_url,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["conclusion_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"conclusion_feedback_{csv_file_append}.csv",
+            ['ESSAY_ID', 'CONCLUSION_FEEDBACK'],
+            [essay_id, data["feedback"]]
+        )
+    
+    return result["conclusion_data"]
 
 
 

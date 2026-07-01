@@ -154,7 +154,7 @@ def provide_conclusion_feedback(
                     "properties": {
                         "feedback": { "type": "string" }
                     },
-                    "required": [ "string" ],
+                    "required": [ "feedback" ],
                     "additionalProperties": False
                 }
             }

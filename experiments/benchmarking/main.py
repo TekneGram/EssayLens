@@ -22,6 +22,7 @@ from run_benchmarks import run_identify_essay_benchmark
 from run_benchmarks import run_identify_citations_benchmark, run_check_citations_no_references_benchmark, run_check_references_no_citations_benchmark
 from run_benchmarks import run_determine_thesis_statement_benchmark, run_thesis_statement_characteristics_benchmark, run_thesis_statement_advice_benchmark, run_thesis_statement_comment_benchmark, run_thesis_statement_heap_praise_benchmark
 from run_benchmarks import run_analyze_gen_spec_benchmark, run_provide_introduction_feedback_benchmark
+from run_benchmarks import run_analyze_conclusions_benchmark, run_provide_conclusion_feedback_benchmark
 
 import requests
 
@@ -251,7 +252,16 @@ def main() -> None:
             
 
             # ----- STEP 5: RUN CONCLUSION BENCHMARKS -----
-
+            conclusion_evaluation = run_analyze_conclusions_benchmark(essay, essay,id, conclusion, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            if conclusion_evaluation is None:
+                print("It seems the analysis of the conclusion failed.")
+            else:
+                print(conclusion_evaluation)
+                conclusion_feedback = run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, json.dumps(conclusion_evaluation), base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if conclusion_feedback is None:
+                    print("It seems getting feedback for the conclusion paragraph failed.")
+                else:
+                    print(conclusion_feedback)
 
             # ----- STEP 6: RUN COHERENCE BENCHMARKS -----
 
