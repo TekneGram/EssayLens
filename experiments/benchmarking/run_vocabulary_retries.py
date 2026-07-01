@@ -7,6 +7,7 @@ MAX_ATTEMPTS = 6
 def run_enhance_vocabulary_with_retries(
         essay,
         essay_id,
+        word_list,
         base_url,
         max_tokens,
         temp,
@@ -21,6 +22,7 @@ def run_enhance_vocabulary_with_retries(
             conc_analysis = enhance_vocabulary(
                 essay,
                 "experiments/tasks_vocabulary/vocabulary_enrichment_knowledge.md",
+                word_list,
                 "experiments/tasks_vocabulary/vocabulary_enrichment_tasks.md",
                 base_url,
                 max_tokens,

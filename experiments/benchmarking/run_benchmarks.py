@@ -518,15 +518,30 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
 
 
 # ----- 8. VOCABULARY -----
-def run_enhance_vocabulary_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_tokens, temp, csv_file_append):
     result = run_enhance_vocabulary_with_retries(
         essay=essay,
         essay_id=essay_id,
+        word_list=word_list,
         base_url=base_url,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    recommendations = result["vocabulary_data"]["recommendations"]
+    for item in recommendations:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"vocabulary_enhancements_{csv_file_append}.csv",
+            ['ESSAY_ID', 'SENTENCE', 'WORD_TO_CHANGE', 'UPDATED_SENTENCE', 'COMMENTS'],
+            [essay_id, item["sentence"], item["word_to_change"], item["updated_sentence"], item["comments"]]
+        )
+    
+    return recommendations
 
 
 

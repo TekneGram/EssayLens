@@ -96,7 +96,7 @@ def enhance_vocabulary(
         "response_format": {
             "type": "json_schema",
             "json_schema": {
-                "name": "analyze_pronoun_usage",
+                "name": "enhance_vocabulary",
                 "schema": {
                     "type": "object",
                     "properties": {
@@ -120,7 +120,7 @@ def enhance_vocabulary(
                             },
                         },
                     },
-                    "required": ["sentences"],
+                    "required": ["recommendations"],
                     "additionalProperties": False
                 }
             }
