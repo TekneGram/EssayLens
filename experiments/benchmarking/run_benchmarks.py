@@ -557,6 +557,20 @@ def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    sentences = result["grammar_data"]["sentences"]
+    for item in sentences["items"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"grammar_style_edits_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'REVISION', 'NECESSARY'],
+            [essay_id, para_num, item["sentence"], item["revision"], item["necessary"]]
+        )
+    
+    return sentences
+
 def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
     result = run_repair_grammar_with_retries(
         bp=bp,
@@ -567,4 +581,17 @@ def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    sentences = result["grammar_data"]["sentences"]
+    for item in sentences["items"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"grammar_repairs_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'CORRECTION', 'COMMENTS'],
+            [essay_id, para_num, item["sentence"], item["correction"], item["comments"]]
+        )
+    return sentences
 

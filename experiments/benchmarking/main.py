@@ -27,6 +27,7 @@ from run_benchmarks import run_analyze_topic_sentence_coherence_benchmark, run_a
 from run_benchmarks import run_encourage_development_benchmark, run_anything_unclear_benchmark
 from run_benchmarks import run_enhance_vocabulary_benchmark
 from vocabulary_helpers import run_vocabulary_analysis
+from run_benchmarks import run_edit_for_style_benchmark, run_repair_grammar_benchmark
 
 import requests
 
@@ -325,9 +326,12 @@ def main() -> None:
             if i == 2:
                 word_list = word_list + row['word'] + "."
                 enhancements = run_enhance_vocabulary_benchmark(full_essay, essay_id, word_list, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if enhancements is None:
+                    print("It seems enhancements to vocabulary in the essay failed.")
+                else:
+                    print(enhancements)
                 i = 0
                 word_list = "Look for the following words in the essay: "
-                print(enhancements)
             else:
                 word_list = word_list + row['word'] + ", "
                 i += 1
@@ -342,9 +346,19 @@ def main() -> None:
 
 
             # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
+            for bp, para_num in enumerate(body_paragraphs, start=1):
+                grammar_edits = run_edit_for_style_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if grammar_edits is None:
+                    print(f"It seems like grammar edits for body paragraph {para_num} failed.")
+                else:
+                    print(grammar_edits)
 
-
-
+            for bp, para_num in enumerate(body_paragraphs, start=1):
+                grammar_repair = run_repair_grammar_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if grammar_repair is None:
+                    print(f"It seems like grammar repair for body paragraph {para_num} failed.")
+                else:
+                    print(grammar_repair)
 
     finally:
         proc.terminate()
@@ -356,7 +370,7 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
-# To run a quick experiment
+# To run the benchmarks:
 # With Ternary Bonsai:
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="gemma_e4b"
 
