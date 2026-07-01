@@ -402,6 +402,19 @@ def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    sentences = result["coherence_data"]["sentences"]
+    for item in sentences["items"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"coherence_topic_sentence_unity_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', "BEHAVIOR", "COMMENT"],
+            [essay_id, para_num, item["sentence"], item["behavior"], item["comment"]]
+        )
+    return sentences
+
 def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
     result = run_analyze_pronouns_with_retries(
         bp=bp,
@@ -412,6 +425,20 @@ def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
+    if not result["passed"]:
+        return None
+    
+    sentences = result["coherence_data"]["sentences"]
+    for item in sentences["items"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"coherence_linguistic_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'COHERENCE', 'COMMENT'],
+            [essay_id, para_num, item["sentence"], item["coherence"], item["comment"]]
+        )
+    return sentences
+    
+
 
 def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append):
     result = run_analyze_linguistic_coherence_with_retries(
@@ -423,6 +450,19 @@ def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url,
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    sentences = result["coherence_data"]["sentences"]
+    for item in sentences["items"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"coherence_pronouns_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'PRONOUN_ISSUE', 'RECOMMENDATION'],
+            [essay_id, para_num, item["sentence"], item["pronoun_issue"], item["recommendation"]]
+        )
+    return sentences
 
 
 
