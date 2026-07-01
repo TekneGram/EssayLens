@@ -109,6 +109,30 @@ def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp
 
     return citations_data
 
+def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
+    result = run_check_references_no_citations_with_retries(
+        essay=essay,
+        essay_id=essay_id,
+        base_url=base_url,
+        max_tokens=max_tokens,
+        temp=temp,
+        csv_file_append=csv_file_append
+    )
+
+    if not result["passed"]:
+        return None
+
+    for item in result["check_reference_no_citations_data"]["reference_has_no_citations"]["items"]:
+        reference = item["reference"]
+        missing_citation = item["missing_citation"]
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"reference_has_no_citations_{csv_file_append}.csv",
+            ['ESSAY_ID', 'REFERENCE', 'MISSING_CITATION'],
+            [essay_id, reference, missing_citation]
+        )
+    return result["check_reference_no_citations_data"]
+
 def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
     result = run_check_citations_no_references_with_retries(
         essay=essay,
@@ -119,15 +143,23 @@ def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_t
         csv_file_append=csv_file_append
     )
 
-def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append):
-    result = run_check_references_no_citations_with_retries(
-        essay=essay,
-        essay_id=essay_id,
-        base_url=base_url,
-        max_tokens=max_tokens,
-        temp=temp,
-        csv_file_append=csv_file_append
-    )
+    if not result["passed"]:
+        return None
+    
+    for item in result["check_citations_no_references_data"]["citation_has_no_reference"]["items"]:
+        sentence_with_citation = item["sentence_with_citation"]
+        missing_reference = item["missing_reference"]
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"citations_no_references_{csv_file_append}.csv",
+            ['ESSAY_ID', 'CITATION', 'MISSING_REFERENCE'],
+            [essay_id, sentence_with_citation, missing_reference]
+        )
+        return result["check_citations_no_references_data"]
+    
+
+
+
 
 # ----- 3. THESIS STATEMENTS -----
 def run_determine_thesis_statement_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):

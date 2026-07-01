@@ -131,13 +131,41 @@ def main() -> None:
             )
             # Move on to the next file if everything failed
             if citations_data is None:
-                continue
+                print("It seems the check citations benchmark failed")
 
             if citations_data["has_citations"] == "yes" and has_references == "yes":
                 print("Citations and references included - but do they match?")
                 # check citation no reference
-                
+                ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if ref_check is None:
+                    print("It seems the check references with no citations benchmark failed.")
+                else:
+                    print(json.dumps(ref_check))
                 # AND check reference no citation
+                cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if cit_check is None:
+                    print('it seems the check citations with no references benchmark failed.')
+                else:
+                    print(json.dumps(cit_check))
+
+            if citations_data["has_citation"] == "yes" and has_references == "no":
+                cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if cit_check is None:
+                    print('it seems the check citations with no references benchmark failed.')
+                else:
+                    print(json.dumps(cit_check))
+            
+            if citations_data["has_citation"] == "no" and has_references == "yes":
+                ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                if ref_check is None:
+                    print("It seems the check references with no citations benchmark failed.")
+                else:
+                    print(json.dumps(ref_check))
+
+            if citations_data["has_citations"] == "no" and has_references == "no":
+                # Add a function here to handle this case. The function should examine the text
+                # and recommend to the writer a claim or idea that can benefit from being supported by a citation or reference
+                print("Create a function to encourage the writer to add cited and referenced support to a claim.")
 
             # ----- STEP 3: RUN THESIS BENCHMARKS -----
 

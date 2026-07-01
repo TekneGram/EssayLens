@@ -177,7 +177,7 @@ def run_check_citations_no_references_with_retries(
             return {
                 "passed": True,
                 "attempts_used": attempt,
-                "check_reference_no_citations_data": validated,
+                "check_citations_no_references_data": validated,
                 "failure_reason": None
             }
         
@@ -198,6 +198,6 @@ def run_check_citations_no_references_with_retries(
     return {
         "passed": False,
         "attempts_used": attempt,
-        "check_reference_no_citations_data": None,
+        "check_citations_no_references_data": None,
         "failure_reason": last_error
     }
