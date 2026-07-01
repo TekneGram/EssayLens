@@ -20,6 +20,7 @@ sys.path.insert(0, str(VALIDATORS_DIR))
 
 from run_benchmarks import run_identify_essay_benchmark
 from run_benchmarks import run_identify_citations_benchmark, run_check_citations_no_references_benchmark, run_check_references_no_citations_benchmark
+from run_benchmarks import run_determine_thesis_statement_benchmark, run_thesis_statement_characteristics_benchmark, run_thesis_statement_advice_benchmark, run_thesis_statement_comment_benchmark, run_thesis_statement_heap_praise_benchmark
 
 import requests
 
@@ -114,8 +115,8 @@ def main() -> None:
             
             # ----- STEP 1: IDENTIFY THE PARAGRAPHS -----
             # First, get the essay as individual paragraphs
-            full_essay, full_essay_with_references, body_paragraphs, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-            # If there is any failure, continue with the next essay
+            full_essay, introduction, conclusion, full_essay_with_references, body_paragraphs, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            # If there is any failure, continue with the next essay since a lack of essay is impossible to work with!
             if full_essay is None:
                 continue
             
@@ -132,42 +133,103 @@ def main() -> None:
             # Move on to the next file if everything failed
             if citations_data is None:
                 print("It seems the check citations benchmark failed")
+            else:
+                if citations_data["has_citations"] == "yes" and has_references == "yes":
+                    print("Citations and references included - but do they match?")
+                    # check citation no reference
+                    ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if ref_check is None:
+                        print("It seems the check references with no citations benchmark failed.")
+                    else:
+                        print(json.dumps(ref_check))
+                    # AND check reference no citation
+                    cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if cit_check is None:
+                        print('it seems the check citations with no references benchmark failed.')
+                    else:
+                        print(json.dumps(cit_check))
 
-            if citations_data["has_citations"] == "yes" and has_references == "yes":
-                print("Citations and references included - but do they match?")
-                # check citation no reference
-                ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-                if ref_check is None:
-                    print("It seems the check references with no citations benchmark failed.")
-                else:
-                    print(json.dumps(ref_check))
-                # AND check reference no citation
-                cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-                if cit_check is None:
-                    print('it seems the check citations with no references benchmark failed.')
-                else:
-                    print(json.dumps(cit_check))
+                if citations_data["has_citation"] == "yes" and has_references == "no":
+                    cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if cit_check is None:
+                        print('it seems the check citations with no references benchmark failed.')
+                    else:
+                        print(json.dumps(cit_check))
+                
+                if citations_data["has_citation"] == "no" and has_references == "yes":
+                    ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if ref_check is None:
+                        print("It seems the check references with no citations benchmark failed.")
+                    else:
+                        print(json.dumps(ref_check))
 
-            if citations_data["has_citation"] == "yes" and has_references == "no":
-                cit_check = run_check_citations_no_references_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-                if cit_check is None:
-                    print('it seems the check citations with no references benchmark failed.')
-                else:
-                    print(json.dumps(cit_check))
-            
-            if citations_data["has_citation"] == "no" and has_references == "yes":
-                ref_check = run_check_references_no_citations_benchmark(full_essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
-                if ref_check is None:
-                    print("It seems the check references with no citations benchmark failed.")
-                else:
-                    print(json.dumps(ref_check))
-
-            if citations_data["has_citations"] == "no" and has_references == "no":
-                # Add a function here to handle this case. The function should examine the text
-                # and recommend to the writer a claim or idea that can benefit from being supported by a citation or reference
-                print("Create a function to encourage the writer to add cited and referenced support to a claim.")
+                if citations_data["has_citations"] == "no" and has_references == "no":
+                    # Add a function here to handle this case. The function should examine the text
+                    # and recommend to the writer a claim or idea that can benefit from being supported by a citation or reference
+                    print("Create a function to encourage the writer to add cited and referenced support to a claim.")
 
             # ----- STEP 3: RUN THESIS BENCHMARKS -----
+            
+            # Extract the thesis statement
+            thesis_statement_extracted_data = run_determine_thesis_statement_benchmark(full_essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            
+            if thesis_statement_extracted_data is None:
+                print("It seems thesis statement extraction failed.")
+            else:
+                thesis_statement = thesis_statement_extracted_data["thesis_statement"]
+                has_thesis_statement = thesis_statement_extracted_data["has_thesis_statement"]
+                
+                if has_thesis_statement == "yes":
+                    ts_characteristics = run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    
+                    if ts_characteristics is None:
+                        print("It seems getting the characteristics failed")
+                    else:
+                        no_characteristics_count = 0
+                        missing_features = []
+                        if ts_characteristics["main_idea"] == "no":
+                            no_characteristics_count = no_characteristics_count + 1
+                            missing_features.append("have a main idea")
+                        if ts_characteristics["clear_goal"] == "no":
+                            no_characteristics_count = no_characteristics_count + 1
+                            missing_features.append("have a clear goal")
+                        if ts_characteristics["preview_topics"] == "no":
+                            no_characteristics_count = no_characteristics_count + 1
+                            missing_features.append("preview topics")
+                        if ts_characteristics["writer_opinion"] == "no":
+                            no_characteristics_count = no_characteristics_count + 1
+                            missing_features.append("have the writer's opinion")
+                        
+                        if no_characteristics_count >= 3:
+                            ts_advice = run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_characteristics_count, base_url, args.max_tokens, args.temp, args.csv_append_file)
+                            if ts_advice is None:
+                                print("It seems getting advice on the thesis statement failed.")
+                            else:
+                                print(ts_advice)
+
+                        if no_characteristics_count == 2:
+                            what_is_missing = "The writer's thesis statement appears to not "
+                            if len(missing_features) == 1:
+                                what_is_missing = what_is_missing + missing_features[0]
+                            else:
+                                what_is_missing = what_is_missing + ", ".join(missing_features[:-1]) + " or " + missing_features[-1]
+
+                            ts_comment = run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                            if ts_comment is None:
+                                print("It seems the ts_comment failed")
+                            else:
+                                print(ts_comment)
+                            
+                        if no_characteristics_count == 1 or no_characteristics_count == 0:
+                            ts_praise = run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                            if ts_praise is None:
+                                print("It seems ts_praise failed.")
+                            else:
+                                print(ts_praise)
+
+
+
+
 
 
             # ----- STEP 4: RUN INTRODUCTIONS BENCHMARKS -----

@@ -78,7 +78,7 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
 
     full_essay = full_essay + "\n\n" + conclusion
     full_essay_with_refs = full_essay + "\n\n" + references
-    return full_essay, full_essay_with_refs, body_paragraphs, has_references
+    return full_essay, introduction, conclusion, full_essay_with_refs, body_paragraphs, has_references
 
 
 # ----- 2. CITATIONS -----
@@ -162,16 +162,31 @@ def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_t
 
 
 # ----- 3. THESIS STATEMENTS -----
-def run_determine_thesis_statement_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
+def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append):
     result = run_determine_thesis_statement_with_retries(
         essay=essay,
         essay_id=essay_id,
-        thesis_statement=thesis_statement,
+        introduction=introduction,
         base_url=base_url,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["thesis_data"]:
+        has_thesis_statement = data["has_thesis_statement"]
+        thesis_statement = data["thesis_statement"]
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"thesis_statement_{csv_file_append}.csv",
+            ['ESSAY_ID', 'HAS_THESIS_STATEMENT', 'THESIS_STATEMENT'],
+            [essay_id, has_thesis_statement, thesis_statement]
+        )
+    
+    return result["thesis_data"]
 
 def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
     result = run_thesis_statement_charateristics_with_retries(
@@ -183,6 +198,19 @@ def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_state
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["thesis_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"thesis_statement_characteristics_{csv_file_append}.csv",
+            ['ESSAY_ID', "MAIN_IDEA", "CLEAR_GOAL", "PREVIEW_TOPICS", "WRITER_OPINION"],
+            [essay_id, data["main_idea"], data["clear_goal"], data["preview_topics"], data["writer_opinion"]]
+        )
+    
+    return result["thesis_data"]
 
 def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_characteristics_count, base_url, max_tokens, temp, csv_file_append):
     result = run_thesis_statement_advice_with_retries(
@@ -196,6 +224,19 @@ def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    for data in result["thesis_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"thesis_statement_advice_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PRAISE_ADVICE', 'EXAMPLE_THESIS', 'EXPLAIN_EXAMPLE'],
+            [essay_id, data["praise_advice"], data["example_thesis"], data["explain_example"]]
+        )
+    
+    return result["thesis_data"]
+
 def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, max_tokens, temp, csv_file_append):
     result = run_thesis_statement_comment_with_retries(
         essay=essay,
@@ -208,6 +249,20 @@ def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, wh
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    for data in result["thesis_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"thesis_statement_comment_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PRAISE', 'COMMENT', 'ADVICE'],
+            [essay_id, data["praise"], data["comment"], data["advice"]]
+        )
+    
+    return result["thesis_data"]
+
+
 def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append):
     result = run_thesis_statement_heap_praise_with_retries(
         essay=essay,
@@ -218,6 +273,19 @@ def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["thesis_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"thesis_statement_heap_praise_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PRAISE', 'COMMENT'],
+            [essay_id, data["praise"], data["comment"]]
+        )
+    
+    return result["thesis_data"]
 
 # ----- 4. INTRODUCTION -----
 
