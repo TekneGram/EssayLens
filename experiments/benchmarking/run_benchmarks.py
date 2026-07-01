@@ -479,6 +479,18 @@ def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url,
         csv_file_append=csv_file_append
     )
 
+    if not result["passed"]:
+        return None
+    
+    for data in result["paragraph_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"paragraphs_encourage_development_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'FEEDBACK'],
+            [essay_id, para_num, data["sentence"], data["feedback"]]
+        )
+    return result["paragraph_data"]
+
 def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append):
     result = run_anything_unclear_with_retries(
         essay=essay,
@@ -490,6 +502,18 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
         temp=temp,
         csv_file_append=csv_file_append
     )
+
+    if not result["passed"]:
+        return None
+    
+    for data in result["paragraph_data"]:
+        append_to_csv(
+            "experiments/benchmarking/llm_responses",
+            f"paragraph_anything_unclear_{csv_file_append}.csv",
+            ['ESSAY_ID', 'PARA_NUM', 'ALL_CLEAR', 'SENTENCE', 'FEEDBACK'],
+            [essay_id, para_num, data["all_clear"], data["sentence"], data["feedback"]]
+        )
+    return result["paragraph_data"]
 
 
 

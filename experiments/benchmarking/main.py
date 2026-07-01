@@ -24,6 +24,7 @@ from run_benchmarks import run_determine_thesis_statement_benchmark, run_thesis_
 from run_benchmarks import run_analyze_gen_spec_benchmark, run_provide_introduction_feedback_benchmark
 from run_benchmarks import run_analyze_conclusions_benchmark, run_provide_conclusion_feedback_benchmark
 from run_benchmarks import run_analyze_topic_sentence_coherence_benchmark, run_analyze_linguistic_coherence_benchmark, run_analyze_pronouns_benchmark
+from run_benchmarks import run_encourage_development_benchmark, run_anything_unclear_benchmark
 
 import requests
 
@@ -266,33 +267,45 @@ def main() -> None:
 
             # ----- STEP 6: RUN COHERENCE BENCHMARKS -----
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                ts_coherence_analysis = run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                ts_coherence_analysis = run_analyze_topic_sentence_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
                 if ts_coherence_analysis is None:
                     print(f"It seems getting the topic sentence coherence from body paragraph {para_num} failed.")
                 else:
                     print(ts_coherence_analysis)
 
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                linguistic_coherence = run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                linguistic_coherence = run_analyze_linguistic_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
                 if linguistic_coherence is None:
                     print(f"It seems getting the linguistic coherence in body paragraph {para_num} failed.")
                 else:
                     print(linguistic_coherence)
 
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                pronouns_analysis = run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                pronouns_analysis = run_analyze_pronouns_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
                 if pronouns_analysis is None:
                     print(f"It seems analysis of pronouns in body paragraph {para_num} failed.")
                 else:
                     print(pronouns_analysis)
 
-            
-
 
             # ----- STEP 7: RUN PARAGRAPHS BENCHMARKS -----
+            for bp, para_num in enumerate(body_paragraphs, start=1):
+                words = bp["body_paragraph"].split(" ")
+                word_count = len(words)
+                if word_count < 100:
+                    paragraph_feedback = run_encourage_development_benchmark(essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if paragraph_feedback is None:
+                        print(f"It seems that to encourage development in body paragraph {para_num}, this llm process failed")
+                    else:
+                        print(paragraph_feedback)
+                else:
+                    clarity_feedback = run_anything_unclear_benchmark(essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if clarity_feedback is None:
+                        print(f"It seems that getting feedback on clarity for body paragraph {para_num} failed.")
+                    else:
+                        print(clarity_feedback)
 
-
-            # ----- STEP 8: EUN VOCABULARY BENCHMARKS -----
+            # ----- STEP 8: RUN VOCABULARY BENCHMARKS -----
 
 
             # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
