@@ -99,7 +99,8 @@ def validate_thesis_statement_advice_shape(
   explain_example = obj["explain_example"]
 
   allowed_praise_advice = {
-    "Your thesis statement is good so far, but it can be improved as follows: Your introduction is coming along nicely, but you need to work on your thesis statement. Try this:",
+    "Your thesis statement is good so far, but it can be improved as follows:",
+    "Your introduction is coming along nicely, but you need to work on your thesis statement. Try this:",
   }
 
   if praise_advice not in allowed_praise_advice:

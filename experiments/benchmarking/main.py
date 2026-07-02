@@ -156,14 +156,14 @@ def main() -> None:
                     else:
                         print(json.dumps(cit_check))
 
-                if citations_data["has_citation"] == "yes" and has_references == "no":
+                if citations_data["has_citations"] == "yes" and has_references == "no":
                     cit_check = run_check_citations_no_references_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
                     if cit_check is None:
                         print('it seems the check citations with no references benchmark failed.')
                     else:
                         print(json.dumps(cit_check))
                 
-                if citations_data["has_citation"] == "no" and has_references == "yes":
+                if citations_data["has_citations"] == "no" and has_references == "yes":
                     ref_check = run_check_references_no_citations_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
                     if ref_check is None:
                         print("It seems the check references with no citations benchmark failed.")
@@ -257,7 +257,7 @@ def main() -> None:
             
 
             # ----- STEP 5: RUN CONCLUSION BENCHMARKS -----
-            conclusion_evaluation = run_analyze_conclusions_benchmark(full_essay, essay,id, conclusion, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            conclusion_evaluation = run_analyze_conclusions_benchmark(full_essay, essay_id, conclusion, base_url, args.max_tokens, args.temp, args.csv_file_append)
             if conclusion_evaluation is None:
                 print("It seems the analysis of the conclusion failed.")
             else:
@@ -292,7 +292,7 @@ def main() -> None:
 
 
             # ----- STEP 7: RUN PARAGRAPHS BENCHMARKS -----
-            for bp, para_num in enumerate(body_paragraphs, start=1):
+            for para_num, bp in enumerate(body_paragraphs, start=1):
                 words = bp["body_paragraph"].split(" ")
                 word_count = len(words)
                 if word_count < 100:
@@ -318,42 +318,42 @@ def main() -> None:
                 and row["signed_log_likelihood"] > 0
             ][:15]
 
-        print("Top 15 high-LL top-1000 lexical words with frequency >= 3")
-        print("----------------------------------------------------------")
-        i = 0
-        word_list = "Look for the following words in the essay: "
-        for row in top_15_high_ll_top_1000_freq_3:
-            if i == 2:
-                word_list = word_list + row['word'] + "."
-                enhancements = run_enhance_vocabulary_benchmark(full_essay, essay_id, word_list, base_url, args.max_tokens, args.temp, args.csv_file_append)
-                if enhancements is None:
-                    print("It seems enhancements to vocabulary in the essay failed.")
+            print("Top 15 high-LL top-1000 lexical words with frequency >= 3")
+            print("----------------------------------------------------------")
+            i = 0
+            word_list = "Look for the following words in the essay: "
+            for row in top_15_high_ll_top_1000_freq_3:
+                if i == 2:
+                    word_list = word_list + row['word'] + "."
+                    enhancements = run_enhance_vocabulary_benchmark(full_essay, essay_id, word_list, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    if enhancements is None:
+                        print("It seems enhancements to vocabulary in the essay failed.")
+                    else:
+                        print(enhancements)
+                    i = 0
+                    word_list = "Look for the following words in the essay: "
                 else:
-                    print(enhancements)
-                i = 0
-                word_list = "Look for the following words in the essay: "
-            else:
-                word_list = word_list + row['word'] + ", "
-                i += 1
-            
-            print(
-                f"{row['word']}\t"
-                f"freq={row['student_frequency']}\t"
-                f"student_pct={row['student_relative_frequency_pct']:.3f}\t"
-                f"ref_pct={row['reference_relative_frequency_pct']:.3f}\t"
-                f"signed_LL={row['signed_log_likelihood']:.2f}"
-            )
+                    word_list = word_list + row['word'] + ", "
+                    i += 1
+                
+                print(
+                    f"{row['word']}\t"
+                    f"freq={row['student_frequency']}\t"
+                    f"student_pct={row['student_relative_frequency_pct']:.3f}\t"
+                    f"ref_pct={row['reference_relative_frequency_pct']:.3f}\t"
+                    f"signed_LL={row['signed_log_likelihood']:.2f}"
+                )
 
 
             # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
-            for bp, para_num in enumerate(body_paragraphs, start=1):
+            for para_num, bp in enumerate(body_paragraphs, start=1):
                 grammar_edits = run_edit_for_style_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
                 if grammar_edits is None:
                     print(f"It seems like grammar edits for body paragraph {para_num} failed.")
                 else:
                     print(grammar_edits)
 
-            for bp, para_num in enumerate(body_paragraphs, start=1):
+            for para_num, bp in enumerate(body_paragraphs, start=1):
                 grammar_repair = run_repair_grammar_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
                 if grammar_repair is None:
                     print(f"It seems like grammar repair for body paragraph {para_num} failed.")

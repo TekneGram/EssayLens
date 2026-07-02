@@ -19,10 +19,11 @@ def run_analyze_topic_sentence_coherence_with_retries(
 
     for attempt in range(1, max_attempts + 1):
         try:
+            
             ts_coh = analyze_topic_sentence_coherence(
                 bp,
                 "experiments/tasks_body_paras/topic_sentence_coherence_knowledge.md",
-                "experiments/tasks_body_paras/bosy_coherence_with_topic.md",
+                "experiments/tasks_body_paras/body_coherence_with_topic.md",
                 base_url,
                 max_tokens,
                 temp
@@ -147,7 +148,7 @@ def run_analyze_linguistic_coherence_with_retries(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            ling_coh = analyze_pronouns(
+            ling_coh = analyze_linguistic_coherence(
                 bp,
                 "experiments/tasks_body_paras/linguistic_coherence_knowledge.md",
                 "experiments/tasks_body_paras/identify_linguistic_coherence_improvements.md",

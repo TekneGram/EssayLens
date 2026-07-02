@@ -83,7 +83,7 @@ def run_repair_grammar_with_retries(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            edits = edit_for_style(
+            edits = repair_grammar(
                 bp,
                 "experiments/tasks_grammar/grammar_knowledge.md",
                 "experiments/tasks_grammar/improve_language.md",

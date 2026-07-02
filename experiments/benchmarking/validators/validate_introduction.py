@@ -1,4 +1,4 @@
-def validate_anaylze_gen_spec(
+def validate_analyze_gen_spec(
   obj
 ):
   if not isinstance(obj, dict):

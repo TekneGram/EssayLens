@@ -27,7 +27,7 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
     )
 
     if not result["passed"]:
-        return None, None, None, None
+        return None, None, None, None, None, None
 
     essay_paragraphs = result["essay_paragraphs"]
     
@@ -122,7 +122,7 @@ def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_t
     if not result["passed"]:
         return None
 
-    for item in result["check_reference_no_citations_data"]["reference_has_no_citations"]["items"]:
+    for item in result["check_reference_no_citations_data"]["reference_has_no_citation"]["items"]:
         reference = item["reference"]
         missing_citation = item["missing_citation"]
         append_to_csv(
@@ -155,7 +155,8 @@ def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_t
             ['ESSAY_ID', 'CITATION', 'MISSING_REFERENCE'],
             [essay_id, sentence_with_citation, missing_reference]
         )
-        return result["check_citations_no_references_data"]
+    
+    return result["check_citations_no_references_data"]
     
 
 
@@ -176,15 +177,14 @@ def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base
     if not result["passed"]:
         return None
     
-    for data in result["thesis_data"]:
-        has_thesis_statement = data["has_thesis_statement"]
-        thesis_statement = data["thesis_statement"]
-        append_to_csv(
+    has_thesis_statement = result["thesis_data"]["has_thesis_statement"]
+    thesis_statement = result["thesis_data"]["thesis_statement"]
+    append_to_csv(
             "experiments/benchmarking/llm_responses",
             f"thesis_statement_{csv_file_append}.csv",
             ['ESSAY_ID', 'HAS_THESIS_STATEMENT', 'THESIS_STATEMENT'],
             [essay_id, has_thesis_statement, thesis_statement]
-        )
+    )
     
     return result["thesis_data"]
 
@@ -194,7 +194,7 @@ def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_state
         essay_id=essay_id,
         thesis_statement=thesis_statement,
         base_url=base_url,
-        max_token=max_tokens,
+        max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
@@ -202,13 +202,18 @@ def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_state
     if not result["passed"]:
         return None
     
-    for data in result["thesis_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"thesis_statement_characteristics_{csv_file_append}.csv",
-            ['ESSAY_ID', "MAIN_IDEA", "CLEAR_GOAL", "PREVIEW_TOPICS", "WRITER_OPINION"],
-            [essay_id, data["main_idea"], data["clear_goal"], data["preview_topics"], data["writer_opinion"]]
-        )
+    main_idea = result["thesis_data"]["main_idea"]
+    clear_goal = result["thesis_data"]["clear_goal"]
+    preview_topics = result["thesis_data"]["preview_topics"]
+    writer_opinion = result["thesis_data"]["writer_opinion"]
+
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"thesis_statement_characteristics_{csv_file_append}.csv",
+        ['ESSAY_ID', "MAIN_IDEA", "CLEAR_GOAL", "PREVIEW_TOPICS", "WRITER_OPINION"],
+        [essay_id, main_idea, clear_goal, preview_topics, writer_opinion]
+    )
+        
     
     return result["thesis_data"]
 
@@ -219,7 +224,7 @@ def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_
         thesis_statement=thesis_statement,
         no_characteristics_count=no_characteristics_count,
         base_url=base_url,
-        max_token=max_tokens,
+        max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append
     )
@@ -227,14 +232,17 @@ def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_
     if not result["passed"]:
         return None
     
-    for data in result["thesis_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"thesis_statement_advice_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PRAISE_ADVICE', 'EXAMPLE_THESIS', 'EXPLAIN_EXAMPLE'],
-            [essay_id, data["praise_advice"], data["example_thesis"], data["explain_example"]]
-        )
-    
+    praise_advice = result["thesis_data"]["praise_advice"]
+    example_thesis = result["thesis_data"]["example_thesis"]
+    explain_example = result["thesis_data"]["explain_example"]
+
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"thesis_statement_advice_{csv_file_append}.csv",
+        ['ESSAY_ID', 'PRAISE_ADVICE', 'EXAMPLE_THESIS', 'EXPLAIN_EXAMPLE'],
+        [essay_id, praise_advice, example_thesis, explain_example]
+    )
+
     return result["thesis_data"]
 
 def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, max_tokens, temp, csv_file_append):
@@ -303,13 +311,14 @@ def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_
     if not result["passed"]:
         return None
     
-    for data in result["introduction_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"introduction_gen_spec_{csv_file_append}.csv",
-            ['ESSAY_ID', 'CLEAR_TOPIC', 'SUFFICIENT_CONTEXT', 'RELEVANCE_HIGHLIGHTED', 'SPECIFIC_FOCUS_IDENTIFIED', 'TOPIC', 'ESSAY_CONTEXT', 'RELEVANCE', 'FOCUS'],
-            [essay_id, data["clear_topic"], data["sufficient_content"], data["relevance_highlighted"], data["specific_focus_identified"], data["topic"], data["essay_context"], data["relevance"], data["focus"]]
-        )
+    intro_data = result["introduction_data"]
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"introduction_gen_spec_{csv_file_append}.csv",
+        ['ESSAY_ID', 'CLEAR_TOPIC', 'SUFFICIENT_CONTEXT', 'RELEVANCE_HIGHLIGHTED', 'SPECIFIC_FOCUS_IDENTIFIED', 'TOPIC', 'ESSAY_CONTEXT', 'RELEVANCE', 'FOCUS'],
+        [essay_id, intro_data["clear_topic"], intro_data["sufficient_context"], intro_data["relevance_highlighted"], intro_data["specific_focus_identified"], intro_data["topic"], intro_data["essay_context"], intro_data["relevance"], intro_data["focus"]]
+    )
+        
     return result["introduction_data"]
 
 def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, gen_spec_content, base_url, max_tokens, temp, csv_file_append):
@@ -358,7 +367,7 @@ def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max
         append_to_csv(
             "experiments/benchmarking/llm_responses",
             f"conclusion_analysis_{csv_file_append}.csv",
-            ['ESSAY_ID', 'RESTATE_MAIN_IDEA', 'SUFFICIENT_SUMMARY', 'STRONG_FINAL_COMMENT', 'MAIN_IDEA', 'SUMMARY', 'FINAL_COMMENT']
+            ['ESSAY_ID', 'RESTATE_MAIN_IDEA', 'SUFFICIENT_SUMMARY', 'STRONG_FINAL_COMMENT', 'MAIN_IDEA', 'SUMMARY', 'FINAL_COMMENT'],
             [essay_id, data["restate_main_idea"], data["sufficient_summary"], data["strong_final_comment"], data["main_idea"], data["summary"], data["final_comment"]]
         )
     return result["conclusion_data"]
@@ -378,13 +387,14 @@ def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evalu
     if not result["passed"]:
         return None
     
-    for data in result["conclusion_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"conclusion_feedback_{csv_file_append}.csv",
-            ['ESSAY_ID', 'CONCLUSION_FEEDBACK'],
-            [essay_id, data["feedback"]]
-        )
+    conclusion_data = result["conclusion_data"]
+
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"conclusion_feedback_{csv_file_append}.csv",
+        ['ESSAY_ID', 'CONCLUSION_FEEDBACK'],
+        [essay_id, conclusion_data["feedback"]]
+    )   
     
     return result["conclusion_data"]
 
@@ -433,8 +443,8 @@ def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens,
         append_to_csv(
             "experiments/benchmarking/llm_responses",
             f"coherence_linguistic_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'COHERENCE', 'COMMENT'],
-            [essay_id, para_num, item["sentence"], item["coherence"], item["comment"]]
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'PRONOUN_ISSUE', 'RECOMMENDATION'],
+            [essay_id, para_num, item["sentence"], item["pronoun_issue"], item["recommendation"]]
         )
     return sentences
     
@@ -459,8 +469,8 @@ def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url,
         append_to_csv(
             "experiments/benchmarking/llm_responses",
             f"coherence_pronouns_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'PRONOUN_ISSUE', 'RECOMMENDATION'],
-            [essay_id, para_num, item["sentence"], item["pronoun_issue"], item["recommendation"]]
+            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'COHERENCE', 'COMMENT'],
+            [essay_id, para_num, item["sentence"], item["coherence"], item["comment"]]
         )
     return sentences
 
@@ -482,13 +492,14 @@ def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url,
     if not result["passed"]:
         return None
     
-    for data in result["paragraph_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"paragraphs_encourage_development_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'FEEDBACK'],
-            [essay_id, para_num, data["sentence"], data["feedback"]]
-        )
+    paragraph_data = result["paragraph_data"]
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"paragraphs_encourage_development_{csv_file_append}.csv",
+        ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'FEEDBACK'],
+        [essay_id, para_num, paragraph_data["sentence"], paragraph_data["feedback"]]
+    )
+        
     return result["paragraph_data"]
 
 def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append):
@@ -533,7 +544,7 @@ def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_t
         return None
     
     recommendations = result["vocabulary_data"]["recommendations"]
-    for item in recommendations:
+    for item in recommendations["items"]:
         append_to_csv(
             "experiments/benchmarking/llm_responses",
             f"vocabulary_enhancements_{csv_file_append}.csv",

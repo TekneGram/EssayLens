@@ -14,7 +14,7 @@ def append_attempt_log(
     append_to_csv(
         "experiments/benchmarking/llm_responses/attempt_logs",
         f"attempt_logs_{csv_file_append}.csv",
-        ["ESSAY_ID", "PARAGRAPh_NUM", "SENTENCE_NUM", "ATTEMPTS_USED", "PASSED_VALIDATION", "FAILURE_REASON", "BENCHMARK_TYPE"],
+        ["ESSAY_ID", "PARAGRAPH_NUM", "SENTENCE_NUM", "ATTEMPTS_USED", "PASSED_VALIDATION", "FAILURE_REASON", "BENCHMARK_TYPE"],
         [
             essay_id,
             paragraph_num,

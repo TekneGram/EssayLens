@@ -98,7 +98,7 @@ def run_provide_introduction_feedback_with_retries(
 
             feedback_data = feedback["choices"][0]["message"]["content"]
             feedback_data = json.loads(feedback_data)
-            validated = validate_analyze_gen_spec(feedback_data)
+            validated = validate_introduction_feedback(feedback_data)
 
             append_attempt_log(
                 essay_id=essay_id,

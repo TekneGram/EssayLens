@@ -23,7 +23,7 @@ def run_enhance_vocabulary_with_retries(
                 essay,
                 "experiments/tasks_vocabulary/vocabulary_enrichment_knowledge.md",
                 word_list,
-                "experiments/tasks_vocabulary/vocabulary_enrichment_tasks.md",
+                "experiments/tasks_vocabulary/vocabulary_enrichment_task.md",
                 base_url,
                 max_tokens,
                 temp

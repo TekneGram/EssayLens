@@ -98,7 +98,7 @@ def run_provide_conclusion_feedback_with_retries(
 
             conc_feedback_data = conc_feedback["choices"][0]["message"]["content"]
             conc_feedback_data = json.loads(conc_feedback_data)
-            validated = validate_anaylze_conclusions(conc_feedback_data)
+            validated = validate_provide_conclusion_feedback(conc_feedback_data)
 
             append_attempt_log(
                 essay_id=essay_id,

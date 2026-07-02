@@ -35,6 +35,8 @@ def run_determine_thesis_statement_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -52,6 +54,8 @@ def run_determine_thesis_statement_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -96,6 +100,8 @@ def run_thesis_statement_charateristics_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -113,6 +119,8 @@ def run_thesis_statement_charateristics_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -159,6 +167,8 @@ def run_thesis_statement_advice_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -176,6 +186,8 @@ def run_thesis_statement_advice_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -205,7 +217,7 @@ def run_thesis_statement_comment_with_retries(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            ts_advice = thesis_statement_advice(
+            ts_advice = thesis_statement_comment(
                 essay,
                 "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md",
                 thesis_statement,
@@ -222,6 +234,8 @@ def run_thesis_statement_comment_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -239,6 +253,8 @@ def run_thesis_statement_comment_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,
@@ -267,7 +283,7 @@ def run_thesis_statement_heap_praise_with_retries(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            ts_advice = thesis_statement_advice(
+            ts_advice = thesis_statement_heap_praise(
                 essay,
                 "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md",
                 thesis_statement,
@@ -283,6 +299,8 @@ def run_thesis_statement_heap_praise_with_retries(
 
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
@@ -300,6 +318,8 @@ def run_thesis_statement_heap_praise_with_retries(
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=False,

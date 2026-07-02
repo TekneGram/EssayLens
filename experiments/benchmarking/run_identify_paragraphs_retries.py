@@ -15,6 +15,7 @@ def run_identify_paragraphs_with_retries(
         max_attempts = MAX_IDENTIFY_PARAGRAPHS_ATTEMPTS
 ):
     last_error = None
+    BENCHMARK_TYPE="identify_paragraphs"
 
     for attempt in range(1, max_attempts + 1):
         try:
@@ -37,7 +38,8 @@ def run_identify_paragraphs_with_retries(
                 csv_file_append=csv_file_append,
                 attempt_count=attempt,
                 passed=True,
-                failure_reason=""
+                failure_reason="",
+                benchmark_type=BENCHMARK_TYPE
             )
             return {
                 "passed": True,
@@ -55,6 +57,7 @@ def run_identify_paragraphs_with_retries(
                 attempt_count = attempt,
                 passed=False,
                 failure_reason=last_error,
+                benchmark_type=BENCHMARK_TYPE
             )
 
     
