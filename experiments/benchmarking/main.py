@@ -208,7 +208,7 @@ def main() -> None:
                             missing_features.append("have the writer's opinion")
                         
                         if no_characteristics_count >= 3:
-                            ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, thesis_statement, no_characteristics_count, base_url, args.max_tokens, args.temp, args.csv_append_file)
+                            ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, thesis_statement, no_characteristics_count, base_url, args.max_tokens, args.temp, args.csv_file_append)
                             if ts_advice is None:
                                 print("It seems getting advice on the thesis statement failed.")
                             else:
@@ -235,7 +235,7 @@ def main() -> None:
                                 print(ts_praise)
                 else:
                     # This is the case when there is no clear thesis statement
-                    ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, "Actually, it was determined that there is no clear thesis statement in this essay", 4, base_url, args.max_tokens, args.temp, args.csv_append_file)
+                    ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, "Actually, it was determined that there is no clear thesis statement in this essay", 4, base_url, args.max_tokens, args.temp, args.csv_file_append)
                     if ts_advice is None:
                         print("It seems getting advice on the thesis statement, when there is no thesi statement, failed.")
                     else:
@@ -325,7 +325,15 @@ def main() -> None:
             for row in top_15_high_ll_top_1000_freq_3:
                 if i == 2:
                     word_list = word_list + row['word'] + "."
-                    enhancements = run_enhance_vocabulary_benchmark(full_essay, essay_id, word_list, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    enhancements = run_enhance_vocabulary_benchmark(
+                        full_essay, 
+                        essay_id, 
+                        word_list, 
+                        base_url, 
+                        args.max_tokens, 
+                        args.temp, 
+                        args.csv_file_append
+                    )
                     if enhancements is None:
                         print("It seems enhancements to vocabulary in the essay failed.")
                     else:
@@ -343,6 +351,21 @@ def main() -> None:
                     f"ref_pct={row['reference_relative_frequency_pct']:.3f}\t"
                     f"signed_LL={row['signed_log_likelihood']:.2f}"
                 )
+            if i > 0:
+                word_list = word_list.rstrip(", ") + "."
+                enhancements = run_enhance_vocabulary_benchmark(
+                    full_essay,
+                    essay_id,
+                    word_list,
+                    base_url,
+                    args.max_tokens,
+                    args.temp,
+                    args.csv_file_append
+                )
+                if enhancements is None:
+                    print("It seems enhancements to vocabulary in the essay failed.")
+                else:
+                    print(enhancements)
 
 
             # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
@@ -372,9 +395,9 @@ if __name__ == "__main__":
 
 # To run the benchmarks:
 # With Ternary Bonsai:
-# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="gemma_e4b"
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="bonsai_8b"
 
 # With Gemma 4
-# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="bonsai-8b"
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_e4b"
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
 # python experiments/benchmarking/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3

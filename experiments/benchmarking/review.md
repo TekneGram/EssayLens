@@ -140,3 +140,65 @@
   - run_grammar_retries.py | run_repair_grammar_with_retries | 86: calls
     edit_for_style(...) instead of repair_grammar(...); the wrong grammar task
     runs. *OK*
+
+# SECOND PASS
+
+- run_benchmarks.py | run_thesis_statement_comment_benchmark | 263: iterates
+    result["thesis_data"] as if it were a list, but thesis_data is a dict; data
+    becomes a string key and data["..."] will fail. *OK*
+
+  - run_benchmarks.py | run_thesis_statement_heap_praise_benchmark | 288: same
+    dict-vs-list iteration bug as above on result["thesis_data"]. *OK*
+
+  - run_benchmarks.py | run_provide_introduction_feedback_benchmark | 339:
+    iterates result["introduction_data"] as if it were a list, but the retry
+    wrapper returns a dict. *OK*
+
+  - run_benchmarks.py | run_analyze_conclusions_benchmark | 366: iterates
+    result["conclusion_data"] as if it were a list, but the retry wrapper
+    returns a dict. *OK*
+
+  - run_benchmarks.py | run_anything_unclear_benchmark | 520: iterates
+    result["paragraph_data"] as if it were a list, but the retry wrapper returns
+    a dict. *OK*
+
+  - main.py | main | 211: uses args.csv_append_file, but the argument name is
+    args.csv_file_append; this will raise AttributeError. *OK*
+
+  - main.py | main | 238: same args.csv_append_file typo as above. *OK*
+
+  - run_thesis_retries.py | run_determine_thesis_statement_with_retries | 36:
+    append_attempt_log(...) is still missing paragraph_num and sentence_num;
+    this will raise TypeError. *OK - actually this was fixed, so not sure what the AI is talking about here*
+
+  - run_thesis_retries.py | run_thesis_statement_charateristics_with_retries |
+    97: same missing paragraph_num / sentence_num arguments to
+    append_attempt_log(...). *OK - actually this was fixed already!*
+
+  - run_thesis_retries.py | run_thesis_statement_advice_with_retries | 160: same
+    missing paragraph_num / sentence_num arguments to append_attempt_log(...). *OK AI pointed this out incorrectly*
+
+  - run_thesis_retries.py | run_thesis_statement_comment_with_retries | 223:
+    same missing paragraph_num / sentence_num arguments to
+    append_attempt_log(...). *OK AI pointed this out incorrectly*
+
+  - run_thesis_retries.py | run_thesis_statement_heap_praise_with_retries | 284:
+    same missing paragraph_num / sentence_num arguments to
+    append_attempt_log(...). *OK AI pointed this out incorrectly*
+
+  - run_thesis_retries.py | run_thesis_statement_comment_with_retries | 208:
+    calls thesis_statement_advice(...) instead of thesis_statement_comment(...);
+    the wrong LLM task is executed. *OK Pointed out incorrectly*
+
+  - run_thesis_retries.py | run_thesis_statement_heap_praise_with_retries | 270:
+    calls thesis_statement_advice(...) instead of
+    thesis_statement_heap_praise(...); the wrong function is called and the
+    argument shape does not match. *OK pointed out incorrectly*
+
+  - run_benchmarks.py | run_analyze_pronouns_benchmark | 445: writes pronoun-
+    analysis output to coherence_linguistic_...csv; the CSV target is swapped
+    with linguistic coherence. *OK pointed out incorrectly*
+
+  - run_benchmarks.py | run_analyze_linguistic_coherence_benchmark | 471: writes
+    linguistic-coherence output to coherence_pronouns_...csv; the CSV target is
+    swapped with pronoun analysis. *OK pointed out incorrectly*

@@ -260,14 +260,14 @@ def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, wh
     if not result["passed"]:
         return None
     
-    for data in result["thesis_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"thesis_statement_comment_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PRAISE', 'COMMENT', 'ADVICE'],
-            [essay_id, data["praise"], data["comment"], data["advice"]]
-        )
-    
+    thesis_data = result["thesis_data"]
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"thesis_statement_comment_{csv_file_append}.csv",
+        ['ESSAY_ID', 'PRAISE', 'COMMENT', 'ADVICE'],
+        [essay_id, thesis_data["praise"], thesis_data["comment"], thesis_data["advice"]]
+    )
+
     return result["thesis_data"]
 
 
@@ -285,13 +285,14 @@ def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement
     if not result["passed"]:
         return None
     
-    for data in result["thesis_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"thesis_statement_heap_praise_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PRAISE', 'COMMENT'],
-            [essay_id, data["praise"], data["comment"]]
-        )
+    thesis_data = result["thesis_data"]
+
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"thesis_statement_heap_praise_{csv_file_append}.csv",
+        ['ESSAY_ID', 'PRAISE', 'COMMENT'],
+        [essay_id, thesis_data["praise"], thesis_data["comment"]]
+    )
     
     return result["thesis_data"]
 
@@ -336,13 +337,14 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
     if not result["passed"]:
         return None
     
-    for data in result["introduction_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"introduction_feedback_{csv_file_append}.csv",
-            ['ESSAY_ID', 'INTRODUCTION_FEEDBACK'],
-            [essay_id, data["feedback"]]
-        )
+    introduction_data = result["introduction_data"]
+
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"introduction_feedback_{csv_file_append}.csv",
+        ['ESSAY_ID', 'INTRODUCTION_FEEDBACK'],
+        [essay_id, introduction_data["feedback"]]
+    )
     
     return result["introduction_data"]
 
@@ -363,13 +365,14 @@ def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max
     if not result["passed"]:
         return None
     
-    for data in result["conclusion_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"conclusion_analysis_{csv_file_append}.csv",
-            ['ESSAY_ID', 'RESTATE_MAIN_IDEA', 'SUFFICIENT_SUMMARY', 'STRONG_FINAL_COMMENT', 'MAIN_IDEA', 'SUMMARY', 'FINAL_COMMENT'],
-            [essay_id, data["restate_main_idea"], data["sufficient_summary"], data["strong_final_comment"], data["main_idea"], data["summary"], data["final_comment"]]
-        )
+    conclusion_data = result["conclusion_data"]
+    
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"conclusion_analysis_{csv_file_append}.csv",
+        ['ESSAY_ID', 'RESTATE_MAIN_IDEA', 'SUFFICIENT_SUMMARY', 'STRONG_FINAL_COMMENT', 'MAIN_IDEA', 'SUMMARY', 'FINAL_COMMENT'],
+        [essay_id, conclusion_data["restate_main_idea"], conclusion_data["sufficient_summary"], conclusion_data["strong_final_comment"], conclusion_data["main_idea"], conclusion_data["summary"], conclusion_data["final_comment"]]
+    )
     return result["conclusion_data"]
 
 def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evaluation_content, base_url, max_tokens, temp, csv_file_append):
@@ -442,7 +445,7 @@ def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens,
     for item in sentences["items"]:
         append_to_csv(
             "experiments/benchmarking/llm_responses",
-            f"coherence_linguistic_{csv_file_append}.csv",
+            f"coherence_pronouns_{csv_file_append}.csv",
             ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'PRONOUN_ISSUE', 'RECOMMENDATION'],
             [essay_id, para_num, item["sentence"], item["pronoun_issue"], item["recommendation"]]
         )
@@ -468,7 +471,7 @@ def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url,
     for item in sentences["items"]:
         append_to_csv(
             "experiments/benchmarking/llm_responses",
-            f"coherence_pronouns_{csv_file_append}.csv",
+            f"coherence_linguistic_{csv_file_append}.csv",
             ['ESSAY_ID', 'PARA_NUM', 'SENTENCE', 'COHERENCE', 'COMMENT'],
             [essay_id, para_num, item["sentence"], item["coherence"], item["comment"]]
         )
@@ -517,13 +520,14 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
     if not result["passed"]:
         return None
     
-    for data in result["paragraph_data"]:
-        append_to_csv(
-            "experiments/benchmarking/llm_responses",
-            f"paragraph_anything_unclear_{csv_file_append}.csv",
-            ['ESSAY_ID', 'PARA_NUM', 'ALL_CLEAR', 'SENTENCE', 'FEEDBACK'],
-            [essay_id, para_num, data["all_clear"], data["sentence"], data["feedback"]]
-        )
+    paragraph_data = result["paragraph_data"]
+    
+    append_to_csv(
+        "experiments/benchmarking/llm_responses",
+        f"paragraph_anything_unclear_{csv_file_append}.csv",
+        ['ESSAY_ID', 'PARA_NUM', 'ALL_CLEAR', 'SENTENCE', 'FEEDBACK'],
+        [essay_id, para_num, paragraph_data["all_clear"], paragraph_data["sentence"], paragraph_data["feedback"]]
+    )
     return result["paragraph_data"]
 
 
