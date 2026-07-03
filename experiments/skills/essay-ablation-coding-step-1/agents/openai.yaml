@@ -1,0 +1,4 @@
+interface:
+  display_name: "Essay Ablation Coding Step 1"
+  short_description: "Code step-1 essay ablation sentence alignment"
+  default_prompt: "Use $essay-ablation-coding-step-1 to align an ablated essay with its original and write step-1 coding rows into the target CSV."

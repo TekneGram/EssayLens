@@ -1,0 +1,4 @@
+interface:
+  display_name: "Essay Ablation Coding Step 2"
+  short_description: "Code step-2 essay ablation judgment columns"
+  default_prompt: "Use $essay-ablation-coding-step-2 to fill the remaining ablation-coding judgment columns in the target CSV."

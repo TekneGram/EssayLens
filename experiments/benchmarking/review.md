@@ -202,3 +202,143 @@
   - run_benchmarks.py | run_analyze_linguistic_coherence_benchmark | 471: writes
     linguistic-coherence output to coherence_pronouns_...csv; the CSV target is
     swapped with pronoun analysis. *OK pointed out incorrectly*
+
+# REVIEW CONTRACT:
+## Daniel
+Look at the function analyze_linguistic_choerence in
+  essay_analysis_coherence.py . Look at the task in tasks_body_paras/
+  identify_linguistic_coherence_improvements.md . In some cases it may be
+  possible that there is no comment, such as when the coherence is selected as
+  "satisfactory". Now look at benchmarking/validators/validate_coherence.py .
+  It seems that we do not allow the comment to be empty, but actually, it may
+  be okay if the comment is sometimes empty.
+
+  How should we update the benchmarking/validators/validate_coherence.py to
+  allow the comment? Explain here, do not edit the code.
+## Codex
+validate_analyze_linguistic_coherence should keep requiring the comment field
+  to exist and be a string, but it should stop requiring that string to be non-
+  empty in every case.
+
+  Why:
+
+  - The analyzer schema in essay_analysis_coherence.py:170 requires comment to
+    be present, but only as a string. It does not require non-empty content.
+
+  - The task spec in tasks_body_paras/
+    identify_linguistic_coherence_improvements.md:3 explicitly says the comment
+    may be empty when coherence is satisfactory.
+
+  - The current validator rejects all empty comments at benchmarking/validators/
+    validate_coherence.py:222.
+
+  So the validator logic should become conditional:
+
+  1. Keep:
+
+  - comment must be present.
+  - comment must be a string.
+  - sentence must still be non-empty.
+  - coherence must still be one of the allowed enum values.
+
+  2. Change:
+
+  - If coherence == "satisfactory", allow comment.strip() to be empty.
+  - Otherwise, require comment.strip() to be non-empty.
+
+  Conceptually, replace the unconditional check:
+
+  - if not normalized_comment: raise ...
+
+  with a conditional rule like:
+
+  - if coherence is not satisfactory and normalized_comment is empty, raise an
+    error
+
+  - otherwise accept it
+
+  You should still normalize with strip() and return the normalized comment,
+  which may legitimately be "" for satisfactory cases.
+
+  One extra point: there is also a wording mismatch between the task file and
+  the allowed enum values, but that is separate from the empty-comment issue.
+
+## Daniel
+In the validators folder, there are many validator functions. I would like to
+  review and make sure all the validators are correct, focusing specifically on
+  cases of "comments" or "recommendations" or anything where the LLM needs to
+  provide a judgement. For each essay_analysis_....py, review the related
+  validator. Ensure that you access the task_... folder's relevant task to
+  understand what the LLM is being asked to do. Then tell me here, without
+  editing any code, where there might be some ambiguity. Name the
+  essay_analysis_... file, the specific function, the validator file and its
+  function and the related task .md file, and very briefly explain the
+  ambiguity.
+
+## Codex: (Are the validators contracts too strict compared to the LLM task?)
+I found a short list of genuine contract ambiguities. Most of the other
+  analysis/validator pairs look aligned.
+
+  - essay_analysis_citations.py → check_references_no_citation
+    Validator: benchmarking/validators/validate_citations.py →
+    validate_check_references_no_citation_results
+    Task: tasks_citations/check_ref_no_citation.md
+    Ambiguity: the task only asks the LLM to extract the unmatched reference,
+    but the schema and validator also require a missing_citation field with one
+    exact canned sentence.
+
+  - essay_analysis_citations.py → check_citation_no_reference
+    Validator: benchmarking/validators/validate_citations.py →
+    validate_check_citation_no_ref_results
+    Task: tasks_citations/check_citation_no_ref.md
+    Ambiguity: same pattern as above. The task only asks to extract the sentence
+    with the unmatched citation, but the schema and validator additionally
+    require missing_reference to equal one exact fixed message.
+
+  - essay_analysis_coherence.py → analyze_linguistic_coherence
+    Validator: benchmarking/validators/validate_coherence.py →
+    validate_analyze_linguistic_coherence
+    Task: tasks_body_paras/identify_linguistic_coherence_improvements.md
+    Ambiguity: the task wording and the allowed enum values do not match
+    exactly. The task says "add a contrast connector" and "use elaboration
+    connector", while the schema/validator allow "add a contrast" and "use
+    elaboration words". *OK*
+
+  - essay_analysis_grammar.py → edit_for_style
+    Validator: benchmarking/validators/validate_grammar.py →
+    validate_edit_for_style
+    Task: tasks_grammar/improve_style.md
+    Ambiguity: the task says “If no improvements in style are necessary, leave
+    it blank,” but the schema/validator require each returned item to include a
+    non-empty revision plus necessary: yes|no. It is unclear whether “leave it
+    blank” means an empty string, no item at all, or something else.
+
+  - essay_analysis_grammar.py → repair_grammar
+    Validator: benchmarking/validators/validate_grammar.py →
+    validate_repair_grammar
+    Task: tasks_grammar/improve_language.md
+    Ambiguity: the task examples imply acceptable sentences may be returned with
+    correction: none and comments: none, but the validator only checks for non-
+    empty strings. It does not define whether unchanged sentences must be
+    omitted, included with "none", or constrained in some other way.
+
+  - essay_analysis_thesis.py → thesis_statement_advice
+    Validator: benchmarking/validators/validate_thesis.py →
+    validate_thesis_statement_advice_shape
+    Task: tasks_thesis/essay_thesis_statement_advice.md
+    Ambiguity: the task asks for an example thesis and a concise explanation,
+    but it does not require a specific lead-in sentence. The schema/validator
+    force praise_advice to be one of two exact strings.
+
+  - essay_analysis_thesis.py → thesis_statement_comment
+    Validator: benchmarking/validators/validate_thesis.py →
+    validate_thesis_statement_comment
+    Task: tasks_thesis/essay_thesis_statement_comment.md
+    Ambiguity: the task asks for praise, a brief strengths comment, and one
+    small piece of advice, but it does not prescribe exact praise wording. The
+    schema/validator require praise to be one of three exact strings.
+
+  One additional note, not an ambiguity: in benchmarking/validators/
+  validate_coherence.py, validate_analyze_topic_sentence_coherence now contains
+  a direct bug because it references coherence even though that function has no
+  coherence field.

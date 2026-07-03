@@ -58,8 +58,6 @@ def validate_analyze_topic_sentence_coherence(
 
         if not normalized_sentence:
             raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
-        if not normalized_comment:
-            raise ValueError(f"sentences.items[{index}].comment must not be empty.")
 
         validated_items.append(
             {
@@ -130,17 +128,6 @@ def validate_analyze_pronouns(
         normalized_sentence = sentence.strip()
         normalized_pronoun_issue = pronoun_issue.strip()
         normalized_recommendation = recommendation.strip()
-
-        if not normalized_sentence:
-            raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
-        if not normalized_pronoun_issue:
-            raise ValueError(
-                f"sentences.items[{index}].pronoun_issue must not be empty."
-            )
-        if not normalized_recommendation:
-            raise ValueError(
-                f"sentences.items[{index}].recommendation must not be empty."
-            )
 
         validated_items.append(
             {
@@ -216,11 +203,6 @@ def validate_analyze_linguistic_coherence(
 
         normalized_sentence = sentence.strip()
         normalized_comment = comment.strip()
-
-        if not normalized_sentence:
-            raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
-        if not normalized_comment:
-            raise ValueError(f"sentences.items[{index}].comment must not be empty.")
 
         validated_items.append(
             {

@@ -48,10 +48,6 @@ def validate_edit_for_style(
     normalized_sentence = sentence.strip()
     normalized_revision = revision.strip()
 
-    if not normalized_sentence:
-      raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
-    if not normalized_revision:
-      raise ValueError(f"sentences.items[{index}].revision must not be empty.")
 
     validated_items.append(
       {
@@ -117,13 +113,6 @@ def validate_repair_grammar(
     normalized_sentence = sentence.strip()
     normalized_correction = correction.strip()
     normalized_comments = comments.strip()
-
-    if not normalized_sentence:
-      raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
-    if not normalized_correction:
-      raise ValueError(f"sentences.items[{index}].correction must not be empty.")
-    if not normalized_comments:
-      raise ValueError(f"sentences.items[{index}].comments must not be empty.")
 
     validated_items.append(
       {

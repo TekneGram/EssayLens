@@ -1,0 +1,4 @@
+interface:
+  display_name: "Essay Ablation Comparison"
+  short_description: "Compare ablated and perfect essays."
+  default_prompt: "Use $essay-ablation-comparison to compare an ablated essay against its perfect version and fill the expected-response CSV rows."
