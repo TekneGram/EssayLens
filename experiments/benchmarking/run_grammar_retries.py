@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_grammar import validate_edit_for_style, validate_repair_grammar
 from essay_analysis_grammar import edit_for_style, repair_grammar
 MAX_ATTEMPTS = 6
@@ -19,8 +20,11 @@ def run_edit_for_style_with_retries(
     BENCHMARK_TYPE="grammar_edit_for_style"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            edits = edit_for_style(
+            edits, elapsed_ms, emissions_kg = call_with_timer_ms(
+                edit_for_style,
                 bp,
                 "experiments/tasks_grammar/style_knowledge.md",
                 "experiments/tasks_grammar/improve_style.md",
@@ -42,7 +46,9 @@ def run_edit_for_style_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -52,6 +58,8 @@ def run_edit_for_style_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -61,7 +69,9 @@ def run_edit_for_style_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
@@ -85,8 +95,11 @@ def run_repair_grammar_with_retries(
     BENCHMARK_TYPE="repair_grammar"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            edits = repair_grammar(
+            edits, elapsed_ms, emissions_kg = call_with_timer_ms(
+                repair_grammar,
                 bp,
                 "experiments/tasks_grammar/grammar_knowledge.md",
                 "experiments/tasks_grammar/improve_language.md",
@@ -108,7 +121,9 @@ def run_repair_grammar_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -118,6 +133,8 @@ def run_repair_grammar_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -127,7 +144,9 @@ def run_repair_grammar_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,

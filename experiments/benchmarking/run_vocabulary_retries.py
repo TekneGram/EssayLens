@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_vocabulary import validate_enhance_vocabulary
 from essay_analysis_vocabulary import enhance_vocabulary
 MAX_ATTEMPTS = 6
@@ -19,8 +20,11 @@ def run_enhance_vocabulary_with_retries(
     BENCHMARK_TYPE="enrich_vocabulary"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            conc_analysis = enhance_vocabulary(
+            conc_analysis, elapsed_ms, emissions_kg = call_with_timer_ms(
+                enhance_vocabulary,
                 essay,
                 "experiments/tasks_vocabulary/vocabulary_enrichment_knowledge.md",
                 word_list,
@@ -43,7 +47,9 @@ def run_enhance_vocabulary_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -53,6 +59,8 @@ def run_enhance_vocabulary_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -62,7 +70,9 @@ def run_enhance_vocabulary_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,

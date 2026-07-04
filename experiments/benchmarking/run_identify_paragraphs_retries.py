@@ -1,6 +1,7 @@
 import json
 from essay_analysis_all_paragraphs import identify_paragraphs
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_identify_paragraphs import validate_identify_paragraphs_shape
 
 MAX_IDENTIFY_PARAGRAPHS_ATTEMPTS = 6
@@ -19,8 +20,11 @@ def run_identify_paragraphs_with_retries(
     BENCHMARK_TYPE="identify_paragraphs"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            identified_paragraphs = identify_paragraphs(
+            identified_paragraphs, elapsed_ms, emissions_kg = call_with_timer_ms(
+                identify_paragraphs,
                 essay,
                 "experiments/tasks_all_paragraphs/essay_knowledge.md",
                 "experiments/tasks_all_paragraphs/identify_paragraphs_references.md",
@@ -41,7 +45,9 @@ def run_identify_paragraphs_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
             return {
                 "passed": True,
@@ -50,6 +56,8 @@ def run_identify_paragraphs_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -59,7 +67,9 @@ def run_identify_paragraphs_with_retries(
                 attempt_count = attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
     

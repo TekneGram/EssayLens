@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_introduction import validate_analyze_gen_spec, validate_introduction_feedback
 from essay_analysis_introductions import analyze_gen_spec, provide_introduction_feedback
 MAX_ATTEMPTS = 6
@@ -19,8 +20,11 @@ def run_analyze_gen_spec_with_retries(
     BENCHMARK_TYPE="analyze_gen_spec"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            gen_spec = analyze_gen_spec(
+            gen_spec, elapsed_ms, emissions_kg = call_with_timer_ms(
+                analyze_gen_spec,
                 essay,
                 introduction,
                 "experiments/tasks_introductions/introductions_knowledge.md",
@@ -43,7 +47,9 @@ def run_analyze_gen_spec_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -53,6 +59,8 @@ def run_analyze_gen_spec_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -62,7 +70,9 @@ def run_analyze_gen_spec_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
@@ -87,8 +97,11 @@ def run_provide_introduction_feedback_with_retries(
     BENCHMARK_TYPE="provide_introduction_feedback"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            feedback = provide_introduction_feedback(
+            feedback, elapsed_ms, emissions_kg = call_with_timer_ms(
+                provide_introduction_feedback,
                 essay,
                 introduction,
                 gen_spec_content,
@@ -112,7 +125,9 @@ def run_provide_introduction_feedback_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -122,6 +137,8 @@ def run_provide_introduction_feedback_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -131,7 +148,9 @@ def run_provide_introduction_feedback_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,

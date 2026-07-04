@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_coherence import validate_analyze_topic_sentence_coherence, validate_analyze_pronouns, validate_analyze_linguistic_coherence
 from essay_analysis_coherence import analyze_topic_sentence_coherence, analyze_pronouns, analyze_linguistic_coherence
 MAX_ATTEMPTS = 6
@@ -19,9 +20,11 @@ def run_analyze_topic_sentence_coherence_with_retries(
     BENCHMARK_TYPE="topic_sentence_coherence_unity"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            
-            ts_coh = analyze_topic_sentence_coherence(
+            ts_coh, elapsed_ms, emissions_kg = call_with_timer_ms(
+                analyze_topic_sentence_coherence,
                 bp,
                 "experiments/tasks_body_paras/topic_sentence_coherence_knowledge.md",
                 "experiments/tasks_body_paras/body_coherence_with_topic.md",
@@ -43,7 +46,9 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -53,6 +58,8 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -62,7 +69,9 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
@@ -86,8 +95,11 @@ def run_analyze_pronouns_with_retries(
     BENCHMARK_TYPE="pronoun_coherence"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            pronouns = analyze_pronouns(
+            pronouns, elapsed_ms, emissions_kg = call_with_timer_ms(
+                analyze_pronouns,
                 bp,
                 "experiments/tasks_body_paras/pronoun_coherence_knowledge.md",
                 "experiments/tasks_body_paras/improve_pronouns.md",
@@ -109,7 +121,9 @@ def run_analyze_pronouns_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -119,6 +133,8 @@ def run_analyze_pronouns_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -128,7 +144,9 @@ def run_analyze_pronouns_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
@@ -152,8 +170,11 @@ def run_analyze_linguistic_coherence_with_retries(
     BENCHMARK_TYPE="linguistic_coherence"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            ling_coh = analyze_linguistic_coherence(
+            ling_coh, elapsed_ms, emissions_kg = call_with_timer_ms(
+                analyze_linguistic_coherence,
                 bp,
                 "experiments/tasks_body_paras/linguistic_coherence_knowledge.md",
                 "experiments/tasks_body_paras/identify_linguistic_coherence_improvements.md",
@@ -175,7 +196,9 @@ def run_analyze_linguistic_coherence_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -185,6 +208,8 @@ def run_analyze_linguistic_coherence_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -194,7 +219,9 @@ def run_analyze_linguistic_coherence_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,

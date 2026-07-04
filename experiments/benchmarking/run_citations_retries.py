@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_citations import validate_identify_sentences_with_citations_shape, validate_check_references_no_citation_results, validate_check_citation_no_ref_results
 from essay_analysis_citations import identify_citations, check_references_no_citation, check_citation_no_reference
 MAX_IDENTIFY_CITATIONS_ATTEMPTS = 6
@@ -18,8 +19,11 @@ def run_identify_citations_with_retries(
     BENCHMARK_TYPE="identify_citations"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            identified_citations = identify_citations(
+            identified_citations, elapsed_ms, emissions_kg = call_with_timer_ms(
+                identify_citations,
                 essay,
                 "experiments/tasks_citations/citations_knowledge.md",
                 "experiments/tasks_citations/identify_citations.md",
@@ -41,7 +45,9 @@ def run_identify_citations_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -52,6 +58,8 @@ def run_identify_citations_with_retries(
             }
 
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -61,7 +69,9 @@ def run_identify_citations_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
     
@@ -88,8 +98,11 @@ def run_check_references_no_citations_with_retries(
     BENCHMARK_TYPE="check_reference_no_citations"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            cit_check = check_references_no_citation(
+            cit_check, elapsed_ms, emissions_kg = call_with_timer_ms(
+                check_references_no_citation,
                 essay,
                 "experiments/tasks_citations/citations_references_knowledge.md",
                 "experiments/tasks_citations/check_ref_no_citation.md",
@@ -110,7 +123,9 @@ def run_check_references_no_citations_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -121,6 +136,8 @@ def run_check_references_no_citations_with_retries(
             }
         
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -130,7 +147,9 @@ def run_check_references_no_citations_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
 
@@ -155,8 +174,11 @@ def run_check_citations_no_references_with_retries(
     BENCHMARK_TYPE="check_citation_no_reference"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            cit_check = check_citation_no_reference(
+            cit_check, elapsed_ms, emissions_kg = call_with_timer_ms(
+                check_citation_no_reference,
                 essay,
                 "experiments/tasks_citations/citations_references_knowledge.md",
                 "experiments/tasks_citations/check_citation_no_ref.md",
@@ -177,7 +199,9 @@ def run_check_citations_no_references_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -188,6 +212,8 @@ def run_check_citations_no_references_with_retries(
             }
         
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -197,7 +223,9 @@ def run_check_citations_no_references_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
 

@@ -1,5 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
+from timing_utils import call_with_timer_ms
 from validators.validate_paragraphs import validate_encourage_development, validate_anything_unclear
 from essay_analysis_paragraphs import encourage_development, anything_unclear
 MAX_ATTEMPTS = 6
@@ -21,8 +22,11 @@ def run_encourage_development_with_retries(
     BENCHMARK_TYPE="paragraph_encourage_development"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            encouragement = encourage_development(
+            encouragement, elapsed_ms, emissions_kg = call_with_timer_ms(
+                encourage_development,
                 essay,
                 bp,
                 "experiments/tasks_paragraphs/paragraphs_knowledge.md",
@@ -45,7 +49,9 @@ def run_encourage_development_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -55,6 +61,8 @@ def run_encourage_development_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -64,7 +72,9 @@ def run_encourage_development_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
@@ -91,8 +101,11 @@ def run_anything_unclear_with_retries(
     BENCHMARK_TYPE="paragraph_anything_unclear"
 
     for attempt in range(1, max_attempts + 1):
+        elapsed_ms = 0
+        emissions_kg = None
         try:
-            unclear_points = anything_unclear(
+            unclear_points, elapsed_ms, emissions_kg = call_with_timer_ms(
+                anything_unclear,
                 essay,
                 bp,
                 "experiments/tasks_paragraphs/paragraphs_knowledge.md",
@@ -115,7 +128,9 @@ def run_anything_unclear_with_retries(
                 attempt_count=attempt,
                 passed=True,
                 failure_reason="",
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
 
             return {
@@ -125,6 +140,8 @@ def run_anything_unclear_with_retries(
                 "failure_reason": None
             }
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
             last_error = str(exc)
             append_attempt_log(
                 essay_id=essay_id,
@@ -134,7 +151,9 @@ def run_anything_unclear_with_retries(
                 attempt_count=attempt,
                 passed=False,
                 failure_reason=last_error,
-                benchmark_type=BENCHMARK_TYPE
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
             )
     return {
         "passed": False,
