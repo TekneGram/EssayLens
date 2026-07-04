@@ -1,6 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
-from timing_utils import call_with_timer_ms
+from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_thesis import validate_determine_thesis_statement_shape, validate_thesis_statement_characteristics_shape, validate_thesis_statement_comment, validate_thesis_statement_advice_shape, validate_thesis_statement_heap_praise
 from essay_analysis_thesis import determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
 MAX_ATTEMPTS = 6
@@ -22,6 +22,7 @@ def run_determine_thesis_statement_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             thesis_statement, elapsed_ms, emissions_kg = call_with_timer_ms(
                 determine_thesis_statement,
@@ -34,6 +35,7 @@ def run_determine_thesis_statement_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(thesis_statement, elapsed_ms)
 
             thesis_statement_data = thesis_statement["choices"][0]["message"]["content"]
             thesis_statement_data = json.loads(thesis_statement_data)
@@ -50,6 +52,12 @@ def run_determine_thesis_statement_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -73,6 +81,12 @@ def run_determine_thesis_statement_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -98,6 +112,7 @@ def run_thesis_statement_charateristics_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ts_characteristics, elapsed_ms, emissions_kg = call_with_timer_ms(
                 thesis_statement_characteristics,
@@ -110,6 +125,7 @@ def run_thesis_statement_charateristics_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(ts_characteristics, elapsed_ms)
 
             ts_characteristics_data = ts_characteristics["choices"][0]["message"]["content"]
             ts_characteristics_data = json.loads(ts_characteristics_data)
@@ -126,6 +142,12 @@ def run_thesis_statement_charateristics_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -149,6 +171,12 @@ def run_thesis_statement_charateristics_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -175,6 +203,7 @@ def run_thesis_statement_advice_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ts_advice, elapsed_ms, emissions_kg = call_with_timer_ms(
                 thesis_statement_advice,
@@ -188,6 +217,7 @@ def run_thesis_statement_advice_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(ts_advice, elapsed_ms)
 
             ts_advice_data = ts_advice["choices"][0]["message"]["content"]
             ts_advice_data = json.loads(ts_advice_data)
@@ -204,6 +234,12 @@ def run_thesis_statement_advice_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -227,6 +263,12 @@ def run_thesis_statement_advice_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -253,6 +295,7 @@ def run_thesis_statement_comment_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ts_advice, elapsed_ms, emissions_kg = call_with_timer_ms(
                 thesis_statement_comment,
@@ -266,6 +309,7 @@ def run_thesis_statement_comment_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(ts_advice, elapsed_ms)
 
             ts_comment = ts_advice["choices"][0]["message"]["content"]
             ts_comment_data = json.loads(ts_comment)
@@ -282,6 +326,12 @@ def run_thesis_statement_comment_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -305,6 +355,12 @@ def run_thesis_statement_comment_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -330,6 +386,7 @@ def run_thesis_statement_heap_praise_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ts_advice, elapsed_ms, emissions_kg = call_with_timer_ms(
                 thesis_statement_heap_praise,
@@ -342,6 +399,7 @@ def run_thesis_statement_heap_praise_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(ts_advice, elapsed_ms)
 
             ts_praise = ts_advice["choices"][0]["message"]["content"]
             ts_praise_data = json.loads(ts_praise)
@@ -358,6 +416,12 @@ def run_thesis_statement_heap_praise_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -381,6 +445,12 @@ def run_thesis_statement_heap_praise_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,

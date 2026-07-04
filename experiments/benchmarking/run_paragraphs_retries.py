@@ -1,6 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
-from timing_utils import call_with_timer_ms
+from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_paragraphs import validate_encourage_development, validate_anything_unclear
 from essay_analysis_paragraphs import encourage_development, anything_unclear
 MAX_ATTEMPTS = 6
@@ -24,6 +24,7 @@ def run_encourage_development_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             encouragement, elapsed_ms, emissions_kg = call_with_timer_ms(
                 encourage_development,
@@ -36,6 +37,7 @@ def run_encourage_development_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(encouragement, elapsed_ms)
 
             encouragement_data = encouragement["choices"][0]["message"]["content"]
             encouragement_data = json.loads(encouragement_data)
@@ -52,6 +54,12 @@ def run_encourage_development_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -75,6 +83,12 @@ def run_encourage_development_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -103,6 +117,7 @@ def run_anything_unclear_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             unclear_points, elapsed_ms, emissions_kg = call_with_timer_ms(
                 anything_unclear,
@@ -115,6 +130,7 @@ def run_anything_unclear_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(unclear_points, elapsed_ms)
 
             unclear_points_data = unclear_points["choices"][0]["message"]["content"]
             unclear_points_data = json.loads(unclear_points_data)
@@ -131,6 +147,12 @@ def run_anything_unclear_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -154,6 +176,12 @@ def run_anything_unclear_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,

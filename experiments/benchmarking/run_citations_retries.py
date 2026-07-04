@@ -1,6 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
-from timing_utils import call_with_timer_ms
+from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_citations import validate_identify_sentences_with_citations_shape, validate_check_references_no_citation_results, validate_check_citation_no_ref_results
 from essay_analysis_citations import identify_citations, check_references_no_citation, check_citation_no_reference
 MAX_IDENTIFY_CITATIONS_ATTEMPTS = 6
@@ -21,6 +21,7 @@ def run_identify_citations_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             identified_citations, elapsed_ms, emissions_kg = call_with_timer_ms(
                 identify_citations,
@@ -32,6 +33,7 @@ def run_identify_citations_with_retries(
                 temp,
                 sampling_params,
             )
+            response_metrics = extract_response_metrics(identified_citations, elapsed_ms)
 
             identified_citations_data = identified_citations["choices"][0]["message"]["content"]
             identified_citations_data = json.loads(identified_citations_data)
@@ -48,6 +50,12 @@ def run_identify_citations_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -72,6 +80,12 @@ def run_identify_citations_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
     
@@ -100,6 +114,7 @@ def run_check_references_no_citations_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             cit_check, elapsed_ms, emissions_kg = call_with_timer_ms(
                 check_references_no_citation,
@@ -111,6 +126,7 @@ def run_check_references_no_citations_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(cit_check, elapsed_ms)
             cit_check_results = cit_check["choices"][0]["message"]["content"]
             cit_check_results = json.loads(cit_check_results)
             validated = validate_check_references_no_citation_results(cit_check_results)
@@ -126,6 +142,12 @@ def run_check_references_no_citations_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -150,6 +172,12 @@ def run_check_references_no_citations_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
 
@@ -176,6 +204,7 @@ def run_check_citations_no_references_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             cit_check, elapsed_ms, emissions_kg = call_with_timer_ms(
                 check_citation_no_reference,
@@ -187,6 +216,7 @@ def run_check_citations_no_references_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(cit_check, elapsed_ms)
             cit_check_results = cit_check["choices"][0]["message"]["content"]
             cit_check_results = json.loads(cit_check_results)
             validated = validate_check_citation_no_ref_results(cit_check_results)
@@ -202,6 +232,12 @@ def run_check_citations_no_references_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -226,6 +262,12 @@ def run_check_citations_no_references_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
 

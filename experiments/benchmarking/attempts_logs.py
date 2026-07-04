@@ -32,10 +32,32 @@ def append_attempt_log(
         benchmark_type,
         elapsed_ms,
         emissions_kg,
+        completion_tokens,
+        prompt_tokens,
+        total_tokens,
+        tokens_per_second,
+        predicted_tokens_per_second,
+        prompt_tokens_per_second,
 ):
     csv_dir = "experiments/benchmarking/llm_responses/attempt_logs"
     csv_filename = f"attempt_logs_{csv_file_append}.csv"
-    columns = ["ESSAY_ID", "PARAGRAPH_NUM", "SENTENCE_NUM", "ATTEMPTS_USED", "PASSED_VALIDATION", "FAILURE_REASON", "BENCHMARK_TYPE", "ELAPSED_MS", "EMISSIONS_KG"]
+    columns = [
+        "ESSAY_ID",
+        "PARAGRAPH_NUM",
+        "SENTENCE_NUM",
+        "ATTEMPTS_USED",
+        "PASSED_VALIDATION",
+        "FAILURE_REASON",
+        "BENCHMARK_TYPE",
+        "ELAPSED_MS",
+        "EMISSIONS_KG",
+        "COMPLETION_TOKENS",
+        "PROMPT_TOKENS",
+        "TOTAL_TOKENS",
+        "TOKENS_PER_SECOND",
+        "PREDICTED_TOKENS_PER_SECOND",
+        "PROMPT_TOKENS_PER_SECOND",
+    ]
 
     ensure_csv_schema(csv_dir, csv_filename, columns)
     append_to_csv(
@@ -52,6 +74,12 @@ def append_attempt_log(
             benchmark_type,
             elapsed_ms,
             emissions_kg,
+            completion_tokens,
+            prompt_tokens,
+            total_tokens,
+            tokens_per_second,
+            predicted_tokens_per_second,
+            prompt_tokens_per_second,
         ]
     )
 

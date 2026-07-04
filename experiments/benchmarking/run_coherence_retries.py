@@ -1,6 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
-from timing_utils import call_with_timer_ms
+from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_coherence import validate_analyze_topic_sentence_coherence, validate_analyze_pronouns, validate_analyze_linguistic_coherence
 from essay_analysis_coherence import analyze_topic_sentence_coherence, analyze_pronouns, analyze_linguistic_coherence
 MAX_ATTEMPTS = 6
@@ -22,6 +22,7 @@ def run_analyze_topic_sentence_coherence_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ts_coh, elapsed_ms, emissions_kg = call_with_timer_ms(
                 analyze_topic_sentence_coherence,
@@ -33,6 +34,7 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 temp,
                 sampling_params,
             )
+            response_metrics = extract_response_metrics(ts_coh, elapsed_ms)
 
             ts_coh_data = ts_coh["choices"][0]["message"]["content"]
             ts_coh_data = json.loads(ts_coh_data)
@@ -49,6 +51,12 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -72,6 +80,12 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -97,6 +111,7 @@ def run_analyze_pronouns_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             pronouns, elapsed_ms, emissions_kg = call_with_timer_ms(
                 analyze_pronouns,
@@ -108,6 +123,7 @@ def run_analyze_pronouns_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(pronouns, elapsed_ms)
 
             pronouns_data = pronouns["choices"][0]["message"]["content"]
             pronouns_data = json.loads(pronouns_data)
@@ -124,6 +140,12 @@ def run_analyze_pronouns_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -147,6 +169,12 @@ def run_analyze_pronouns_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -172,6 +200,7 @@ def run_analyze_linguistic_coherence_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             ling_coh, elapsed_ms, emissions_kg = call_with_timer_ms(
                 analyze_linguistic_coherence,
@@ -183,6 +212,7 @@ def run_analyze_linguistic_coherence_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(ling_coh, elapsed_ms)
 
             ling_coh_data = ling_coh["choices"][0]["message"]["content"]
             ling_coh_data = json.loads(ling_coh_data)
@@ -199,6 +229,12 @@ def run_analyze_linguistic_coherence_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -222,6 +258,12 @@ def run_analyze_linguistic_coherence_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,

@@ -1,6 +1,6 @@
 import json
 from attempts_logs import append_attempt_log
-from timing_utils import call_with_timer_ms
+from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_conclusion import validate_anaylze_conclusions, validate_provide_conclusion_feedback
 from essay_analysis_conclusions import analyze_conclusions, provide_conclusion_feedback
 MAX_ATTEMPTS = 6
@@ -22,6 +22,7 @@ def run_analyze_conclusions_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             conc_analysis, elapsed_ms, emissions_kg = call_with_timer_ms(
                 analyze_conclusions,
@@ -34,6 +35,7 @@ def run_analyze_conclusions_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(conc_analysis, elapsed_ms)
 
             conc_analysis_data = conc_analysis["choices"][0]["message"]["content"]
             conc_analysis_data = json.loads(conc_analysis_data)
@@ -50,6 +52,12 @@ def run_analyze_conclusions_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -73,6 +81,12 @@ def run_analyze_conclusions_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,
@@ -99,6 +113,7 @@ def run_provide_conclusion_feedback_with_retries(
     for attempt in range(1, max_attempts + 1):
         elapsed_ms = 0
         emissions_kg = None
+        response_metrics = extract_response_metrics(None, elapsed_ms)
         try:
             conc_feedback, elapsed_ms, emissions_kg = call_with_timer_ms(
                 provide_conclusion_feedback,
@@ -112,6 +127,7 @@ def run_provide_conclusion_feedback_with_retries(
                 temp,
                 sampling_params
             )
+            response_metrics = extract_response_metrics(conc_feedback, elapsed_ms)
 
             conc_feedback_data = conc_feedback["choices"][0]["message"]["content"]
             conc_feedback_data = json.loads(conc_feedback_data)
@@ -128,6 +144,12 @@ def run_provide_conclusion_feedback_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
 
             return {
@@ -151,6 +173,12 @@ def run_provide_conclusion_feedback_with_retries(
                 benchmark_type=BENCHMARK_TYPE,
                 elapsed_ms=elapsed_ms,
                 emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
             )
     return {
         "passed": False,

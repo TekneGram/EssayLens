@@ -6,6 +6,28 @@ from codecarbon import EmissionsTracker
 logging.getLogger("codecarbon").setLevel(logging.ERROR)
 
 
+def extract_response_metrics(response, elapsed_ms):
+    usage = response.get("usage", {}) if isinstance(response, dict) else {}
+    timings = response.get("timings", {}) if isinstance(response, dict) else {}
+
+    completion_tokens = usage.get("completion_tokens")
+    prompt_tokens = usage.get("prompt_tokens")
+    total_tokens = usage.get("total_tokens")
+
+    tokens_per_second = None
+    if completion_tokens is not None and elapsed_ms and elapsed_ms > 0:
+        tokens_per_second = completion_tokens / (elapsed_ms / 1000)
+
+    return {
+        "completion_tokens": completion_tokens,
+        "prompt_tokens": prompt_tokens,
+        "total_tokens": total_tokens,
+        "tokens_per_second": tokens_per_second,
+        "predicted_tokens_per_second": timings.get("predicted_per_second"),
+        "prompt_tokens_per_second": timings.get("prompt_per_second"),
+    }
+
+
 def call_with_timer_ms(func, *args, **kwargs):
     tracker = None
     emissions_kg = None
