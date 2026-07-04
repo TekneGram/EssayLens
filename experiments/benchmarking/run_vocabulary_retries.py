@@ -12,6 +12,7 @@ def run_enhance_vocabulary_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -26,7 +27,8 @@ def run_enhance_vocabulary_with_retries(
                 "experiments/tasks_vocabulary/vocabulary_enrichment_task.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             conc_analysis_data = conc_analysis["choices"][0]["message"]["content"]

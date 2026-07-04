@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_enhance_vocabulary(
   obj
 ):
@@ -57,10 +59,18 @@ def validate_enhance_vocabulary(
     if not isinstance(comments, str):
       raise ValueError(f"recommendations.items[{index}].comments must be a string.")
 
-    normalized_sentence = sentence.strip()
-    normalized_word_to_change = word_to_change.strip()
-    normalized_updated_sentence = updated_sentence.strip()
-    normalized_comments = comments.strip()
+    normalized_sentence = normalize_and_reject_reasoning(
+      sentence, f"recommendations.items[{index}].sentence"
+    )
+    normalized_word_to_change = normalize_and_reject_reasoning(
+      word_to_change, f"recommendations.items[{index}].word_to_change"
+    )
+    normalized_updated_sentence = normalize_and_reject_reasoning(
+      updated_sentence, f"recommendations.items[{index}].updated_sentence"
+    )
+    normalized_comments = normalize_and_reject_reasoning(
+      comments, f"recommendations.items[{index}].comments"
+    )
 
     if not normalized_sentence:
       raise ValueError(f"recommendations.items[{index}].sentence must not be empty.")

@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_edit_for_style(
     obj
 ):
@@ -45,8 +47,12 @@ def validate_edit_for_style(
     if necessary not in {"yes", "no"}:
       raise ValueError(f"sentences.items[{index}].necessary must be 'yes' or 'no'.")
 
-    normalized_sentence = sentence.strip()
-    normalized_revision = revision.strip()
+    normalized_sentence = normalize_and_reject_reasoning(
+      sentence, f"sentences.items[{index}].sentence"
+    )
+    normalized_revision = normalize_and_reject_reasoning(
+      revision, f"sentences.items[{index}].revision"
+    )
 
 
     validated_items.append(
@@ -110,9 +116,15 @@ def validate_repair_grammar(
     if not isinstance(comments, str):
       raise ValueError(f"sentences.items[{index}].comments must be a string.")
 
-    normalized_sentence = sentence.strip()
-    normalized_correction = correction.strip()
-    normalized_comments = comments.strip()
+    normalized_sentence = normalize_and_reject_reasoning(
+      sentence, f"sentences.items[{index}].sentence"
+    )
+    normalized_correction = normalize_and_reject_reasoning(
+      correction, f"sentences.items[{index}].correction"
+    )
+    normalized_comments = normalize_and_reject_reasoning(
+      comments, f"sentences.items[{index}].comments"
+    )
 
     validated_items.append(
       {

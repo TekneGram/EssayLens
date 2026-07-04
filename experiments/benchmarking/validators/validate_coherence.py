@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_analyze_topic_sentence_coherence(
         obj
 ):
@@ -53,8 +55,12 @@ def validate_analyze_topic_sentence_coherence(
         if not isinstance(comment, str):
             raise ValueError(f"sentences.items[{index}].comment must be a string.")
 
-        normalized_sentence = sentence.strip()
-        normalized_comment = comment.strip()
+        normalized_sentence = normalize_and_reject_reasoning(
+            sentence, f"sentences.items[{index}].sentence"
+        )
+        normalized_comment = normalize_and_reject_reasoning(
+            comment, f"sentences.items[{index}].comment"
+        )
 
         if not normalized_sentence:
             raise ValueError(f"sentences.items[{index}].sentence must not be empty.")
@@ -125,9 +131,15 @@ def validate_analyze_pronouns(
                 f"sentences.items[{index}].recommendation must be a string."
             )
 
-        normalized_sentence = sentence.strip()
-        normalized_pronoun_issue = pronoun_issue.strip()
-        normalized_recommendation = recommendation.strip()
+        normalized_sentence = normalize_and_reject_reasoning(
+            sentence, f"sentences.items[{index}].sentence"
+        )
+        normalized_pronoun_issue = normalize_and_reject_reasoning(
+            pronoun_issue, f"sentences.items[{index}].pronoun_issue"
+        )
+        normalized_recommendation = normalize_and_reject_reasoning(
+            recommendation, f"sentences.items[{index}].recommendation"
+        )
 
         validated_items.append(
             {
@@ -201,8 +213,12 @@ def validate_analyze_linguistic_coherence(
         if not isinstance(comment, str):
             raise ValueError(f"sentences.items[{index}].comment must be a string.")
 
-        normalized_sentence = sentence.strip()
-        normalized_comment = comment.strip()
+        normalized_sentence = normalize_and_reject_reasoning(
+            sentence, f"sentences.items[{index}].sentence"
+        )
+        normalized_comment = normalize_and_reject_reasoning(
+            comment, f"sentences.items[{index}].comment"
+        )
 
         validated_items.append(
             {

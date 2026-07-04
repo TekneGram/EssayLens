@@ -11,6 +11,7 @@ def run_identify_citations_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     last_error = None
@@ -24,7 +25,8 @@ def run_identify_citations_with_retries(
                 "experiments/tasks_citations/identify_citations.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params,
             )
 
             identified_citations_data = identified_citations["choices"][0]["message"]["content"]
@@ -78,6 +80,7 @@ def run_check_references_no_citations_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     
@@ -92,7 +95,8 @@ def run_check_references_no_citations_with_retries(
                 "experiments/tasks_citations/check_ref_no_citation.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
             cit_check_results = cit_check["choices"][0]["message"]["content"]
             cit_check_results = json.loads(cit_check_results)
@@ -144,6 +148,7 @@ def run_check_citations_no_references_with_retries(
     max_tokens,
     temp,
     csv_file_append,
+    sampling_params,
     max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     last_error = None
@@ -157,7 +162,8 @@ def run_check_citations_no_references_with_retries(
                 "experiments/tasks_citations/check_citation_no_ref.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
             cit_check_results = cit_check["choices"][0]["message"]["content"]
             cit_check_results = json.loads(cit_check_results)

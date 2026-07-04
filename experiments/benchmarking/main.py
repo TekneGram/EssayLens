@@ -5,6 +5,7 @@ import argparse
 import time
 from pathlib import Path
 import re
+from types import SimpleNamespace
 
 import sys
 from pathlib import Path
@@ -50,17 +51,21 @@ def select_server_for_model(model: str) -> Path:
         return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
     if model == "bonsai":
         return repo_root / "third_party_prismml" / "llama-cpp" / "build" / "bin" / "llama-server"
+    if model == "qwen3.5":
+        return repo_root / "third_party_new" / "llama-cpp-turboquant" / "build" / "bin" / "llama-server"
     
 def select_jinja(model: str) -> Path:
     repo_root = Path(__file__).resolve().parents[2]
     if model =="gemma":
         return repo_root / "assets" / "models" / "gemma_4_chat_template.jinja"
+    if model=="qwen3.5":
+        return repo_root / "assets" / "models" / "qwen3.5_2b_chat_template.jinja"
     
 def main() -> None:
     # Set up arguments for command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", required=True, help="Path to GGUF model")
-    parser.add_argument("--model", required=True, help="Name of model: bonsai, gemma", choices=["bonsai", "gemma"])
+    parser.add_argument("--model", required=True, help="Name of model: bonsai, gemma", choices=["bonsai", "gemma", "qwen3.5"])
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument("--ctx", type=int, default=8192)
     parser.add_argument("--cache-k", default="turbo3", choices=["f32", "f16", "bf16", "q8_0", "q4_0", "turbo2", "turbo3", "turbo4"])
@@ -69,6 +74,9 @@ def main() -> None:
     parser.add_argument("--max_tokens", type=int, default=512)
     parser.add_argument("--temp", type=float, default=0.7)
     parser.add_argument("--csv_file_append", required=True, help="Add a csv file identifier for the benchmark, usually the name of the language model being used")
+    parser.add_argument("--top_k", type=int, default=None)
+    parser.add_argument("--top_p", type=float, default=None)
+    parser.add_argument("--min_p", type=float, default=None)
     args = parser.parse_args()
 
     # File path to server
@@ -78,6 +86,18 @@ def main() -> None:
     if args.model=="gemma":
         # Set thinking to 0 for gemma
         cmd_extra = ["--reasoning", "off", "--reasoning-budget", "0", "--jinja", "--chat-template-file", str(jinja)]
+    if args.model=="qwen3.5":
+        cmd_extra = ["--reasoning", "off", "--reasoning-budget", "0", "--jinja", "--chat-template-file", str(jinja)]
+
+    # Will set the sampling_params to None if they are not defined
+    # Downstream, the essay_analysis_ ... .py functions define the payload and only add these sampling
+    # parameters if these values are not None.
+    # If they are None, the server's default values are used.
+    sampling_params = SimpleNamespace(
+        top_k=args.top_k,
+        top_p=args.top_p,
+        min_p=args.min_p
+    )
 
     # Basic server settings
     cmd = [
@@ -104,7 +124,7 @@ def main() -> None:
     try:
         wait_for_server(base_url)
         # Look through essays and run benchmarks on each essay
-        folder = Path("experiments/generated_essays")
+        folder = Path("experiments/generated_essays_ablated")
 
         for md_file in folder.rglob("*.md"):
             filename = md_file.name
@@ -122,7 +142,7 @@ def main() -> None:
             
             # ----- STEP 1: IDENTIFY THE PARAGRAPHS -----
             # First, get the essay as individual paragraphs
-            full_essay, introduction, conclusion, full_essay_with_references, body_paragraphs, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            full_essay, introduction, conclusion, full_essay_with_references, body_paragraphs, has_references = run_identify_essay_benchmark(essay, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
             # If there is any failure, continue with the next essay since a lack of essay is impossible to work with!
             if full_essay is None:
                 continue
@@ -135,7 +155,8 @@ def main() -> None:
                 base_url=base_url,
                 max_tokens=args.max_tokens,
                 temp=args.temp,
-                csv_file_append=args.csv_file_append
+                csv_file_append=args.csv_file_append,
+                sampling_params=sampling_params
             )
             # Move on to the next file if everything failed
             if citations_data is None:
@@ -144,27 +165,27 @@ def main() -> None:
                 if citations_data["has_citations"] == "yes" and has_references == "yes":
                     print("Citations and references included - but do they match?")
                     # check citation no reference
-                    ref_check = run_check_references_no_citations_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    ref_check = run_check_references_no_citations_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if ref_check is None:
                         print("It seems the check references with no citations benchmark failed.")
                     else:
                         print(json.dumps(ref_check))
                     # AND check reference no citation
-                    cit_check = run_check_citations_no_references_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    cit_check = run_check_citations_no_references_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if cit_check is None:
                         print('it seems the check citations with no references benchmark failed.')
                     else:
                         print(json.dumps(cit_check))
 
                 if citations_data["has_citations"] == "yes" and has_references == "no":
-                    cit_check = run_check_citations_no_references_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    cit_check = run_check_citations_no_references_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if cit_check is None:
                         print('it seems the check citations with no references benchmark failed.')
                     else:
                         print(json.dumps(cit_check))
                 
                 if citations_data["has_citations"] == "no" and has_references == "yes":
-                    ref_check = run_check_references_no_citations_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    ref_check = run_check_references_no_citations_benchmark(full_essay_with_references, essay_id, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if ref_check is None:
                         print("It seems the check references with no citations benchmark failed.")
                     else:
@@ -178,7 +199,7 @@ def main() -> None:
             # ----- STEP 3: RUN THESIS BENCHMARKS -----
             
             # Extract the thesis statement
-            thesis_statement_extracted_data = run_determine_thesis_statement_benchmark(full_essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            thesis_statement_extracted_data = run_determine_thesis_statement_benchmark(full_essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
             
             if thesis_statement_extracted_data is None:
                 print("It seems thesis statement extraction failed.")
@@ -187,7 +208,7 @@ def main() -> None:
                 has_thesis_statement = thesis_statement_extracted_data["has_thesis_statement"]
                 
                 if has_thesis_statement == "yes":
-                    ts_characteristics = run_thesis_statement_characteristics_benchmark(full_essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    ts_characteristics = run_thesis_statement_characteristics_benchmark(full_essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     
                     if ts_characteristics is None:
                         print("It seems getting the characteristics failed")
@@ -208,7 +229,7 @@ def main() -> None:
                             missing_features.append("have the writer's opinion")
                         
                         if no_characteristics_count >= 3:
-                            ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, thesis_statement, no_characteristics_count, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                            ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, thesis_statement, no_characteristics_count, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                             if ts_advice is None:
                                 print("It seems getting advice on the thesis statement failed.")
                             else:
@@ -221,21 +242,21 @@ def main() -> None:
                             else:
                                 what_is_missing = what_is_missing + ", ".join(missing_features[:-1]) + " or " + missing_features[-1]
 
-                            ts_comment = run_thesis_statement_comment_benchmark(full_essay, essay_id, thesis_statement, what_is_missing, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                            ts_comment = run_thesis_statement_comment_benchmark(full_essay, essay_id, thesis_statement, what_is_missing, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                             if ts_comment is None:
                                 print("It seems the ts_comment failed")
                             else:
                                 print(ts_comment)
                             
                         if no_characteristics_count == 1 or no_characteristics_count == 0:
-                            ts_praise = run_thesis_statement_heap_praise_benchmark(full_essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                            ts_praise = run_thesis_statement_heap_praise_benchmark(full_essay, essay_id, thesis_statement, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                             if ts_praise is None:
                                 print("It seems ts_praise failed.")
                             else:
                                 print(ts_praise)
                 else:
                     # This is the case when there is no clear thesis statement
-                    ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, "Actually, it was determined that there is no clear thesis statement in this essay", 4, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    ts_advice = run_thesis_statement_advice_benchmark(full_essay, essay_id, "Actually, it was determined that there is no clear thesis statement in this essay", 4, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if ts_advice is None:
                         print("It seems getting advice on the thesis statement, when there is no thesi statement, failed.")
                     else:
@@ -243,12 +264,12 @@ def main() -> None:
 
 
             # ----- STEP 4: RUN INTRODUCTIONS BENCHMARKS -----
-            gen_spec = run_analyze_gen_spec_benchmark(full_essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            gen_spec = run_analyze_gen_spec_benchmark(full_essay, essay_id, introduction, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
             if gen_spec is None:
                 print("It seems running the analysis on general to specific formation of the introduction failed.")
             else:
                 print(gen_spec)
-                introduction_feedback = run_provide_introduction_feedback_benchmark(full_essay, essay_id, introduction, json.dumps(gen_spec), base_url, args.max_tokens, args.temp, args.csv_file_append)
+                introduction_feedback = run_provide_introduction_feedback_benchmark(full_essay, essay_id, introduction, json.dumps(gen_spec), base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if introduction_feedback is None:
                     print("It seems getting the feedback on the introduction failed.")
                 else:
@@ -257,12 +278,12 @@ def main() -> None:
             
 
             # ----- STEP 5: RUN CONCLUSION BENCHMARKS -----
-            conclusion_evaluation = run_analyze_conclusions_benchmark(full_essay, essay_id, conclusion, base_url, args.max_tokens, args.temp, args.csv_file_append)
+            conclusion_evaluation = run_analyze_conclusions_benchmark(full_essay, essay_id, conclusion, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
             if conclusion_evaluation is None:
                 print("It seems the analysis of the conclusion failed.")
             else:
                 print(conclusion_evaluation)
-                conclusion_feedback = run_provide_conclusion_feedback_benchmark(full_essay, essay_id, conclusion, json.dumps(conclusion_evaluation), base_url, args.max_tokens, args.temp, args.csv_file_append)
+                conclusion_feedback = run_provide_conclusion_feedback_benchmark(full_essay, essay_id, conclusion, json.dumps(conclusion_evaluation), base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if conclusion_feedback is None:
                     print("It seems getting feedback for the conclusion paragraph failed.")
                 else:
@@ -270,21 +291,21 @@ def main() -> None:
 
             # ----- STEP 6: RUN COHERENCE BENCHMARKS -----
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                ts_coherence_analysis = run_analyze_topic_sentence_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                ts_coherence_analysis = run_analyze_topic_sentence_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if ts_coherence_analysis is None:
                     print(f"It seems getting the topic sentence coherence from body paragraph {para_num} failed.")
                 else:
                     print(ts_coherence_analysis)
 
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                linguistic_coherence = run_analyze_linguistic_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                linguistic_coherence = run_analyze_linguistic_coherence_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if linguistic_coherence is None:
                     print(f"It seems getting the linguistic coherence in body paragraph {para_num} failed.")
                 else:
                     print(linguistic_coherence)
 
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                pronouns_analysis = run_analyze_pronouns_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                pronouns_analysis = run_analyze_pronouns_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if pronouns_analysis is None:
                     print(f"It seems analysis of pronouns in body paragraph {para_num} failed.")
                 else:
@@ -296,13 +317,13 @@ def main() -> None:
                 words = bp["body_paragraph"].split(" ")
                 word_count = len(words)
                 if word_count < 100:
-                    paragraph_feedback = run_encourage_development_benchmark(full_essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    paragraph_feedback = run_encourage_development_benchmark(full_essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if paragraph_feedback is None:
                         print(f"It seems that to encourage development in body paragraph {para_num}, this llm process failed")
                     else:
                         print(paragraph_feedback)
                 else:
-                    clarity_feedback = run_anything_unclear_benchmark(full_essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                    clarity_feedback = run_anything_unclear_benchmark(full_essay, essay_id, bp["body_paragraph"], para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                     if clarity_feedback is None:
                         print(f"It seems that getting feedback on clarity for body paragraph {para_num} failed.")
                     else:
@@ -332,7 +353,8 @@ def main() -> None:
                         base_url, 
                         args.max_tokens, 
                         args.temp, 
-                        args.csv_file_append
+                        args.csv_file_append,
+                        sampling_params
                     )
                     if enhancements is None:
                         print("It seems enhancements to vocabulary in the essay failed.")
@@ -360,7 +382,8 @@ def main() -> None:
                     base_url,
                     args.max_tokens,
                     args.temp,
-                    args.csv_file_append
+                    args.csv_file_append,
+                    sampling_params
                 )
                 if enhancements is None:
                     print("It seems enhancements to vocabulary in the essay failed.")
@@ -370,14 +393,14 @@ def main() -> None:
 
             # ----- STEP 9: RUN GRAMMAR BENCHMARKS -----
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                grammar_edits = run_edit_for_style_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                grammar_edits = run_edit_for_style_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if grammar_edits is None:
                     print(f"It seems like grammar edits for body paragraph {para_num} failed.")
                 else:
                     print(grammar_edits)
 
             for para_num, bp in enumerate(body_paragraphs, start=1):
-                grammar_repair = run_repair_grammar_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append)
+                grammar_repair = run_repair_grammar_benchmark(bp["body_paragraph"], essay_id, para_num, base_url, args.max_tokens, args.temp, args.csv_file_append, sampling_params)
                 if grammar_repair is None:
                     print(f"It seems like grammar repair for body paragraph {para_num} failed.")
                 else:
@@ -397,7 +420,11 @@ if __name__ == "__main__":
 # With Ternary Bonsai:
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="bonsai_8b"
 
-# With Gemma 4
+# With Gemma 4 e4b
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_e4b"
-# - Change line 54 to llama_server = select_server_for_model("bonsai")
-# python experiments/benchmarking/main.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3
+
+# With Gemma 4 12b
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-12b-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_12b"
+
+# With Qwen 3.5 2b
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Qwen3.5-2B-Q4_K_M.gguf" --model "qwen3.5" --top_p 0.8 --top_k 20 --min_p 0 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="qwen3.5_2b"

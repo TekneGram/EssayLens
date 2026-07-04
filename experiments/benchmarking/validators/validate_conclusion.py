@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_anaylze_conclusions(
     obj
 ):
@@ -43,9 +45,13 @@ def validate_anaylze_conclusions(
     if not isinstance(final_comment, str):
         raise ValueError("final_comment must be a string.")
 
-    normalized_main_idea = main_idea.strip()
-    normalized_summary = summary.strip()
-    normalized_final_comment = final_comment.strip()
+    normalized_main_idea = normalize_and_reject_reasoning(
+        main_idea, "main_idea"
+    )
+    normalized_summary = normalize_and_reject_reasoning(summary, "summary")
+    normalized_final_comment = normalize_and_reject_reasoning(
+        final_comment, "final_comment"
+    )
 
     if restate_main_idea == "yes" and not normalized_main_idea:
         raise ValueError("main_idea must be non-empty when restate_main_idea is 'yes'.")
@@ -85,7 +91,7 @@ def validate_provide_conclusion_feedback(
     if not isinstance(feedback, str):
         raise ValueError("feedback must be a string.")
 
-    normalized_feedback = feedback.strip()
+    normalized_feedback = normalize_and_reject_reasoning(feedback, "feedback")
     if not normalized_feedback:
         raise ValueError("feedback must not be empty.")
 

@@ -12,6 +12,7 @@ def run_identify_paragraphs_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_IDENTIFY_PARAGRAPHS_ATTEMPTS
 ):
     last_error = None
@@ -26,6 +27,7 @@ def run_identify_paragraphs_with_retries(
                 base_url,
                 max_tokens,
                 temp,
+                sampling_params
             )
 
             content = identified_paragraphs["choices"][0]["message"]["content"]

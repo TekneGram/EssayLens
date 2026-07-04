@@ -12,6 +12,7 @@ def run_edit_for_style_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -25,7 +26,8 @@ def run_edit_for_style_with_retries(
                 "experiments/tasks_grammar/improve_style.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             edits_data = edits["choices"][0]["message"]["content"]
@@ -76,6 +78,7 @@ def run_repair_grammar_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -89,7 +92,8 @@ def run_repair_grammar_with_retries(
                 "experiments/tasks_grammar/improve_language.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             edits_data = edits["choices"][0]["message"]["content"]

@@ -14,6 +14,7 @@ def run_encourage_development_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -28,7 +29,8 @@ def run_encourage_development_with_retries(
                 "experiments/tasks_paragraphs/encourage_development.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             encouragement_data = encouragement["choices"][0]["message"]["content"]
@@ -82,6 +84,7 @@ def run_anything_unclear_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -96,7 +99,8 @@ def run_anything_unclear_with_retries(
                 "experiments/tasks_paragraphs/seek_clarity.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             unclear_points_data = unclear_points["choices"][0]["message"]["content"]

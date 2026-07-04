@@ -1,4 +1,6 @@
 
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_determine_thesis_statement_shape(
   obj
 ):
@@ -25,7 +27,9 @@ def validate_determine_thesis_statement_shape(
   if not isinstance(thesis_statement, str):
     raise ValueError("thesis_statement must be a string.")
 
-  normalized_thesis_statement = thesis_statement.strip()
+  normalized_thesis_statement = normalize_and_reject_reasoning(
+    thesis_statement, "thesis_statement"
+  )
 
   if has_thesis_statement == "yes" and not normalized_thesis_statement:
     raise ValueError("thesis_statement must be non-empty when has_thesis_statement is 'yes'.")
@@ -113,8 +117,12 @@ def validate_thesis_statement_advice_shape(
   if not isinstance(explain_example, str):
     raise ValueError("explain_example must be a string.")
 
-  normalized_example_thesis = example_thesis.strip()
-  normalized_explain_example = explain_example.strip()
+  normalized_example_thesis = normalize_and_reject_reasoning(
+    example_thesis, "example_thesis"
+  )
+  normalized_explain_example = normalize_and_reject_reasoning(
+    explain_example, "explain_example"
+  )
 
   if not normalized_example_thesis:
     raise ValueError("example_thesis must not be empty.")
@@ -162,8 +170,8 @@ def validate_thesis_statement_comment(
   if not isinstance(advice, str):
     raise ValueError("advice must be a string.")
 
-  normalized_comment = comment.strip()
-  normalized_advice = advice.strip()
+  normalized_comment = normalize_and_reject_reasoning(comment, "comment")
+  normalized_advice = normalize_and_reject_reasoning(advice, "advice")
 
   if not normalized_comment:
     raise ValueError("comment must not be empty.")
@@ -208,7 +216,7 @@ def validate_thesis_statement_heap_praise(
   if not isinstance(comment, str):
     raise ValueError("comment must be a string.")
 
-  normalized_comment = comment.strip()
+  normalized_comment = normalize_and_reject_reasoning(comment, "comment")
 
   if not normalized_comment:
     raise ValueError("comment must not be empty.")

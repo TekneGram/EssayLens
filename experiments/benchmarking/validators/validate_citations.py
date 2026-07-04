@@ -1,4 +1,6 @@
 
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_identify_sentences_with_citations_shape(obj):
       if not isinstance(obj, dict):
           raise ValueError("Top-level response is not an object.")
@@ -46,7 +48,9 @@ def validate_identify_sentences_with_citations_shape(obj):
                   f"sentences.items[{index}].sentence must be a string."
               )
 
-          sentence = sentence.strip()
+          sentence = normalize_and_reject_reasoning(
+              sentence, f"sentences.items[{index}].sentence"
+          )
           if not sentence:
               raise ValueError(
                   f"sentences.items[{index}].sentence must not be empty."
@@ -115,7 +119,9 @@ def validate_check_references_no_citation_results(
                 f"reference_has_no_citation.items[{index}].reference must be a string."
             )
 
-        reference = reference.strip()
+        reference = normalize_and_reject_reasoning(
+            reference, f"reference_has_no_citation.items[{index}].reference"
+        )
         if not reference:
             raise ValueError(
                 f"reference_has_no_citation.items[{index}].reference must not be empty."
@@ -198,7 +204,10 @@ def validate_check_citation_no_ref_results(
                 f"citation_has_no_reference.items[{index}].sentence_with_citation must be a string."
             )
 
-        sentence_with_citation = sentence_with_citation.strip()
+        sentence_with_citation = normalize_and_reject_reasoning(
+            sentence_with_citation,
+            f"citation_has_no_reference.items[{index}].sentence_with_citation",
+        )
         if not sentence_with_citation:
             raise ValueError(
 

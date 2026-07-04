@@ -12,6 +12,7 @@ def run_analyze_topic_sentence_coherence_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -26,7 +27,8 @@ def run_analyze_topic_sentence_coherence_with_retries(
                 "experiments/tasks_body_paras/body_coherence_with_topic.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params,
             )
 
             ts_coh_data = ts_coh["choices"][0]["message"]["content"]
@@ -77,6 +79,7 @@ def run_analyze_pronouns_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -90,7 +93,8 @@ def run_analyze_pronouns_with_retries(
                 "experiments/tasks_body_paras/improve_pronouns.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             pronouns_data = pronouns["choices"][0]["message"]["content"]
@@ -141,6 +145,7 @@ def run_analyze_linguistic_coherence_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -154,7 +159,8 @@ def run_analyze_linguistic_coherence_with_retries(
                 "experiments/tasks_body_paras/identify_linguistic_coherence_improvements.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             ling_coh_data = ling_coh["choices"][0]["message"]["content"]

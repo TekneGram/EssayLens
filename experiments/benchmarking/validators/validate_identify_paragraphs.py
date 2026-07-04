@@ -1,4 +1,6 @@
 
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_identify_paragraphs_shape(obj):
     if not isinstance(obj, dict):
         raise ValueError("Top-level response is not an object")
@@ -34,7 +36,15 @@ def validate_identify_paragraphs_shape(obj):
         raise ValueError("contains_references must be 'yes' or 'no'")
     if not isinstance(references_section, str):
         raise ValueError("references_section must be a string")
-    normalized_references = references_section.strip()
+    introduction = normalize_and_reject_reasoning(
+        introduction, "introduction_paragraph"
+    )
+    conclusion = normalize_and_reject_reasoning(
+        conclusion, "conclusion_paragraph"
+    )
+    normalized_references = normalize_and_reject_reasoning(
+        references_section, "references_section"
+    )
 
     if contains_references == "yes" and not normalized_references:
         raise ValueError(
@@ -65,7 +75,9 @@ def validate_identify_paragraphs_shape(obj):
                 f"body_paragraphs,items[{index}].body_paragraph must be a string"
             )
         
-        paragraph = paragraph.strip()
+        paragraph = normalize_and_reject_reasoning(
+            paragraph, f"body_paragraphs.items[{index}].body_paragraph"
+        )
         if not paragraph:
             raise ValueError(
                 f"body_paragraphs.items[{index}].body_paragraph must not be empty"
@@ -76,9 +88,9 @@ def validate_identify_paragraphs_shape(obj):
         raise ValueError("body_paragraphs.items must contain at least one body paragraph.")
     
     return {
-        "introduction_paragraph": introduction.strip(),
+        "introduction_paragraph": introduction,
         "body_paragraphs": { "items": validated_items },
-        "conclusion_paragraph": conclusion.strip(),
+        "conclusion_paragraph": conclusion,
         "contains_references": contains_references,
         "references_section": normalized_references,
     }

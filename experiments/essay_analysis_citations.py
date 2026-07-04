@@ -7,7 +7,8 @@ def identify_paragraphs(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     essay_path = repo_root / essay_path
@@ -62,6 +63,13 @@ def identify_paragraphs(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -73,7 +81,8 @@ def identify_citations(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -123,6 +132,13 @@ def identify_citations(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -134,7 +150,8 @@ def check_references_no_citation(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -196,6 +213,13 @@ def check_references_no_citation(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -207,7 +231,8 @@ def check_citation_no_reference(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -267,6 +292,13 @@ def check_citation_no_reference(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+        
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()

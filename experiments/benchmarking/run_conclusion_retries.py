@@ -12,6 +12,7 @@ def run_analyze_conclusions_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -26,7 +27,8 @@ def run_analyze_conclusions_with_retries(
                 "experiments/tasks_conclusions/analyze_conclusion.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             conc_analysis_data = conc_analysis["choices"][0]["message"]["content"]
@@ -78,6 +80,7 @@ def run_provide_conclusion_feedback_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -93,7 +96,8 @@ def run_provide_conclusion_feedback_with_retries(
                 "experiments/tasks_conclusions/conclusions_feedback.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             conc_feedback_data = conc_feedback["choices"][0]["message"]["content"]

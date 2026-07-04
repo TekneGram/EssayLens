@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_analyze_gen_spec(
   obj
 ):
@@ -51,10 +53,12 @@ def validate_analyze_gen_spec(
   if not isinstance(focus, str):
     raise ValueError("focus must be a string.")
 
-  normalized_topic = topic.strip()
-  normalized_essay_context = essay_context.strip()
-  normalized_relevance = relevance.strip()
-  normalized_focus = focus.strip()
+  normalized_topic = normalize_and_reject_reasoning(topic, "topic")
+  normalized_essay_context = normalize_and_reject_reasoning(
+    essay_context, "essay_context"
+  )
+  normalized_relevance = normalize_and_reject_reasoning(relevance, "relevance")
+  normalized_focus = normalize_and_reject_reasoning(focus, "focus")
 
   if clear_topic == "yes" and not normalized_topic:
       raise ValueError("topic must be non-empty when clear_topic is 'yes'.")
@@ -98,7 +102,7 @@ def validate_introduction_feedback(
   if not isinstance(feedback, str):
       raise ValueError("feedback must be a string.")
 
-  normalized_feedback = feedback.strip()
+  normalized_feedback = normalize_and_reject_reasoning(feedback, "feedback")
   if not normalized_feedback:
       raise ValueError("feedback must not be empty.")
 

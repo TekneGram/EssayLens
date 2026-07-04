@@ -7,7 +7,8 @@ def identify_paragraphs(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params
 ):
     repo_root = Path(__file__).resolve().parents[1]
     essay_path = repo_root / essay_path
@@ -62,6 +63,13 @@ def identify_paragraphs(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -74,7 +82,8 @@ def determine_thesis_statement(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -109,6 +118,13 @@ def determine_thesis_statement(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -121,7 +137,8 @@ def thesis_statement_characteristics(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -158,6 +175,13 @@ def thesis_statement_characteristics(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -171,7 +195,8 @@ def thesis_statement_advice(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -179,7 +204,7 @@ def thesis_statement_advice(
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about thesis statements in essays:" + knowledge + "\n" + "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer originally used " + feature_count + " features of a thesis statement in their introduction." + "\n" + task
+    user_prompt = "\n Here is your knowledge about thesis statements in essays:" + knowledge + "\n" + "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer originally used " + str(feature_count) + " features of a thesis statement in their introduction." + "\n" + task
 
     payload = {
         "model": "local-gguf",
@@ -207,6 +232,13 @@ def thesis_statement_advice(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
+    
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -220,7 +252,8 @@ def thesis_statement_comment(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -256,6 +289,12 @@ def thesis_statement_comment(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
@@ -268,7 +307,8 @@ def thesis_statement_heap_praise(
     task_path,
     base_url,
     max_tokens,
-    temperature
+    temperature,
+    sampling_params,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -303,6 +343,12 @@ def thesis_statement_heap_praise(
             }
         }
     }
+    if sampling_params.top_k is not None:
+        payload["top_k"] = sampling_params.top_k
+    if sampling_params.top_p is not None:
+        payload["top_p"] = sampling_params.top_p
+    if sampling_params.min_p is not None:
+        payload["min_p"] = sampling_params.min_p
     r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()

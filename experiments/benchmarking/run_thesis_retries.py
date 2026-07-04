@@ -12,6 +12,7 @@ def run_determine_thesis_statement_with_retries(
     max_tokens,
     temp,
     csv_file_append,
+    sampling_params,
     max_attempts = MAX_ATTEMPTS
 ):
     last_error = None
@@ -26,7 +27,8 @@ def run_determine_thesis_statement_with_retries(
                 "experiments/tasks_thesis/essay_determine_thesis.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             thesis_statement_data = thesis_statement["choices"][0]["message"]["content"]
@@ -77,6 +79,7 @@ def run_thesis_statement_charateristics_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_ATTEMPTS
 ):
     last_error = None
@@ -91,7 +94,8 @@ def run_thesis_statement_charateristics_with_retries(
                 "experiments/tasks_thesis/essay_characterize_thesis.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             ts_characteristics_data = ts_characteristics["choices"][0]["message"]["content"]
@@ -143,6 +147,7 @@ def run_thesis_statement_advice_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_ATTEMPTS
 ):
     last_error = None
@@ -158,7 +163,8 @@ def run_thesis_statement_advice_with_retries(
                 "experiments/tasks_thesis/essay_thesis_statement_advice.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             ts_advice_data = ts_advice["choices"][0]["message"]["content"]
@@ -210,6 +216,7 @@ def run_thesis_statement_comment_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_ATTEMPTS
 ):
     last_error = None
@@ -225,7 +232,8 @@ def run_thesis_statement_comment_with_retries(
                 "experiments/tasks_thesis/essay_thesis_statement_comment.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             ts_comment = ts_advice["choices"][0]["message"]["content"]
@@ -276,6 +284,7 @@ def run_thesis_statement_heap_praise_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts = MAX_ATTEMPTS
 ):
     last_error = None
@@ -290,7 +299,8 @@ def run_thesis_statement_heap_praise_with_retries(
                 "experiments/tasks_thesis/essay_thesis_statement_heap_praise.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             ts_praise = ts_advice["choices"][0]["message"]["content"]

@@ -1,3 +1,5 @@
+from reasoning_guard import normalize_and_reject_reasoning
+
 def validate_encourage_development(
   obj
 ):
@@ -23,8 +25,8 @@ def validate_encourage_development(
   if not isinstance(feedback, str):
     raise ValueError("feedback must be a string.")
 
-  normalized_sentence = sentence.strip()
-  normalized_feedback = feedback.strip()
+  normalized_sentence = normalize_and_reject_reasoning(sentence, "sentence")
+  normalized_feedback = normalize_and_reject_reasoning(feedback, "feedback")
 
   if not normalized_sentence:
     raise ValueError("sentence must not be empty.")
@@ -64,8 +66,8 @@ def validate_anything_unclear(
   if not isinstance(feedback, str):
     raise ValueError("feedback must be a string.")
 
-  normalized_sentence = sentence.strip()
-  normalized_feedback = feedback.strip()
+  normalized_sentence = normalize_and_reject_reasoning(sentence, "sentence")
+  normalized_feedback = normalize_and_reject_reasoning(feedback, "feedback")
 
   if all_clear == "no" and not normalized_sentence:
     raise ValueError("sentence must be non-empty when all_clear is 'no'.")

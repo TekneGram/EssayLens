@@ -12,6 +12,7 @@ def run_analyze_gen_spec_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -26,7 +27,8 @@ def run_analyze_gen_spec_with_retries(
                 "experiments/tasks_introductions/analyze_gen_spec.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             gen_spec_data = gen_spec["choices"][0]["message"]["content"]
@@ -78,6 +80,7 @@ def run_provide_introduction_feedback_with_retries(
         max_tokens,
         temp,
         csv_file_append,
+        sampling_params,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -93,7 +96,8 @@ def run_provide_introduction_feedback_with_retries(
                 "experiments/tasks_introductions/introductions_feedback.md",
                 base_url,
                 max_tokens,
-                temp
+                temp,
+                sampling_params
             )
 
             feedback_data = feedback["choices"][0]["message"]["content"]
