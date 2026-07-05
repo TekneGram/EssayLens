@@ -1,8 +1,10 @@
 import json
+import requests
 from attempts_logs import append_attempt_log
 from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_vocabulary import validate_enhance_vocabulary
 from essay_analysis_vocabulary import enhance_vocabulary
+from request_timeout_utils import DEFAULT_REQUEST_TIMEOUT, format_timeout_failure
 MAX_ATTEMPTS = 6
 
 def run_enhance_vocabulary_with_retries(
@@ -14,6 +16,7 @@ def run_enhance_vocabulary_with_retries(
         temp,
         csv_file_append,
         sampling_params,
+        request_timeout=DEFAULT_REQUEST_TIMEOUT,
         max_attempts=MAX_ATTEMPTS
 ):
     last_error = None
@@ -33,7 +36,8 @@ def run_enhance_vocabulary_with_retries(
                 base_url,
                 max_tokens,
                 temp,
-                sampling_params
+                sampling_params,
+                request_timeout,
             )
             response_metrics = extract_response_metrics(conc_analysis, elapsed_ms)
 
@@ -66,6 +70,28 @@ def run_enhance_vocabulary_with_retries(
                 "vocabulary_data": validated,
                 "failure_reason": None
             }
+        except requests.exceptions.Timeout as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
+            last_error = format_timeout_failure(BENCHMARK_TYPE, essay_id, "", request_timeout, exc)
+            append_attempt_log(
+                essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
+                csv_file_append=csv_file_append,
+                attempt_count=attempt,
+                passed=False,
+                failure_reason=last_error,
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
+            )
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
             elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
             emissions_kg = getattr(exc, "emissions_kg", emissions_kg)

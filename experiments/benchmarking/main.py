@@ -421,10 +421,10 @@ if __name__ == "__main__":
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="bonsai_8b"
 
 # With Gemma 4 e4b
-# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_e4b"
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --temp 1.0 --top_p 0.95 --top_k 64 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_e4b"
 
 # With Gemma 4 12b
-# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-12b-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_12b"
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-12b-it-Q4_K_M.gguf" --model "gemma" --temp 1.0 --top_p 0.95 --top_k 64 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_12b"
 
 # With Qwen 3.5 2b
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Qwen3.5-2B-Q4_K_M.gguf" --model "qwen3.5" --top_p 0.8 --top_k 20 --min_p 0 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="qwen3.5_2b"

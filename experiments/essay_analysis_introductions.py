@@ -8,7 +8,8 @@ def identify_paragraphs(
     base_url,
     max_tokens,
     temperature,
-    sampling_params
+    sampling_params,
+    request_timeout=120,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     essay_path = repo_root / essay_path
@@ -70,7 +71,7 @@ def identify_paragraphs(
     if sampling_params.min_p is not None:
         payload["min_p"] = sampling_params.min_p
 
-    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=request_timeout)
     r.raise_for_status()
     data = r.json()
     return data
@@ -83,7 +84,8 @@ def analyze_gen_spec(
     base_url,
     max_tokens,
     temperature,
-    sampling_params
+    sampling_params,
+    request_timeout=120,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -131,7 +133,7 @@ def analyze_gen_spec(
     if sampling_params.min_p is not None:
         payload["min_p"] = sampling_params.min_p
 
-    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=request_timeout)
     r.raise_for_status()
     data = r.json()
     return data
@@ -145,7 +147,8 @@ def provide_introduction_feedback(
     base_url,
     max_tokens,
     temperature,
-    sampling_params
+    sampling_params,
+    request_timeout=120,
 ):
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
@@ -186,7 +189,7 @@ def provide_introduction_feedback(
     if sampling_params.min_p is not None:
         payload["min_p"] = sampling_params.min_p
         
-    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=120)
+    r = requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=request_timeout)
     r.raise_for_status()
     data = r.json()
     return data

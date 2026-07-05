@@ -1,8 +1,10 @@
 import json
+import requests
 from attempts_logs import append_attempt_log
 from timing_utils import call_with_timer_ms, extract_response_metrics
 from validators.validate_citations import validate_identify_sentences_with_citations_shape, validate_check_references_no_citation_results, validate_check_citation_no_ref_results
 from essay_analysis_citations import identify_citations, check_references_no_citation, check_citation_no_reference
+from request_timeout_utils import DEFAULT_REQUEST_TIMEOUT, format_timeout_failure
 MAX_IDENTIFY_CITATIONS_ATTEMPTS = 6
 
 def run_identify_citations_with_retries(
@@ -13,6 +15,7 @@ def run_identify_citations_with_retries(
         temp,
         csv_file_append,
         sampling_params,
+        request_timeout=DEFAULT_REQUEST_TIMEOUT,
         max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     last_error = None
@@ -32,6 +35,7 @@ def run_identify_citations_with_retries(
                 max_tokens,
                 temp,
                 sampling_params,
+                request_timeout,
             )
             response_metrics = extract_response_metrics(identified_citations, elapsed_ms)
 
@@ -64,7 +68,28 @@ def run_identify_citations_with_retries(
                 "citations_data": validated,
                 "failure_reason": None
             }
-
+        except requests.exceptions.Timeout as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
+            last_error = format_timeout_failure(BENCHMARK_TYPE, essay_id, "", request_timeout, exc)
+            append_attempt_log(
+                essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
+                csv_file_append=csv_file_append,
+                attempt_count=attempt,
+                passed=False,
+                failure_reason=last_error,
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
+            )
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
             elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
             emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
@@ -105,6 +130,7 @@ def run_check_references_no_citations_with_retries(
         temp,
         csv_file_append,
         sampling_params,
+        request_timeout=DEFAULT_REQUEST_TIMEOUT,
         max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     
@@ -124,7 +150,8 @@ def run_check_references_no_citations_with_retries(
                 base_url,
                 max_tokens,
                 temp,
-                sampling_params
+                sampling_params,
+                request_timeout,
             )
             response_metrics = extract_response_metrics(cit_check, elapsed_ms)
             cit_check_results = cit_check["choices"][0]["message"]["content"]
@@ -156,7 +183,28 @@ def run_check_references_no_citations_with_retries(
                 "check_reference_no_citations_data": validated,
                 "failure_reason": None
             }
-        
+        except requests.exceptions.Timeout as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
+            last_error = format_timeout_failure(BENCHMARK_TYPE, essay_id, "", request_timeout, exc)
+            append_attempt_log(
+                essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
+                csv_file_append=csv_file_append,
+                attempt_count=attempt,
+                passed=False,
+                failure_reason=last_error,
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
+            )
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
             elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
             emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
@@ -196,6 +244,7 @@ def run_check_citations_no_references_with_retries(
     temp,
     csv_file_append,
     sampling_params,
+    request_timeout=DEFAULT_REQUEST_TIMEOUT,
     max_attempts = MAX_IDENTIFY_CITATIONS_ATTEMPTS
 ):
     last_error = None
@@ -214,7 +263,8 @@ def run_check_citations_no_references_with_retries(
                 base_url,
                 max_tokens,
                 temp,
-                sampling_params
+                sampling_params,
+                request_timeout,
             )
             response_metrics = extract_response_metrics(cit_check, elapsed_ms)
             cit_check_results = cit_check["choices"][0]["message"]["content"]
@@ -246,7 +296,28 @@ def run_check_citations_no_references_with_retries(
                 "check_citations_no_references_data": validated,
                 "failure_reason": None
             }
-        
+        except requests.exceptions.Timeout as exc:
+            elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
+            emissions_kg = getattr(exc, "emissions_kg", emissions_kg)
+            last_error = format_timeout_failure(BENCHMARK_TYPE, essay_id, "", request_timeout, exc)
+            append_attempt_log(
+                essay_id=essay_id,
+                paragraph_num="",
+                sentence_num="",
+                csv_file_append=csv_file_append,
+                attempt_count=attempt,
+                passed=False,
+                failure_reason=last_error,
+                benchmark_type=BENCHMARK_TYPE,
+                elapsed_ms=elapsed_ms,
+                emissions_kg=emissions_kg,
+                completion_tokens=response_metrics["completion_tokens"],
+                prompt_tokens=response_metrics["prompt_tokens"],
+                total_tokens=response_metrics["total_tokens"],
+                tokens_per_second=response_metrics["tokens_per_second"],
+                predicted_tokens_per_second=response_metrics["predicted_tokens_per_second"],
+                prompt_tokens_per_second=response_metrics["prompt_tokens_per_second"],
+            )
         except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
             elapsed_ms = getattr(exc, "elapsed_ms", elapsed_ms)
             emissions_kg = getattr(exc, "emissions_kg", emissions_kg)

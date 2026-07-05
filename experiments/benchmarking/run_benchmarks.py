@@ -1,6 +1,7 @@
 import json
 
 from append_to_csv import append_to_csv
+from request_timeout_utils import BENCHMARK_REQUEST_TIMEOUT
 
 from run_identify_paragraphs_retries import run_identify_paragraphs_with_retries
 from run_citations_retries import run_identify_citations_with_retries, run_check_citations_no_references_with_retries, run_check_references_no_citations_with_retries
@@ -15,7 +16,7 @@ from run_grammar_retries import run_edit_for_style_with_retries, run_repair_gram
 
 # ----- 1. IDENTIFY PARAGRAPHS ------
 
-def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
 
     result = run_identify_paragraphs_with_retries(
         essay=essay,
@@ -24,7 +25,8 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -84,7 +86,7 @@ def run_identify_essay_benchmark(essay, essay_id, base_url, max_tokens, temp, cs
 
 # ----- 2. CITATIONS -----
 
-def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_identify_citations_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -92,7 +94,8 @@ def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -111,7 +114,7 @@ def run_identify_citations_benchmark(essay, essay_id, base_url, max_tokens, temp
 
     return citations_data
 
-def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_check_references_no_citations_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -119,7 +122,8 @@ def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_t
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -136,7 +140,7 @@ def run_check_references_no_citations_benchmark(essay, essay_id, base_url, max_t
         )
     return result["check_reference_no_citations_data"]
 
-def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_check_citations_no_references_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -144,7 +148,8 @@ def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_t
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -167,7 +172,7 @@ def run_check_citations_no_references_benchmark(essay, essay_id, base_url, max_t
 
 
 # ----- 3. THESIS STATEMENTS -----
-def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_determine_thesis_statement_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -176,7 +181,8 @@ def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -193,7 +199,7 @@ def run_determine_thesis_statement_benchmark(essay, essay_id, introduction, base
     
     return result["thesis_data"]
 
-def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_thesis_statement_charateristics_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -202,7 +208,8 @@ def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_state
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -223,7 +230,7 @@ def run_thesis_statement_characteristics_benchmark(essay, essay_id, thesis_state
     
     return result["thesis_data"]
 
-def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_characteristics_count, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_characteristics_count, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_thesis_statement_advice_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -233,7 +240,8 @@ def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -252,7 +260,7 @@ def run_thesis_statement_advice_benchmark(essay, essay_id, thesis_statement, no_
 
     return result["thesis_data"]
 
-def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, what_is_missing, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_thesis_statement_comment_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -262,7 +270,8 @@ def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, wh
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -279,7 +288,7 @@ def run_thesis_statement_comment_benchmark(essay, essay_id, thesis_statement, wh
     return result["thesis_data"]
 
 
-def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_thesis_statement_heap_praise_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -288,7 +297,8 @@ def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -307,7 +317,7 @@ def run_thesis_statement_heap_praise_benchmark(essay, essay_id, thesis_statement
 
 # ----- 4. INTRODUCTION -----
 
-def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_analyze_gen_spec_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -316,7 +326,8 @@ def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -332,7 +343,7 @@ def run_analyze_gen_spec_benchmark(essay, essay_id, introduction, base_url, max_
         
     return result["introduction_data"]
 
-def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, gen_spec_content, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, gen_spec_content, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_provide_introduction_feedback_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -342,7 +353,8 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -362,7 +374,7 @@ def run_provide_introduction_feedback_benchmark(essay, essay_id, introduction, g
 
 
 # ----- 5. CONCLUSION -----
-def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_analyze_conclusions_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -371,7 +383,8 @@ def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -387,7 +400,7 @@ def run_analyze_conclusions_benchmark(essay, essay_id, conclusion, base_url, max
     )
     return result["conclusion_data"]
 
-def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evaluation_content, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evaluation_content, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_provide_conclusion_feedback_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -397,7 +410,8 @@ def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evalu
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -417,7 +431,7 @@ def run_provide_conclusion_feedback_benchmark(essay, essay_id, conclusion, evalu
 
 
 # ----- 6. COHERENCE -----
-def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_analyze_topic_sentence_coherence_with_retries(
         bp=bp,
         essay_id=essay_id,
@@ -426,7 +440,8 @@ def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -442,7 +457,7 @@ def run_analyze_topic_sentence_coherence_benchmark(bp, essay_id, para_num, base_
         )
     return sentences
 
-def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_analyze_pronouns_with_retries(
         bp=bp,
         essay_id=essay_id,
@@ -451,7 +466,8 @@ def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
     if not result["passed"]:
         return None
@@ -468,7 +484,7 @@ def run_analyze_pronouns_benchmark(bp, essay_id, para_num, base_url, max_tokens,
     
 
 
-def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_analyze_linguistic_coherence_with_retries(
         bp=bp,
         essay_id=essay_id,
@@ -477,7 +493,8 @@ def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -496,7 +513,7 @@ def run_analyze_linguistic_coherence_benchmark(bp, essay_id, para_num, base_url,
 
 
 # ----- 7. PARAGRAPHS -----
-def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_encourage_development_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -506,7 +523,8 @@ def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url,
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -522,7 +540,7 @@ def run_encourage_development_benchmark(essay, essay_id, bp, para_num, base_url,
         
     return result["paragraph_data"]
 
-def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_anything_unclear_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -532,7 +550,8 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -551,7 +570,7 @@ def run_anything_unclear_benchmark(essay, essay_id, bp, para_num, base_url, max_
 
 
 # ----- 8. VOCABULARY -----
-def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_enhance_vocabulary_with_retries(
         essay=essay,
         essay_id=essay_id,
@@ -560,7 +579,8 @@ def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_t
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -580,7 +600,7 @@ def run_enhance_vocabulary_benchmark(essay, essay_id, word_list, base_url, max_t
 
 
 # ----- 9. GRAMMAR -----
-def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_edit_for_style_with_retries(
         bp=bp,
         essay_id=essay_id,
@@ -589,7 +609,8 @@ def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -606,7 +627,7 @@ def run_edit_for_style_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
     
     return sentences
 
-def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params):
+def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, temp, csv_file_append, sampling_params, request_timeout=BENCHMARK_REQUEST_TIMEOUT):
     result = run_repair_grammar_with_retries(
         bp=bp,
         essay_id=essay_id,
@@ -615,7 +636,8 @@ def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
         max_tokens=max_tokens,
         temp=temp,
         csv_file_append=csv_file_append,
-        sampling_params=sampling_params
+        sampling_params=sampling_params,
+        request_timeout=request_timeout,
     )
 
     if not result["passed"]:
@@ -630,4 +652,3 @@ def run_repair_grammar_benchmark(bp, essay_id, para_num, base_url, max_tokens, t
             [essay_id, para_num, item["sentence"], item["correction"], item["comments"]]
         )
     return sentences
-
