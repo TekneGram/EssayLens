@@ -87,18 +87,19 @@ def determine_thesis_statement(
     sampling_params,
     request_timeout=120,
 ):
+    max_tokens = 256 # Updated this since max_tokens refers to inferences, not ingestion + inference
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
     task_path = repo_root / task_path
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about essays:" + knowledge + "\n" + "Here is the introduction again:" + introduction + "\n" + task
+    user_prompt = "Here is the introduction again:" + introduction + "\n" + task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You analyze the following essay: \n" + essay},
+            {"role": "system", "content": "You are an expert on essay writing and focus on the following essay: \n" + essay  + "\n" + "You have the following knowledge about thesis statements: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -143,18 +144,21 @@ def thesis_statement_characteristics(
     sampling_params,
     request_timeout=120,
 ):
+    
+    max_tokens = 128 # Re-set this here.
+
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
     task_path = repo_root / task_path
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about essays:" + knowledge + "\n" + "Here is the thesis statement from the introduction: " + thesis_statement + "\n" + task
+    user_prompt = "Here is the thesis statement from the introduction: " + thesis_statement + "\n" + task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You analyze the following essay: \n" + essay},
+            {"role": "system", "content": "You are an expert on essay writing and focus on the following essay: \n" + essay + "\n" + "You have the following knowledge about thesis statements: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -202,18 +206,21 @@ def thesis_statement_advice(
     sampling_params,
     request_timeout=120,
 ):
+    
+    max_tokens = 256
+
     repo_root = Path(__file__).resolve().parents[1]
     knowledge_path = repo_root / knowledge_path
     task_path = repo_root / task_path
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about thesis statements in essays:" + knowledge + "\n" + "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer originally used " + str(feature_count) + " features of a thesis statement in their introduction." + "\n" + task
+    user_prompt = "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer originally used " + str(feature_count) + " features of a thesis statement in their introduction." + "\n" + task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You give advice on the thesis statement for the following essay: \n" + essay},
+            {"role": "system", "content": "You are an expert on essay writing and focus on the following essay: \n" + essay + "\n" + "You have the following knowledge about thesis statements: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -266,12 +273,12 @@ def thesis_statement_comment(
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about thesis statements in essays:" + knowledge + "\n" + "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer's thesis statement has missing features as follows:" + what_is_missing + "\n" + task
+    user_prompt = "The writer wrote this thesis statement: " + thesis_statement + "\n" + "The writer's thesis statement is missing the following features:" + what_is_missing + "\n" + task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You make comments on the thesis statement for the following essay: \n" + essay},
+            {"role": "system", "content": "You are an expert on essay writing and focus on the following essay: \n" + essay + "\n" + "You have the following knowledge about thesis statements: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,
@@ -322,12 +329,12 @@ def thesis_statement_heap_praise(
 
     knowledge = knowledge_path.read_text(encoding="utf-8")
     task = task_path.read_text(encoding="utf-8")
-    user_prompt = "\n Here is your knowledge about thesis statements in essays:" + knowledge + "The writer wrote this thesis statement: " + thesis_statement + "\n" + task
+    user_prompt = "The writer wrote this thesis statement: " + thesis_statement + "\n" + task
 
     payload = {
         "model": "local-gguf",
         "messages": [
-            {"role": "system", "content": "You offer praise on the thesis statement for the following essay: \n" + essay},
+            {"role": "system", "content": "You are an expert on essay writing and focus on the following essay: \n" + essay  + "\n" + "You have the following knowledge about thesis statements: \n" + knowledge},
             {"role": "user", "content": user_prompt},
         ],
         "max_tokens": max_tokens,

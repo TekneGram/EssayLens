@@ -4,6 +4,7 @@ import subprocess
 import argparse
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 from essay_analysis_thesis import identify_paragraphs, determine_thesis_statement, thesis_statement_characteristics, thesis_statement_advice, thesis_statement_comment, thesis_statement_heap_praise
 
@@ -60,6 +61,9 @@ def main() -> None:
     parser.add_argument("--n-gpu-layers", type=int, default=99)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--temp", type=float, default=0.7)
+    parser.add_argument("--top_k", type=int, default=None)
+    parser.add_argument("--top_p", type=float, default=None)
+    parser.add_argument("--min_p", type=float, default=None)
     args = parser.parse_args()
 
     # File path to server
@@ -69,6 +73,16 @@ def main() -> None:
     if args.model=="gemma":
         # Set thinking to 0 for gemma
         cmd_extra = ["--reasoning", "off", "--reasoning-budget", "0", "--jinja", "--chat-template-file", str(jinja)]
+    
+    # Will set the sampling_params to None if they are not defined
+    # Downstream, the essay_analysis_ ... .py functions define the payload and only add these sampling
+    # parameters if these values are not None.
+    # If they are None, the server's default values are used.
+    sampling_params = SimpleNamespace(
+        top_k=args.top_k,
+        top_p=args.top_p,
+        min_p=args.min_p
+    )
 
     # Basic server settings
     cmd = [
@@ -96,7 +110,7 @@ def main() -> None:
         wait_for_server(base_url)
         writing_path = "experiments/essay_examples/w1_strong.md"
         
-        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_thesis/essay_knowledge.md", "experiments/tasks_thesis/identify_paragraphs.md", base_url, args.max_tokens, args.temp)
+        identified_paragraphs = identify_paragraphs(writing_path, "experiments/tasks_thesis/essay_knowledge.md", "experiments/tasks_thesis/identify_paragraphs.md", base_url, args.max_tokens, args.temp, sampling_params)
         print(json.dumps(identified_paragraphs, indent=2))
         essay_paragraphs = identified_paragraphs["choices"][0]["message"]["content"]
         essay_paragraphs = json.loads(essay_paragraphs)
@@ -117,13 +131,13 @@ def main() -> None:
         
         full_essay = full_essay + "\n" + conclusion
 
-        thesis_statement_initial = determine_thesis_statement(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", introduction, "experiments/tasks_thesis/essay_determine_thesis.md", base_url, args.max_tokens, args.temp)
+        thesis_statement_initial = determine_thesis_statement(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", introduction, "experiments/tasks_thesis/essay_determine_thesis.md", base_url, args.max_tokens, args.temp, sampling_params)
         print(json.dumps(thesis_statement_initial, indent=2))
         thesis_statement_initial_result = thesis_statement_initial["choices"][0]["message"]["content"]
         thesis_statement_initial_result = json.loads(thesis_statement_initial_result)
         ts = thesis_statement_initial_result["thesis_statement"]
 
-        ts_characteristics = thesis_statement_characteristics(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", thesis_statement_initial_result["thesis_statement"], "experiments/tasks_thesis/essay_characterize_thesis.md", base_url, args.max_tokens, args.temp)
+        ts_characteristics = thesis_statement_characteristics(full_essay, "experiments/tasks_thesis/essay_knowledge_determine_thesis.md", thesis_statement_initial_result["thesis_statement"], "experiments/tasks_thesis/essay_characterize_thesis.md", base_url, args.max_tokens, args.temp, sampling_params)
         print(json.dumps(ts_characteristics, indent=2))
 
         ts_characteristics = ts_characteristics["choices"][0]["message"]["content"]
@@ -148,7 +162,7 @@ def main() -> None:
 
         # When there are at least 3 missing characteristics from the identified thesis statement, then we should offer advice on improvement
         if no_characteristics_count >= 3:
-            ts_advice = thesis_statement_advice(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, str(no_characteristics_count), "experiments/tasks_thesis/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp)
+            ts_advice = thesis_statement_advice(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, str(no_characteristics_count), "experiments/tasks_thesis/essay_thesis_statement_advice.md", base_url, args.max_tokens, args.temp, sampling_params)
             print(json.dumps(ts_advice, indent=2))
 
         # When there are 2 features the thesis statement is reasonable, and we can add a comment.
@@ -160,12 +174,12 @@ def main() -> None:
             else:
                 what_is_missing = what_is_missing + ", ".join(missing_features[:-1]) + " or " + missing_features[-1]
             
-            ts_comment = thesis_statement_comment(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, what_is_missing, "experiments/tasks_thesis/essay_thesis_statement_comment.md", base_url, args.max_tokens, args.temp)
+            ts_comment = thesis_statement_comment(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, what_is_missing, "experiments/tasks_thesis/essay_thesis_statement_comment.md", base_url, args.max_tokens, args.temp, sampling_params)
             print(json.dumps(ts_comment, indent=2))
 
         # When there are no missing features or just 1 missing feature, then the thesis statement is excellent, and we can praise it.
         if no_characteristics_count == 1 or no_characteristics_count == 0:
-            ts_praise = thesis_statement_heap_praise(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, "experiments/tasks_thesis/essay_thesis_statement_heap_praise.md", base_url, args.max_tokens, args.temp)
+            ts_praise = thesis_statement_heap_praise(full_essay, "experiments/tasks_thesis/essay_knowledge_thesis_characteristics.md", ts, "experiments/tasks_thesis/essay_thesis_statement_heap_praise.md", base_url, args.max_tokens, args.temp, sampling_params)
             print(json.dumps(ts_praise, indent=2))
 
     finally:
@@ -184,6 +198,6 @@ if __name__ == "__main__":
 # python experiments/main_essay_thesis.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max-tokens 2048
 
 # With Gemma 4
-# python experiments/main_essay_thesis.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
+# python experiments/main_essay_thesis.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --temp 1.0 --top_p 0.95 --top_k 64 --cache-k turbo3 --cache-v turbo3 --max-tokens 2048
 # - Change line 54 to llama_server = select_server_for_model("bonsai")
 # python experiments/main_essay_thesis.py --model "/path/to/assets/model/gemma-4-E4B-it-Q4_K_M.gguf" --cache-k turbo3 --cache-v turbo3

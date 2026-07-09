@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
 # To run the benchmarks:
 # With Ternary Bonsai:
-# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --cache-v="f16" --max_tokens 2048 --csv_file_append="bonsai_8b"
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Ternary-Bonsai-8B-Q2_0.gguf" --model "bonsai" --cache-k="f16" --temp 0.5 --top_k 20 --top_p 0.85 --min_p 0 --cache-v="f16" --max_tokens 2048 --csv_file_append="bonsai_8b"
 
 # With Gemma 4 e4b
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/gemma-4-E4B-it-Q4_K_M.gguf" --model "gemma" --temp 1.0 --top_p 0.95 --top_k 64 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="gemma_e4b"
@@ -428,3 +428,9 @@ if __name__ == "__main__":
 
 # With Qwen 3.5 2b
 # python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Qwen3.5-2B-Q4_K_M.gguf" --model "qwen3.5" --top_p 0.8 --top_k 20 --min_p 0 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="qwen3.5_2b"
+
+# With Qwen 3.5 4b
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Qwen3.5-4B-Q4_K_M.gguf" --model "qwen3.5" --top_p 0.8 --top_k 20 --min_p 0 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="qwen3.5_4b"
+
+# With Qwen 3.5 9b
+# python experiments/benchmarking/main.py --model_path "/Users/danielparsons/Documents/Development/EssayLens/assets/models/Qwen3.5-9B-Q4_K_M.gguf" --model "qwen3.5" --top_p 0.8 --top_k 20 --min_p 0 --cache-k turbo3 --cache-v turbo3 --max_tokens 2048 --csv_file_append="qwen3.5_9b"

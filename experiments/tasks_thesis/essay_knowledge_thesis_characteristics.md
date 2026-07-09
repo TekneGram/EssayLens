@@ -3,7 +3,7 @@ Thesis statements form part of the introduction paragraph, the first paragraph o
 A thesis statement has a number of characteristics: contains the main idea of the essay, establishes a clear goal for the essay, previews topics in the body paragraphs, provides the writer's opinion. However, not all of these are always necessary.
 
 ## Main idea
-The main idea of the essay
+The main idea of the essay can be the writer's opinion. The writer should develop this idea in the body paragraphs.
 
 ## Clear goal
 A clear goal refers to the verb the writer uses to say what they will do.
@@ -11,6 +11,7 @@ The verb often refers to the genre of the essay. For example, a writer might wri
 - "This essay will compare ... ": comparison
 - "This essay will describe ... ": description
 - "In this essay, the cause and effect will be outlined ... ": cause-effect
+- "This report outlines ... ": outline
 and so on, including problem-solution, explanations, definitions, etc.
 
 # Preview topics

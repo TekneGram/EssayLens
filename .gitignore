@@ -63,3 +63,4 @@ vendor/llama-server/**
 # Experimental essays
 experiments/essay_examples
 experiments/benchmarking/llm_responses
+experiments/benchmarking/evaluation_results
